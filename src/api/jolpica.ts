@@ -27,7 +27,7 @@ export interface Race {
   Circuit: {
     circuitId: string;
     circuitName: string;
-    Location: { locality: string; country: string };
+    Location: { locality: string; country: string; lat?: string; long?: string };
   };
   FirstPractice?: SessionTime;
   SecondPractice?: SessionTime;
@@ -311,4 +311,20 @@ export async function getRound(season: string, round: string): Promise<RoundData
     fetchJson<T>(`${BASE}/${season}/${round}/qualifying/?limit=100`, opts),
   ]);
   return { race: r.MRData.RaceTable.Races[0], sprint: s.MRData.RaceTable.Races[0], quali: q.MRData.RaceTable.Races[0] };
+}
+
+export interface CircuitRecords {
+  winners: RaceWithResults[];
+  poles: (Race & { QualifyingResults?: QualifyingResult[] })[];
+  fastest: RaceWithResults[];
+}
+
+/** Every winner, pole sitter and fastest race lap at a circuit, oldest first. Fastest laps are recorded from 2004. */
+export async function getCircuitRecords(circuitId: string): Promise<CircuitRecords> {
+  const get = <T,>(path: string) =>
+    fetchJson<MR<{ RaceTable: { Races: T[] } }>>(`${BASE}/circuits/${circuitId}/${path}/?limit=100`, { limiter, cacheTtlMs: DAY }).then((d) => d.MRData.RaceTable.Races);
+  const winners = await get<RaceWithResults>('results/1');
+  const poles = await get<Race & { QualifyingResults?: QualifyingResult[] }>('qualifying/1');
+  const fastest = await get<RaceWithResults>('fastest/1/results');
+  return { winners, poles, fastest };
 }

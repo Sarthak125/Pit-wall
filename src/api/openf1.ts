@@ -66,6 +66,8 @@ export interface Meeting {
   country_name: string;
   circuit_short_name: string;
   circuit_key: number;
+  /** Permanent, Temporary - Street or Temporary - Road. */
+  circuit_type?: string;
   date_start: string;
   year: number;
 }
@@ -229,4 +231,21 @@ export async function getStartingGrid(race: Pick<Session, 'meeting_key' | 'sessi
     .filter((r) => r.position != null)
     .map((r) => ({ position: r.position!, driver_number: r.driver_number, lap_duration: null }))
     .sort((a, b) => a.position - b.position);
+}
+
+
+/**
+ * The OpenF1 meeting for a race weekend, matched by date. OpenF1 starts in 2023, so for older seasons this
+ * uses the same circuit's meeting in a later year (found through `laterDate`), which gives the same circuit key.
+ */
+export async function findMeeting(dates: string[], signal?: AbortSignal): Promise<Meeting | null> {
+  for (const date of dates) {
+    const year = Number(date.slice(0, 4));
+    if (year < 2023) continue;
+    const meetings = await openf1<Meeting>('meetings', { year }, signal);
+    const t = Date.parse(date);
+    const m = meetings.find((x) => !/testing/i.test(x.meeting_name) && Math.abs(Date.parse(x.date_start) - t) < 5 * 86_400_000);
+    if (m) return m;
+  }
+  return null;
 }

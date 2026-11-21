@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getRound, SESSION_FIELDS, type Race, type Result } from '../api/jolpica';
+import { CircuitOverview } from '../components/CircuitOverview';
 import { Footer } from '../components/Shell';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { useFavourite, useFavouriteTeam } from '../hooks/useFavourite';
@@ -78,6 +79,8 @@ export function RaceResults() {
         </div>
         {finished && <Podium results={results} />}
       </section>
+
+      <CircuitOverview race={info} />
 
       {upcoming ? (
         <section className="card" aria-labelledby="sched">

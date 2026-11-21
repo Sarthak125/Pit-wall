@@ -19,6 +19,8 @@ export interface Circuit {
   x: number[];
   y: number[];
   rotation: number;
+  /** Estimated time lost making a pit stop, in seconds, normally and under safety car / virtual safety car. */
+  pitLoss?: { normal?: string; sc?: string; vsc?: string };
   corners: CircuitPoint[];
   marshalSectors: CircuitPoint[];
 }

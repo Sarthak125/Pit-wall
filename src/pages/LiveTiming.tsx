@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCircuitLaps } from '../api/jolpica';
+import { getCircuit } from '../api/circuit';
 import { useSchedule } from '../hooks/useSeason';
 import { isSessionLive, type Lap, type OF1Driver, type Session } from '../api/openf1';
 import { Empty, ErrorBox, Loading } from '../components/States';
@@ -67,6 +68,14 @@ export function LiveTiming() {
         return Math.abs(d - Date.parse(session.date_start)) < 4 * 86_400_000;
       })
     : undefined;
+  // Pit stop time loss for this circuit (same layout data the track map uses, so it comes from cache).
+  const layout = useQuery({
+    queryKey: ['circuit', session?.circuit_key, session?.year],
+    enabled: !!session?.circuit_key,
+    staleTime: Infinity,
+    queryFn: ({ signal }) => getCircuit(session!.circuit_key, session!.year, signal),
+  });
+  const pitLoss = layout.data?.pitLoss;
   const planned = useQuery({
     queryKey: ['planned-laps', round?.Circuit.circuitId, isSprint],
     enabled: isRace && !!round,
@@ -132,6 +141,17 @@ export function LiveTiming() {
             <div className="l">{upcoming ? 'STARTS IN' : live ? (isRace ? 'ELAPSED' : 'TIME LEFT') : 'DURATION'}</div>
             <div className="v">{fmtDuration(upcoming ? start - now : live && !isRace ? remaining : elapsed)}</div>
           </div>
+          {pitLoss?.normal && (
+            <div className="metric" title="Estimated time lost making a pit stop (MultiViewer). Under a safety car or virtual safety car the field is slower, so a stop costs less.">
+              <div className="l">PIT LOSS</div>
+              <div className="v">{Number(pitLoss.normal).toFixed(1)}<span className="u"> s</span></div>
+              <div className="s">
+                {pitLoss.sc ? `SC ${Number(pitLoss.sc).toFixed(1)} s` : ''}
+                {pitLoss.sc && pitLoss.vsc ? ' · ' : ''}
+                {pitLoss.vsc ? `VSC ${Number(pitLoss.vsc).toFixed(1)} s` : ''}
+              </div>
+            </div>
+          )}
           <div className="metric">
             <div className="l">TRACK</div>
             <div className="v">{wx ? `${wx.track_temperature.toFixed(1)}°C` : '-'}</div>
