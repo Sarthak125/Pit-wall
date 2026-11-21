@@ -1,19 +1,88 @@
 # Pit Wall: F1 dashboard
 
-An installable web app (PWA) for Formula 1: live timing, FIA race control and stewards' messages, standings, calendar and drivers. One codebase runs in a laptop browser and installs on an Android tablet like an app.
+An installable web app (PWA) for Formula 1: live timing, FIA race control and stewards' messages, standings, calendar, drivers, and a personal page for your favourite driver and team. One codebase runs in a laptop browser and installs on an Android tablet like an app.
 
-## Favourite driver
+Live site: https://sarthak125.github.io/Sarthak125/
 
-Tap the star on a driver (Drivers page) or pick one in Settings. Your driver is then:
+Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
-- highlighted in standings, Live Timing and the FIA message feed, and shown in a strip on the Dashboard;
-- followed on the **My Driver** page: season stats, grid vs finish chart, comparison with any driver, title maths, career totals, history at the next circuit and race-by-race results;
-- tracked live during sessions on My Driver: position, gaps to the cars ahead and behind, tyre, pit stops, lap times, car data, overtakes, FIA messages and team radio, plus an optional live track map (Settings; uses extra API requests);
-- the subject of pop-up alerts (position change, pit stop, FIA decision) while the app is open, optionally as device notifications.
+## Features
 
-Pick a **favourite team** with the flag button in the Constructors' standings or in Settings. Its drivers are tinted in the standings and Live Timing, the Dashboard shows a "Your team" strip, and Favourites gets a **Team** tab: season stats, points per round, team-mate comparison, constructors' title maths, history at the next circuit, race-by-race results and both cars live during sessions.
+### Dashboard
 
-The favourite and alert settings are saved per device.
+- Next race card with a live countdown to lights out and the weekend schedule (practice, sprint, qualifying, race) marked Done, Live, Next or Upcoming.
+- Track conditions from the latest session: air and track temperature, humidity, wind, pressure, rain, and track status (green, yellow, safety car, red, chequered) while a session is live.
+- Drivers' and Constructors' Championship tables.
+- Title fight chart: cumulative points after each round for the top four, plus your favourite driver.
+- Last race podium and fastest lap.
+- Season calendar strip.
+- "Your driver" and "Your team" strips when favourites are set.
+
+### Live Timing
+
+- Pick any session of the current race weekend; live sessions update automatically.
+- Session bar: lap, elapsed time, track temperature and track status.
+- Timing tower: position, gap, interval, last lap, best lap, sector times coloured purple (overall best), green (personal best) or yellow, current tyre and its age, and pit stops. In practice and qualifying the gap is to the fastest lap.
+- Car data for any driver: speed, gear, RPM, throttle and brake.
+- Tyre strategy bars for each driver's stints.
+- **FIA race control and stewards** feed: every official message, newest first, labelled as Penalty, Under Investigation, Noted, No Further Action, Track Limits, Flag, Safety Car or Other. Filter by type, by driver, by your favourite driver or by your favourite team.
+- Penalties this session (with whether each is marked as served), track limits count per driver, and open investigations.
+- Team radio for the session, filterable by driver, your driver or your team.
+
+### Favourites: Driver tab
+
+Pick a favourite driver with the star on the Drivers page or in Settings. They are highlighted in the standings, Live Timing and the FIA feed, and the **Favourites** page shows:
+
+- Championship position, points and gaps to the drivers around them.
+- Season stats: wins, podiums, poles, front-row starts, fastest laps, points finishes, average finish, average grid, positions gained, DNFs, sprint points and points per race.
+- Grid vs finish chart for every round, with DNFs marked.
+- Compare with the team-mate or any other driver: points, ahead in races, ahead in qualifying, wins and podiums.
+- Title maths: whether they can still win the championship with the points left.
+- Career totals: starts, wins, podiums, poles, fastest laps, titles and career points.
+- History at the next circuit.
+- Race-by-race results for Grands Prix, sprints and qualifying.
+- This weekend's session results and the latest team radio.
+- **Live section** during any session: position, gaps to the cars ahead and behind with the change over the last lap, tyre, pit stops, lap time chart, sector times, car data, overtakes made and lost (races), FIA messages about them and team radio. An optional live track map (Settings) shows where they are on the circuit.
+
+### Favourites: Team tab
+
+Pick a favourite team with the flag button in the Constructors' standings or in Settings. Its drivers are tinted in the standings and Live Timing, and the **Team** tab shows:
+
+- Constructors' position, points and gaps.
+- Season stats: wins, podiums, one-two finishes, double points finishes, poles, front-row starts, fastest laps, DNFs, best result, average finish, points per race and sprint points.
+- Points per round, split between the two drivers.
+- Team-mate comparison and constructors' title maths.
+- The team's history at the next circuit.
+- Race-by-race results for both cars.
+- This weekend's session results for both drivers and their team radio.
+- **Live view** during sessions: both cars side by side, team FIA messages and team radio.
+
+### Alerts
+
+While the app is open and a session is live, pop-up alerts tell you when your favourite driver changes position, pits, or gets an FIA decision (penalty, investigation, noted, no further action, track limits). You can also turn on device notifications in Settings; they arrive while the app is open or in the background, not after it has been closed.
+
+### Standings, Calendar and Drivers
+
+- **Standings:** full Drivers' and Constructors' tables, with your favourites highlighted and the flag button to pick a team.
+- **Calendar:** every round with all session times in your time zone and the winner of each finished race.
+- **Drivers:** the current grid with photos, numbers, teams and championship position, and the star to pick your favourite.
+
+### Settings
+
+- Favourite driver and favourite team.
+- Alerts on or off, and device notifications.
+- Live track map on or off.
+- Optional OpenF1 access token and request budget.
+- Clear cached data.
+
+All settings are saved on each device separately.
+
+### Works everywhere
+
+- Laptop layout with a top menu; tablet and phone layout with a bottom menu and large touch targets.
+- Installable on Android (and desktop Chrome or Edge) and opens offline with the last loaded standings and calendar.
+- Season picker for standings, results and calendar from previous years.
+- All times in the device's local time zone.
 
 ## Data sources
 
@@ -21,12 +90,15 @@ Formula 1 has no public official API. This app uses two free community APIs:
 
 | Source | Used for | Notes |
 | --- | --- | --- |
-| [OpenF1](https://openf1.org) | Live timing, positions, gaps, laps and sectors, tyres, pit stops, race control messages, weather, car data | Historical data is free. Check OpenF1's current terms for real-time access during sessions; if it needs an account, paste your access token in **Settings**. Default budget is 30 requests per minute, adjustable in Settings. |
-| [Jolpica-F1](https://github.com/jolpica/jolpica-f1) | Calendar, results, driver and constructor standings | Ergast-compatible. Responses are cached on the device for 10 to 30 minutes. |
+| [OpenF1](https://openf1.org) | Live timing, positions, gaps, laps and sectors, tyres, pit stops, race control messages, weather, car data, car positions (track map), overtakes, starting grid, session results, team radio | Historical data is free. Check OpenF1's current terms for real-time access during sessions; if it needs an account, paste your access token in **Settings**. Default budget is 30 requests per minute, adjustable in Settings. |
+| [Jolpica-F1](https://github.com/jolpica/jolpica-f1) | Calendar, results, qualifying, sprints, driver and constructor standings, career totals, circuit history | Ergast-compatible. Responses are cached on the device, from 10 minutes for standings up to a week for past seasons. |
 
-FIA message types (penalty, under investigation, noted, no further action, track limits, flags) are worked out from the stewards' standard wording in each message. A message with unusual wording lands in "Other".
+How some values are worked out:
 
-All times are shown in the device's local time zone.
+- **FIA message types** come from the stewards' standard wording in each message. A message with unusual wording lands in "Other".
+- **Finished rounds** are counted from the race results, because Jolpica's standings round can run ahead of the results.
+- **Title maths** assumes 25 points for a Grand Prix win and 8 for a sprint win (a one-two of 43 and 15 for a team), with no fastest-lap point. Ties decided by countback are not modelled.
+- **Overtakes** are as recorded by OpenF1 and only shown for races and sprints.
 
 ## Run on your laptop
 
@@ -44,13 +116,9 @@ Open the address it prints (http://localhost:3030).
 
 ## Use it on your Android tablet
 
-To install it as an app, the tablet must open it over **HTTPS**. The simplest way is to host it for free (see Deploy below), then on the tablet:
+Open the live site above in Chrome, tap the three-dot menu, then **Install app** (or **Add to Home screen**). Pit Wall then opens from the home screen, full screen like a normal app.
 
-1. Open the site in Chrome.
-2. Tap the three-dot menu, then **Install app** (or **Add to Home screen**).
-3. Open Pit Wall from the home screen. It runs full screen and opens offline with the last loaded standings.
-
-Quick test without hosting: with `npm run dev` running on the laptop, open `http://<laptop-ip>:3030` on the tablet while both are on the same Wi-Fi. This works in the browser, but Android will not install it as an app over plain HTTP.
+Installing needs the site to be served over **HTTPS**, which GitHub Pages does. For a quick test without hosting, run `npm run dev` on the laptop and open `http://<laptop-ip>:3030` on the tablet while both are on the same Wi-Fi. That works in the browser, but Android will not install it as an app over plain HTTP.
 
 ## Deploy
 
@@ -60,21 +128,21 @@ The build is a static site in `dist/`:
 npm run build
 ```
 
-- **GitHub Pages:** push this folder to a GitHub repository, then in the repo go to Settings, Pages, and set Source to **GitHub Actions**. The workflow in `.github/workflows/deploy.yml` builds and publishes on every push to `main`. The site will be at `https://<user>.github.io/<repo>/`.
+- **GitHub Pages:** in the repository go to Settings, Pages, and set Source to **GitHub Actions**. The workflow in `.github/workflows/deploy.yml` builds and publishes on every push to `main`. The site is served at `https://<user>.github.io/<repo>/`.
 - **Netlify, Vercel or Cloudflare Pages:** build command `npm run build`, output folder `dist`.
 
 ## Project layout
 
 ```
-src/api/        OpenF1 and Jolpica clients, rate limiter, cache
-src/hooks/      Polling and data hooks (live timing is fetched incrementally)
-src/lib/        FIA message classifier, formatting, team colours, settings
-src/pages/      Dashboard, Live Timing, Standings, Calendar, Drivers, Settings
-src/components/ App shell, chart, loading and error states
+src/api/         OpenF1 and Jolpica clients, rate limiter, cache
+src/hooks/       Polling, live timing, season data and favourites hooks
+src/lib/         FIA message classifier, driver stats, alerts, formatting, team colours, settings, routing
+src/pages/       Dashboard, Live Timing, Favourites (My Driver, My Team), Standings, Calendar, Drivers, Settings
+src/components/  App shell, charts, track map, live driver and team views, team radio, strips, alerts, loading and error states
 ```
 
 ## Notes
 
-- Polling pauses while the app is in the background to save API quota.
+- Polling pauses while the app is in the background to save API quota. The live track map adds about 15 OpenF1 requests a minute, which can slow other live updates on the free tier.
+- Team radio is audio only. Automatic transcripts were tried, but F1's radio file server blocks GitHub's servers, so they cannot be produced without running a machine of your own.
 - The OpenF1 token is stored only in the device's browser storage and sent only to api.openf1.org.
-- Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
