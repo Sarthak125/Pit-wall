@@ -412,7 +412,7 @@ function CircuitHistory({ driverId, schedule }: { driverId: string; schedule: Pa
               const res = r.Results![0];
               return (
                 <tr key={r.season}>
-                  <td className="mono">{r.season}</td>
+                  <td className="mono"><a className="name-link" href={raceHref(r.round, r.season)} title={`${r.season} ${r.raceName}: results`}>{r.season}</a></td>
                   <td className="r mono">{Number(res.grid) > 0 ? `P${res.grid}` : 'Pit lane'}</td>
                   <td className="r mono" style={{ fontWeight: 600 }}>{/^\d+$/.test(res.positionText) ? `P${res.positionText}` : 'DNF'}</td>
                   <td className="r mono">{res.points}</td>

@@ -86,7 +86,7 @@ Where names and codes link to these pages:
 | Calendar | Winner of each finished race | |
 | Race results | Podium and every driver in the race, sprint and qualifying tables | Team names in those tables |
 
-The race name in the Dashboard's Last race card, each round in the Dashboard's calendar strip and race names on the Calendar open the race results page. The Last race podium names open driver and team pages. Race names in the race-by-race tables on driver and team pages open the race results page too.
+The race name in the Dashboard's Last race card, each round in the Dashboard's calendar strip and race names on the Calendar open the race results page. The Last race podium names open driver and team pages. Race names in the race-by-race tables on driver and team pages open the race results page too. Seasons in the circuit history tables open that year's race (addresses like `#/race/2023/21` carry their own season instead of following the season picker).
 | Drivers | Each driver card (the star stays separate) | |
 | Live Timing | Codes in the timing tower and tyre strategy rows, driver chips under FIA messages, team radio codes | |
 | Favourites and team pages | Team radio codes | |

@@ -316,7 +316,7 @@ function TeamCircuitHistory({ team, schedule }: { team: FavouriteTeam; schedule:
             <tbody>
               {rows.map((r: RaceWithResults) => (
                 <tr key={r.season}>
-                  <td className="mono">{r.season}</td>
+                  <td className="mono"><a className="name-link" href={raceHref(r.round, r.season)} title={`${r.season} ${r.raceName}: results`}>{r.season}</a></td>
                   <td>
                     {(r.Results ?? []).map((x) => `${x.Driver.code ?? x.Driver.familyName} ${isClassified(x) ? `P${x.positionText}` : 'DNF'}`).join(' · ')}
                   </td>

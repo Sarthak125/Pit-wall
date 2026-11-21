@@ -17,8 +17,11 @@ type Tab = 'race' | 'sprint' | 'quali';
 
 /** Results of one round: race, sprint and qualifying, for the season in the season picker. */
 export function RaceResults() {
-  const round = useRouteParam();
-  const { season } = useSettings();
+  const param = useRouteParam();
+  const { season: picked } = useSettings();
+  // A season in the address (from history tables) wins over the season picker.
+  const [fixedSeason, round] = param.includes('/') ? param.split('/') : ['', param];
+  const season = fixedSeason || picked;
   const schedule = useSchedule(season);
   const data = useQuery({ queryKey: ['round', season, round], enabled: !!round, queryFn: () => getRound(season, round), staleTime: 10 * 60_000 });
   const now = useNow(60_000);
@@ -59,8 +62,8 @@ export function RaceResults() {
       <nav aria-label="Races" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 }}>
         <a className="link" href={href('calendar')}>← Calendar</a>
         <span style={{ display: 'flex', gap: 16 }}>
-          {prev && <a className="link" href={raceHref(prev.round)}>‹ R{prev.round} {prev.raceName.replace(/ Grand Prix$/, '')}</a>}
-          {next && <a className="link" href={raceHref(next.round)}>R{next.round} {next.raceName.replace(/ Grand Prix$/, '')} ›</a>}
+          {prev && <a className="link" href={raceHref(prev.round, fixedSeason)}>‹ R{prev.round} {prev.raceName.replace(/ Grand Prix$/, '')}</a>}
+          {next && <a className="link" href={raceHref(next.round, fixedSeason)}>R{next.round} {next.raceName.replace(/ Grand Prix$/, '')} ›</a>}
         </span>
       </nav>
 

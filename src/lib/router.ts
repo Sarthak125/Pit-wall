@@ -20,7 +20,12 @@ function readParam(): string {
   const [route, p = ''] = parts();
   if (route === 'driver') return /^[A-Za-z]{3}$/.test(p) ? p.toUpperCase() : '';
   if (route === 'team') return /^[a-z0-9_]{2,40}$/.test(p) ? p : '';
-  if (route === 'race') return /^[1-9][0-9]?$/.test(p) ? p : '';
+  if (route === 'race') {
+    // #/race/20 (season picker) or #/race/2024/20 (a specific season).
+    const q = parts()[2];
+    if (/^(19|20)\d\d$/.test(p) && q && /^[1-9][0-9]?$/.test(q)) return `${p}/${q}`;
+    return /^[1-9][0-9]?$/.test(p) ? p : '';
+  }
   return '';
 }
 
@@ -46,4 +51,5 @@ export const teamHref = (id: string) => `#/team/${id}`;
 export const href = (r: Route) => (r === 'dashboard' ? '#/' : `#/${r}`);
 
 /** Link to a race results page by round number, for the season in the season picker. */
-export const raceHref = (round: string | number) => `#/race/${round}`;
+export const raceHref = (round: string | number, season?: string) =>
+  season && /^\d{4}$/.test(season) ? `#/race/${season}/${round}` : `#/race/${round}`;
