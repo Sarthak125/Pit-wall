@@ -9,6 +9,7 @@ import { FiaText, FiaWhen } from '../components/FiaText';
 import { LiveTrackMap } from '../components/LiveTrackMap';
 import { RadioCards } from '../components/RadioCards';
 import { LiveStandings } from '../components/LiveStandings';
+import { InvestigationsPanel, TrackLimitsPanel } from '../components/FiaPanels';
 import { GapChart } from '../components/GapChart';
 import { Footer } from '../components/Shell';
 import { useNow } from '../hooks/usePoll';
@@ -252,7 +253,7 @@ export function LiveTiming() {
       </section>
 
       <RadioPanel session={session} live={live} drivers={t.driversByNumber} favNum={favNum} teamNums={teamNums} laps={t.laps} />
-      <FiaSection messages={t.messages} drivers={t.driversByNumber} favNum={favNum} team={favTeam} teamNums={teamNums} />
+      <FiaSection messages={t.messages} drivers={t.driversByNumber} favNum={favNum} team={favTeam} teamNums={teamNums} isRace={isRace} />
       <Footer />
     </>
   );
@@ -428,7 +429,7 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitL
   );
 }
 
-function FiaSection({ messages, drivers, favNum, team, teamNums }: { messages: ClassifiedMsg[]; drivers: Map<number, OF1Driver>; favNum: number | null; team: FavouriteTeam | null; teamNums: number[] }) {
+function FiaSection({ messages, drivers, favNum, team, teamNums, isRace }: { messages: ClassifiedMsg[]; drivers: Map<number, OF1Driver>; favNum: number | null; team: FavouriteTeam | null; teamNums: number[]; isRace: boolean }) {
   const [tab, setTab] = useState<MsgTab>('All');
   const [driver, setDriver] = useState<number | 0>(0);
   // driver -1 means "the favourite team's cars".
@@ -547,39 +548,8 @@ function FiaSection({ messages, drivers, favNum, team, teamNums }: { messages: C
           )}
         </section>
 
-        <section className="card tight" aria-labelledby="limits">
-          <h2 className="h2 sm" id="limits" style={{ marginBottom: 4 }}>Track limits</h2>
-          <div className="muted" style={{ fontSize: 12, marginBottom: 12 }}>Lap times deleted per driver</div>
-          {limits.length === 0 ? <Empty>No track limits messages.</Empty> : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {limits.map((l) => (
-                <div className="who" key={l.car}>
-                  <span className="code" style={{ width: 40, fontSize: 15 }}>{code(l.car)}</span>
-                  <div style={{ flex: 1, display: 'flex', gap: 4 }}>
-                    {Array.from({ length: Math.max(4, l.deleted) }, (_, k) => (
-                      <span key={k} style={{ flex: 1, height: 10, borderRadius: 2, background: k < l.deleted ? (l.blackAndWhite ? 'var(--violet-soft)' : '#8B93A1') : 'var(--line-soft)' }} />
-                    ))}
-                  </div>
-                  <span style={{ width: 72, textAlign: 'right', fontSize: 12, color: l.blackAndWhite ? 'var(--violet-soft)' : 'var(--muted)' }}>
-                    {l.blackAndWhite ? 'B/W flag' : `${l.deleted} deleted`}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="card tight" aria-label="Open investigations" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ fontWeight: 600 }}>
-            {open.length === 0 ? 'No incidents under investigation' : `${open.length} incident${open.length > 1 ? 's' : ''} under investigation`}
-          </div>
-          {open.map((m) => (
-            <div key={m.id} className="muted" style={{ fontSize: 12 }}>
-              {m.lap_number ? `Lap ${m.lap_number} · ` : ''}
-              {m.cars.map(code).join(', ') || m.message}
-            </div>
-          ))}
-        </section>
+        <TrackLimitsPanel limits={limits} penalties={penalties} drivers={drivers} isRace={isRace} favNum={favNum} />
+        <InvestigationsPanel open={open} drivers={drivers} />
       </div>
     </div>
   );

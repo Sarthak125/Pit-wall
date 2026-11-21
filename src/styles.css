@@ -465,3 +465,25 @@ html { zoom: 1.1; }
 /* When the columns stack (tablet), the card is full width: give the map a height in proportion to its width. */
 .next-circuit { container-type: inline-size; }
 @container (min-width: 560px) { .next-circuit-map { min-height: 55cqw; } }
+/* Track limits and investigations panels */
+.limits-summary { display: flex; gap: 8px; margin: 8px 0 12px; }
+.limits-summary > div { flex: 1; background: var(--inset); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; }
+.limits-summary b { font-size: 18px; }
+.limits-summary span { font-size: 11px; color: var(--muted); }
+.limits-list { display: flex; flex-direction: column; gap: 8px; }
+.limits-row { display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: 10px; padding: 2px 4px; border-radius: 6px; }
+.limits-row.fav { background: #1d1b12; box-shadow: inset 3px 0 0 var(--amber); }
+.limits-bar { display: flex; gap: 3px; }
+.limits-bar i { flex: 1; height: 8px; border-radius: 2px; }
+.limits-meta { display: grid; grid-template-columns: 18px 34px 52px; align-items: center; gap: 6px; font-size: 12px; }
+.limits-n { text-align: right; }
+.limits-b { display: flex; justify-content: flex-end; }
+.limits-badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.5px; }
+.limits-badge.bw { display: inline-flex; align-items: center; gap: 4px; background: #0b0d10; border: 1px solid #c9d1db; color: #e8eaed; }
+.limits-badge.bw i { width: 10px; height: 10px; border-radius: 2px; background: linear-gradient(135deg, #fff 50%, #111 50%); outline: 1px solid #c9d1db; }
+.limits-badge.pen { background: #3a1416; color: #ff8a8a; }
+.inv-list { display: flex; flex-direction: column; gap: 8px; }
+.inv-item { background: var(--inset); border: 1px solid var(--line); border-left: 3px solid var(--amber); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+.inv-when { font-size: 11px; color: var(--faint); }
+.inv-title { font-weight: 600; }
+.inv-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }

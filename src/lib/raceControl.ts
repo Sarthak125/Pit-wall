@@ -117,6 +117,8 @@ export interface LimitsSummary {
   car: number;
   deleted: number;
   blackAndWhite: boolean;
+  /** Corner number to how many lap times were deleted there. */
+  turns: Map<number, number>;
 }
 
 export function summariseTrackLimits(msgs: ClassifiedMsg[]): LimitsSummary[] {
@@ -125,8 +127,12 @@ export function summariseTrackLimits(msgs: ClassifiedMsg[]): LimitsSummary[] {
     if (m.kind !== 'limits') continue;
     const text = m.message.toUpperCase();
     for (const car of m.cars) {
-      const row = map.get(car) ?? { car, deleted: 0, blackAndWhite: false };
-      if (/DELETED/.test(text)) row.deleted++;
+      const row = map.get(car) ?? { car, deleted: 0, blackAndWhite: false, turns: new Map<number, number>() };
+      if (/DELETED/.test(text)) {
+        row.deleted++;
+        const turn = /AT TURN (\d+)/.exec(text);
+        if (turn) row.turns.set(Number(turn[1]), (row.turns.get(Number(turn[1])) ?? 0) + 1);
+      }
       if (/BLACK AND WHITE/.test(text) || (m.flag ?? '').toUpperCase() === 'BLACK AND WHITE') row.blackAndWhite = true;
       map.set(car, row);
     }

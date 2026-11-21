@@ -90,7 +90,9 @@ Pick any session of the current race weekend; live sessions update automatically
 - Every official message, newest first, in plain English with the reason underneath (for example "Turn 4 incident involving VER and NOR · Causing a collision"), and the exact official wording one tap away.
 - Labelled Penalty, Under Investigation, Noted, No Further Action, Track Limits, Flag, Safety Car, Session or Info. The All tab hides routine sector and blue flag messages unless you choose to show them.
 - Filter by type, by driver, by your favourite driver or by your favourite team.
-- Penalties this session (with whether each is marked as served), track limits count per driver, and open investigations.
+- Penalties this session (with whether each is marked as served).
+- **Track limits**: totals for the session (lap times deleted, drivers, the corner with most deletions), then each driver with a bar of deletions (in races it turns amber at 3 and red from 4), the corner where most happened, and badges for a black and white flag or a track limits penalty, shown only when the FIA actually issued them. Top 8 with "Show all".
+- **Under investigation**: each open incident in plain English with the reason, lap and time, the drivers in team colours, and whether the decision is pending or comes after the race or session.
 
 ### Race and circuit pages
 
