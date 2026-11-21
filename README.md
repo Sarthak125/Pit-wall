@@ -120,7 +120,7 @@ The screen designs live on a design canvas: [Pit Wall design canvas](https://cla
 | Page | Laptop board | Android tablet board (portrait) |
 | --- | --- | --- |
 | Dashboard | Dashboard (laptop) | Dashboard (Android tablet, portrait) |
-| Live Timing | Live Timing (laptop) | Live Timing (Android tablet, portrait) |
+| Live Timing (includes the track map, laid out with a yellow flag at turn 2) | Live Timing (laptop) | Live Timing (Android tablet, portrait), and Live Timing: track map and FIA feed (Android tablet, portrait) for the screen further down |
 | Favourites: Driver tab | Favourites: Driver tab (laptop) | Favourites: Driver tab (Android tablet, portrait) |
 | Favourites: Team tab | Favourites: Team tab and where the team appears | Favourites: Team tab (Android tablet, portrait) |
 | Standings | Standings (laptop) | Standings (Android tablet, portrait) |
