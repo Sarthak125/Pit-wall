@@ -63,9 +63,30 @@ While the app is open and a session is live, pop-up alerts tell you when your fa
 
 ### Standings, Calendar and Drivers
 
-- **Standings:** full Drivers' and Constructors' tables, with your favourites highlighted and the flag button to pick a team. Tap a driver's name for their stats page, or a team's name for its team page (the same page as the Favourites Team tab). Driver names on the Dashboard table work the same way.
+- **Standings:** full Drivers' and Constructors' tables, with your favourites highlighted and the flag button to pick a team. Driver and team names open their pages (see below).
 - **Calendar:** every round with all session times in your time zone and the winner of each finished race.
-- **Drivers:** the current grid with photos, numbers, teams and championship position, and the star to pick your favourite. Tap any driver to open their full stats page (the same page as the favourite driver: season stats, grid vs finish, compare, title maths, career, track history, race by race and the live section during sessions).
+- **Drivers:** the current grid with photos, numbers, teams and championship position, and the star to pick your favourite. Tap a driver to open their page (see below).
+
+### Driver and team pages
+
+Every driver and team has its own page, with the same layout as the Favourites tabs:
+
+- **Driver page** (`#/driver/VER`, by three-letter code): season stats, grid vs finish, compare with any driver, title maths, career totals, history at the next circuit, race-by-race results, this weekend's sessions and team radio, plus the live section during sessions.
+- **Team page** (`#/team/ferrari`, by team id): season stats, points per round, team-mate comparison, constructors' title maths, history at the next circuit, race-by-race results for both cars, this weekend's sessions and team radio, plus both cars live during sessions.
+
+For a driver or team that isn't your favourite, the page has a back link instead of the Driver | Team tabs, highlights Drivers or Standings in the menu, and shows an empty ☆ or ⚑ to make it your favourite. Only your favourite driver triggers alerts. Each page has its own address, so you can bookmark or share it, and it follows the season picker (for example 2024 stats).
+
+Where names and codes link to these pages:
+
+| Where | Opens the driver page | Opens the team page |
+| --- | --- | --- |
+| Dashboard | Names in the Drivers' Championship table | Constructors' bars and the Team column of the drivers' table |
+| Standings | Driver names | Team names |
+| Drivers | Each driver card (the star stays separate) | |
+| Live Timing | Codes in the timing tower and tyre strategy rows, driver chips under FIA messages, team radio codes | |
+| Favourites and team pages | Team radio codes | |
+
+On Live Timing, clicking elsewhere in a timing tower row still selects that driver for the Car data panel; only the code itself opens the driver page.
 
 ### Settings
 
