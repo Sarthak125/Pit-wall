@@ -1,10 +1,29 @@
 # Pit Wall: F1 dashboard
 
-An installable web app (PWA) for Formula 1: live timing with a moving track map, FIA race control and stewards' messages in plain English, team radio, standings, a calendar with a page for every race and circuit, driver and team pages, and a personal page for your favourite driver and team. One codebase runs in a laptop browser and installs on an Android tablet like an app.
+An installable web app (PWA) for Formula 1: live timing with a moving track map, pit stop predictions and live championship standings, FIA race control and stewards' messages in plain English, team radio, standings, a calendar with a page for every race and circuit, driver and team pages, and a personal page for your favourite driver and team. One codebase runs in a laptop browser and installs on an Android tablet like an app.
 
 Live site: https://sarthak125.github.io/Sarthak125/
 
 Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
+
+## Recently added
+
+- **Live Timing**
+  - **Timing tower:** mini-sector bars, IN PIT / PIT OUT / STOP / RETIRED tags, tyre history, places gained or lost (DIFF), live speed and pedals, a purple fastest lap, and pinned POS and DRIVER columns.
+  - **PIT NOW predictor:** where each car would rejoin if it pitted this lap.
+  - **Championship if it ended now:** drivers and constructors re-ranked from the current order.
+  - **Track map:** every car moving, with S1 / S2 / S3 sector colours, a top 3 per sector, flag highlights, and a replay bar for finished sessions.
+  - **Session bar:** lap X/Y, pit stop time loss and fuller weather.
+  - **Before a race:** the starting grid with a countdown.
+  - **Team radio:** cards with photo, lap, time and a playback timer.
+  - **FIA feed:** messages in plain English.
+- **Race and circuit pages:** a circuit overview (map, facts, history and lap record), weekend weather, and a lap-by-lap position chart.
+- **Driver and team pages** use the same team radio cards.
+- **Reliability:**
+  - Live Timing stays within OpenF1's request budget, and goes faster if you raise it.
+  - A banner offers **Reload** when a new version is ready.
+  - Rate-limit waits are capped, so a page never stalls.
+- **Readability:** larger text on all screens.
 
 ## Features
 
@@ -146,8 +165,8 @@ Notes:
 
 - Favourite driver and favourite team.
 - Alerts on or off, and device notifications.
-- Live track map on or off.
-- Optional OpenF1 access token and request budget.
+- Live track map on the Favourites driver page on or off (Live Timing always has its own map).
+- Optional OpenF1 access token and request budget. The budget sets how often live data is fetched: at the default 30 requests a minute Live Timing stays just under it, and at 60 or more everything updates up to twice as often.
 - Clear cached data.
 
 All settings are saved on each device separately.
@@ -189,7 +208,7 @@ Formula 1 has no public official API. This app uses free community APIs:
 | Source | Used for | Notes |
 | --- | --- | --- |
 | [OpenF1](https://openf1.org) | Live timing, positions, gaps, laps, sectors and mini-sectors, tyres, pit stops, race control messages, track weather, car data (speed, throttle, brake), car positions (track map), overtakes, starting grid, session results (retirements), team radio, meetings (circuit type), lap-by-lap positions for the position chart | Historical data is free. Check OpenF1's current terms for real-time access during sessions; if it needs an account, paste your access token in **Settings**. Default budget is 30 requests per minute, adjustable in Settings. |
-| [Jolpica-F1](https://github.com/jolpica/jolpica-f1) | Calendar, results, qualifying, sprints, driver and constructor standings, career totals, circuit history (winners, poles, fastest laps), planned race distance | Ergast-compatible. Responses are cached on the device, from 10 minutes for standings up to a week for past seasons. |
+| [Jolpica-F1](https://github.com/jolpica/jolpica-f1) | Calendar, results, qualifying, sprints, driver and constructor standings (also the starting point for the live championship), career totals, circuit history (winners, poles, fastest laps), planned race distance | Ergast-compatible. Responses are cached on the device, from 10 minutes for standings up to a week for past seasons. |
 | [Open-Meteo](https://open-meteo.com) | Weekend weather on race pages (forecast and recorded) | Free, no key, for non-commercial use. Requests come from your own device. |
 | [MultiViewer](https://multiviewer.app) circuit API | Track outlines, turn numbers, marshal sectors and map rotation (Live Timing map and circuit overview), pit stop time loss estimates | Unofficial and free, no key. Layouts are cached on the device for a week. If a layout is missing, the map says so and the rest of the page works as normal. |
 
@@ -206,6 +225,8 @@ How some values are worked out:
 - **Starting grid** is OpenF1's official grid for the matching qualifying session, which includes grid penalties.
 - **Positions lap by lap**: OpenF1 records a row only when a position changes, so each driver's position at the end of a lap is the last change before that lap ended.
 - **Weather days** group sessions by the circuit's local date, using the time zone Open-Meteo reports for the location.
+- **PIT NOW** adds the circuit's pit loss (MultiViewer's estimate; the safety car or VSC figure while the race is neutralised) to each car's live gap to the leader and places the result among the other cars' gaps. It ignores tyre warm-up, slow stops and the field changing during the stop, so treat it as a guide. Lapped cars have no time gap and are left out.
+- **Championship if it ended now** adds the points for each current race position (25 to 1, or 8 to 1 in a sprint) to the standings before the session. It only shows while the session is live and Jolpica's standings do not yet include it; ties keep the earlier order.
 
 ## Run on your laptop
 
@@ -244,10 +265,11 @@ npm run build
 src/api/         OpenF1, Jolpica, MultiViewer (circuits) and Open-Meteo (weather) clients, rate limiter, cache
 src/hooks/       Polling, live timing, season data and favourites hooks
 src/lib/         FIA message classifier and plain-English wording, driver stats, alerts, formatting, team colours,
-                 settings, routing, track geometry, sector lines and lap-by-lap positions
+                 settings, routing, track geometry, sector lines, lap-by-lap positions, app updates
 src/pages/       Dashboard, Live Timing, Favourites (My Driver, My Team), Standings, Calendar, Race results, Drivers, Settings
-src/components/  App shell, charts, live track map, circuit overview and outline, weekend weather, position chart,
-                 live driver and team views, team radio cards, FIA messages, strips, alerts, loading and error states
+src/components/  App shell, charts, live track map, live championship, circuit overview and outline, weekend weather,
+                 position chart, live driver and team views, team radio cards, FIA messages, strips, alerts, update
+                 banner, loading and error states
 ```
 
 ## Notes
