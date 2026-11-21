@@ -31,7 +31,7 @@ export function LiveTiming() {
   const t = useLiveTiming(session, live, carDriver);
   const effectiveCar = carDriver ?? t.rows[0]?.driver.driver_number ?? null;
   // Once rows load, select the leader for the car data panel.
-  if (carDriver == null && effectiveCar != null) setCarDriver(effectiveCar);
+  if (carDriver == null && effectiveCar != null && t.rows[0]?.position != null) setCarDriver(effectiveCar);
 
   const status = useMemo(() => trackStatus([...t.messages].reverse()), [t.messages]);
   const isRace = /race|sprint/i.test(session?.session_name ?? '') && !/qualifying|shootout/i.test(session?.session_name ?? '');

@@ -6,7 +6,7 @@
  * Historical data is free; real-time data during a session may need an
  * OpenF1 account. If a token is set in Settings it is sent as a Bearer header.
  */
-import { fetchJson, RateLimiter } from './http';
+import { fetchJson, HttpError, RateLimiter } from './http';
 import { getSettings } from '../lib/settings';
 
 const BASE = (import.meta.env.VITE_OPENF1_BASE as string | undefined) ?? 'https://api.openf1.org/v1';
@@ -33,7 +33,15 @@ export async function openf1<T>(endpoint: string, params: Params, signal?: Abort
   openf1Limiter.setLimits(3, openf1PerMinute);
   const headers: Record<string, string> = {};
   if (openf1Token.trim()) headers.Authorization = `Bearer ${openf1Token.trim()}`;
-  return fetchJson<T[]>(`${BASE}/${endpoint}?${query(params)}`, { limiter: openf1Limiter, headers, signal });
+  try {
+    const data = await fetchJson<T[] | { detail?: string }>(`${BASE}/${endpoint}?${query(params)}`, { limiter: openf1Limiter, headers, signal });
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    // OpenF1 answers 404 {"detail":"No results found."} when a filter matches nothing,
+    // for example when no new messages arrived since the last poll.
+    if (err instanceof HttpError && err.status === 404) return [];
+    throw err;
+  }
 }
 
 export interface Session {

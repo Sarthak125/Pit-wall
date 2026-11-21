@@ -27,7 +27,7 @@ npm install
 npm run dev
 ```
 
-Open the address it prints (usually http://localhost:5173).
+Open the address it prints (http://localhost:3030).
 
 ## Use it on your Android tablet
 
@@ -37,7 +37,7 @@ To install it as an app, the tablet must open it over **HTTPS**. The simplest wa
 2. Tap the three-dot menu, then **Install app** (or **Add to Home screen**).
 3. Open Pit Wall from the home screen. It runs full screen and opens offline with the last loaded standings.
 
-Quick test without hosting: with `npm run dev` running on the laptop, open `http://<laptop-ip>:5173` on the tablet while both are on the same Wi-Fi. This works in the browser, but Android will not install it as an app over plain HTTP.
+Quick test without hosting: with `npm run dev` running on the laptop, open `http://<laptop-ip>:3030` on the tablet while both are on the same Wi-Fi. This works in the browser, but Android will not install it as an app over plain HTTP.
 
 ## Deploy
 

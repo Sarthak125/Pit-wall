@@ -7,8 +7,8 @@ const base = process.env.BASE_PATH ?? '/';
 
 export default defineConfig({
   base,
-  server: { host: true },
-  preview: { host: true },
+  server: { host: true, port: 3030 },
+  preview: { host: true, port: 3030 },
   plugins: [
     react(),
     VitePWA({
