@@ -64,7 +64,7 @@ While the app is open and a session is live, pop-up alerts tell you when your fa
 ### Standings, Calendar and Drivers
 
 - **Standings:** full Drivers' and Constructors' tables, with your favourites highlighted and the flag button to pick a team. Driver and team names open their pages (see below).
-- **Calendar:** every round with all session times in your time zone and the winner of each finished race. Tap a race name for its results page.
+- **Calendar:** every round with all session times in your time zone and the winner (and their team) of each finished race. Tap a race name for its results page.
 - **Race results** (`#/race/20` for the season in the season picker, or `#/race/2023/21` for a specific season): podium, full race results (grid, places gained or lost, laps, time or status, fastest lap, points), sprint results on sprint weekends and qualifying (Q1, Q2, Q3), with links to the previous and next race. Upcoming races show the weekend schedule instead.
 - **Drivers:** the current grid with photos, numbers, teams and championship position, and the star to pick your favourite. Tap a driver to open their page (see below).
 
@@ -85,7 +85,7 @@ Where names link to (driver page, team page or race results page):
 | Live Timing | Codes in the timing tower and tyre strategy rows, driver chips under FIA messages, team radio codes | | |
 | Driver and team pages | Team radio codes | | Race names in the race-by-race tables, seasons in the circuit history tables |
 | Standings | Driver names | Team names | |
-| Calendar | Winner of each finished race | | Race names |
+| Calendar | Winner of each finished race | Winner's team | Race names |
 | Race results | Podium and every driver in the race, sprint and qualifying tables | Podium teams and team names in those tables | Previous and next race |
 | Drivers | Each driver card (the star stays separate) | | |
 
