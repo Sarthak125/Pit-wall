@@ -12,10 +12,16 @@ export interface Settings {
   favoriteDriver: string;
   /** Display name for the favourite, so it shows before data loads. */
   favoriteName: string;
+  /** Pop-up alerts about the favourite while the app is open. */
+  alertsEnabled: boolean;
+  /** Also show system notifications (needs browser permission). */
+  systemNotifications: boolean;
+  /** Live track map on the My Driver page (uses extra API requests). */
+  trackMap: boolean;
 }
 
 const KEY = 'pitwall:settings';
-const DEFAULTS: Settings = { openf1Token: '', openf1PerMinute: 30, season: 'current', favoriteDriver: '', favoriteName: '' };
+const DEFAULTS: Settings = { openf1Token: '', openf1PerMinute: 30, season: 'current', favoriteDriver: '', favoriteName: '', alertsEnabled: true, systemNotifications: false, trackMap: false };
 
 let current: Settings = load();
 const listeners = new Set<() => void>();

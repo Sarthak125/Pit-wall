@@ -5,6 +5,9 @@ import { isSessionLive, openf1, type RaceControlMsg, type Session, type Weather 
 import { ErrorBox, Empty, Loading } from '../components/States';
 import { Footer } from '../components/Shell';
 import { PointsChart } from '../components/PointsChart';
+import { FavouriteStrip } from '../components/FavouriteStrip';
+import { StarIcon } from '../components/Icons';
+import { useFavourite } from '../hooks/useFavourite';
 import { useNow } from '../hooks/usePoll';
 import {
   pointsProgression,
@@ -46,6 +49,7 @@ export function Dashboard() {
   const drivers = useDriverStandings(season);
   const teams = useConstructorStandings(season);
   const results = useResults(season);
+  const fav = useFavourite();
 
   const races = useMemo(() => schedule.data ?? [], [schedule.data]);
   const nowMinute = Math.floor(useNow(60_000) / 60_000);
@@ -58,7 +62,11 @@ export function Dashboard() {
   const lastRace = [...(results.data?.races ?? [])].reverse().find((r) => r.Results?.length);
 
   const series: ProgressSeries[] = useMemo(() => {
-    const top = (drivers.data?.standings ?? []).slice(0, 4);
+    const all = drivers.data?.standings ?? [];
+    const top = all.slice(0, 4);
+    // Always include the favourite's line, even outside the top 4.
+    const favRow = fav ? all.find((d) => d.Driver.code === fav.code) : undefined;
+    if (favRow && !top.includes(favRow)) top.push(favRow);
     if (!results.data || !top.length) return [];
     const prog = pointsProgression(results.data.races, results.data.sprints, top.map((d) => d.Driver.driverId));
     const used = new Set<string>();
@@ -69,7 +77,7 @@ export function Dashboard() {
       used.add(colour);
       return { driverId: d.Driver.driverId, code: d.Driver.code ?? d.Driver.familyName.slice(0, 3).toUpperCase(), colour, points: prog.get(d.Driver.driverId) ?? [] };
     });
-  }, [drivers.data, results.data]);
+  }, [drivers.data, results.data, fav]);
 
   const leaderPts = Number(drivers.data?.standings[0]?.points ?? 0);
   const topTeamPts = Number(teams.data?.standings[0]?.points ?? 0) || 1;
@@ -88,6 +96,8 @@ export function Dashboard() {
           <Conditions />
         </section>
       </div>
+
+      <FavouriteStrip standings={drivers.data?.standings ?? []} races={results.data?.races ?? []} season={season} />
 
       <div className="row">
         <section className="card w3" aria-labelledby="wdc">
@@ -111,10 +121,10 @@ export function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {drivers.data.standings.slice(0, 10).map((d, i) => {
+                  {drivers.data.standings.filter((d, i) => i < 10 || d.Driver.code === fav?.code).map((d, i) => {
                     const team = d.Constructors[d.Constructors.length - 1];
                     return (
-                      <tr key={d.Driver.driverId}>
+                      <tr key={d.Driver.driverId} className={fav?.code === d.Driver.code ? 'fav' : undefined}>
                         <td className="mono muted">{d.position ?? d.positionText}</td>
                         <td>
                           <div className="who">
@@ -122,6 +132,7 @@ export function Dashboard() {
                             <span style={{ fontWeight: 600 }}>
                               {d.Driver.givenName} {d.Driver.familyName}
                             </span>
+                            {fav?.code === d.Driver.code && <span className="fav-star" aria-label="Favourite"><StarIcon filled size={14} /></span>}
                           </div>
                         </td>
                         <td className="muted">{team?.name}</td>

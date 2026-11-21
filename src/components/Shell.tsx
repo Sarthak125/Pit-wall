@@ -2,11 +2,12 @@ import type { ReactNode } from 'react';
 import { useIsFetching, useQueryClient } from '@tanstack/react-query';
 import { href, type Route } from '../lib/router';
 import { updateSettings, useSettings } from '../lib/settings';
-import { CalendarIcon, DashIcon, GearIcon, HelmetIcon, RefreshIcon, TimerIcon, TrophyIcon } from './Icons';
+import { CalendarIcon, DashIcon, GearIcon, HelmetIcon, RefreshIcon, StarIcon, TimerIcon, TrophyIcon } from './Icons';
 
 const NAV: { route: Route; label: string; icon: () => ReactNode }[] = [
   { route: 'dashboard', label: 'Dashboard', icon: DashIcon },
   { route: 'live', label: 'Live Timing', icon: TimerIcon },
+  { route: 'driver', label: 'My Driver', icon: () => <StarIcon size={20} /> },
   { route: 'standings', label: 'Standings', icon: TrophyIcon },
   { route: 'calendar', label: 'Calendar', icon: CalendarIcon },
   { route: 'drivers', label: 'Drivers', icon: HelmetIcon },
@@ -29,6 +30,7 @@ export function Shell({ route, live, children }: { route: Route; live: boolean; 
         <nav className="topnav" aria-label="Main">
           {NAV.map((n) => (
             <a key={n.route} href={href(n.route)} aria-current={route === n.route ? 'page' : undefined}>
+              {n.route === 'driver' && <span className="fav-star"><StarIcon filled size={14} /></span>}
               {n.label}
               {n.route === 'live' && live && <span className={`live-dot on`} aria-label="Session live" />}
             </a>

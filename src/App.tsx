@@ -9,15 +9,20 @@ import { Drivers } from './pages/Drivers';
 import { LiveTiming } from './pages/LiveTiming';
 import { Settings } from './pages/Settings';
 import { Standings } from './pages/Standings';
+import { MyDriver } from './pages/MyDriver';
+import { Toasts } from './components/Toasts';
+import { useAlertWatcher } from './hooks/useFavourite';
 import { useRoute } from './lib/router';
 
-const TITLES = { dashboard: 'Dashboard', live: 'Live Timing', standings: 'Standings', calendar: 'Calendar', drivers: 'Drivers', settings: 'Settings' };
+const TITLES = { dashboard: 'Dashboard', live: 'Live Timing', driver: 'My Driver', standings: 'Standings', calendar: 'Calendar', drivers: 'Drivers', settings: 'Settings' };
 
 export default function App() {
   const route = useRoute();
   const sessions = useLatestSessions();
   const now = useNow(30_000);
   const live = (sessions.data ?? []).some((s) => isSessionLive(s, now));
+  // Live Timing and My Driver feed alerts from their own data; elsewhere a light watcher does.
+  useAlertWatcher(route !== 'live' && route !== 'driver');
 
   useEffect(() => {
     document.title = `${TITLES[route]} · Pit Wall`;
@@ -28,10 +33,12 @@ export default function App() {
     <Shell route={route} live={live}>
       {route === 'dashboard' && <Dashboard />}
       {route === 'live' && <LiveTiming />}
+      {route === 'driver' && <MyDriver />}
       {route === 'standings' && <Standings />}
       {route === 'calendar' && <Calendar />}
       {route === 'drivers' && <Drivers />}
       {route === 'settings' && <Settings />}
+      <Toasts />
     </Shell>
   );
 }

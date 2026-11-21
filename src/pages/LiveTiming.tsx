@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { isSessionLive, type OF1Driver, type Session, type Stint } from '../api/openf1';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { Footer } from '../components/Shell';
@@ -16,6 +16,9 @@ import {
   type MsgTab,
 } from '../lib/raceControl';
 import { teamColour, tyre, TYRE } from '../lib/teams';
+import { StarIcon } from '../components/Icons';
+import { useFavourite } from '../hooks/useFavourite';
+import { ingestFavourite } from '../lib/alerts';
 
 export function LiveTiming() {
   const sessions = useLatestSessions();
@@ -29,9 +32,18 @@ export function LiveTiming() {
   const live = session ? isSessionLive(session, now) : false;
 
   const t = useLiveTiming(session, live, carDriver);
-  const effectiveCar = carDriver ?? t.rows[0]?.driver.driver_number ?? null;
+  const fav = useFavourite();
+  const favNum = t.rows.find((r) => r.driver.name_acronym === fav?.code)?.driver.driver_number ?? null;
+  // Car data opens on the favourite when they are in this session, else the leader.
+  const effectiveCar = carDriver ?? favNum ?? t.rows[0]?.driver.driver_number ?? null;
   // Once rows load, select the leader for the car data panel.
   if (carDriver == null && effectiveCar != null && t.rows[0]?.position != null) setCarDriver(effectiveCar);
+
+  useEffect(() => {
+    if (!live || !session || !fav || favNum == null || t.loading) return;
+    const me = t.rows.find((r) => r.driver.driver_number === favNum);
+    ingestFavourite({ sessionKey: session.session_key, code: fav.code, position: me?.position ?? null, pits: me?.pits ?? 0, messages: t.messages.filter((m) => m.cars.includes(favNum)) });
+  }, [live, session, fav, favNum, t.rows, t.messages, t.loading]);
 
   const status = useMemo(() => trackStatus([...t.messages].reverse()), [t.messages]);
   const isRace = /race|sprint/i.test(session?.session_name ?? '') && !/qualifying|shootout/i.test(session?.session_name ?? '');
@@ -117,7 +129,7 @@ export function LiveTiming() {
             </div>
           </div>
           {t.loading ? <Loading rows={12} /> : t.rows.length === 0 ? <Empty>No timing data for this session yet.</Empty> : (
-            <TimingTable rows={t.rows} isRace={isRace} fastest={t.fastest} selected={effectiveCar} onSelect={setCarDriver} />
+            <TimingTable rows={t.rows} isRace={isRace} fastest={t.fastest} selected={effectiveCar} favNum={favNum} onSelect={setCarDriver} />
           )}
         </section>
 
@@ -127,13 +139,13 @@ export function LiveTiming() {
         </div>
       </div>
 
-      <FiaSection messages={t.messages} drivers={t.driversByNumber} />
+      <FiaSection messages={t.messages} drivers={t.driversByNumber} favNum={favNum} />
       <Footer />
     </>
   );
 }
 
-function TimingTable({ rows, isRace, fastest, selected, onSelect }: { rows: TimingRow[]; isRace: boolean; fastest: number | null; selected: number | null; onSelect: (n: number) => void }) {
+function TimingTable({ rows, isRace, fastest, selected, favNum, onSelect }: { rows: TimingRow[]; isRace: boolean; fastest: number | null; selected: number | null; favNum: number | null; onSelect: (n: number) => void }) {
   return (
     <div className="scroll-x">
       <table className="tbl timing" style={{ minWidth: 820 }}>
@@ -158,13 +170,14 @@ function TimingTable({ rows, isRace, fastest, selected, onSelect }: { rows: Timi
             const ty = tyre(r.stint?.compound);
             const l = r.lastLap;
             return (
-              <tr key={r.driver.driver_number} className={selected === r.driver.driver_number ? 'me' : undefined} onClick={() => onSelect(r.driver.driver_number)} style={{ cursor: 'pointer' }}>
+              <tr key={r.driver.driver_number} className={[favNum === r.driver.driver_number ? 'fav' : '', selected === r.driver.driver_number ? 'me' : ''].join(' ').trim() || undefined} onClick={() => onSelect(r.driver.driver_number)} style={{ cursor: 'pointer' }}>
                 <td className="mono muted">{r.position ?? '-'}</td>
                 <td>
                   <div className="who">
                     <span className="team-bar" style={{ height: 20, background: r.colour }} />
                     <span className="code">{r.driver.name_acronym}</span>
                     <span className="faint" style={{ fontSize: 11 }}>{r.driver.driver_number}</span>
+                    {favNum === r.driver.driver_number && <span className="fav-star" aria-label="Favourite"><StarIcon filled size={14} /></span>}
                   </div>
                 </td>
                 <td className="r mono">{gap}</td>
@@ -277,7 +290,7 @@ function StrategyPanel({ rows, stints }: { rows: TimingRow[]; stints: Stint[] })
   );
 }
 
-function FiaSection({ messages, drivers }: { messages: ClassifiedMsg[]; drivers: Map<number, OF1Driver> }) {
+function FiaSection({ messages, drivers, favNum }: { messages: ClassifiedMsg[]; drivers: Map<number, OF1Driver>; favNum: number | null }) {
   const [tab, setTab] = useState<MsgTab>('All');
   const [driver, setDriver] = useState<number | 0>(0);
   const byDriver = driver ? messages.filter((m) => m.cars.includes(driver)) : messages;
@@ -318,12 +331,19 @@ function FiaSection({ messages, drivers }: { messages: ClassifiedMsg[]; drivers:
             </button>
           ))}
         </div>
+        {favNum != null && (
+          <div className="tabs">
+            <button className="tab fav-toggle" aria-pressed={driver === favNum} onClick={() => setDriver(driver === favNum ? 0 : favNum)}>
+              ★ {code(favNum)} only
+            </button>
+          </div>
+        )}
         {shown.length === 0 ? (
           <Empty>No messages in this category.</Empty>
         ) : (
           <div role="log" aria-live="polite" aria-label="Race control messages">
             {shown.map((m) => (
-              <div className="msg" key={m.id}>
+              <div className={favNum != null && m.cars.includes(favNum) ? 'msg fav' : 'msg'} key={m.id}>
                 <div className="when">
                   <div className="muted">{m.lap_number ? `LAP ${m.lap_number}` : ' '}</div>
                   <div>{fmtClock(new Date(m.date))}</div>

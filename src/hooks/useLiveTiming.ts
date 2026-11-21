@@ -11,6 +11,7 @@ import {
   type Session,
   type Stint,
   type Weather,
+  type PitDetail,
 } from '../api/openf1';
 import { classify, type ClassifiedMsg } from '../lib/raceControl';
 import { teamColour } from '../lib/teams';
@@ -188,5 +189,7 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
     error: errors[0] ?? null,
     updatedAt,
     driversByNumber: new Map((drivers.data ?? []).map((d) => [d.driver_number, d])),
+    laps: [...(laps.data?.values() ?? [])],
+    pits: (pits.data ?? []) as PitDetail[],
   };
 }

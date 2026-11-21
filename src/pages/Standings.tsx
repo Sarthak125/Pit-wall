@@ -1,13 +1,18 @@
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { Footer } from '../components/Shell';
-import { useConstructorStandings, useDriverStandings } from '../hooks/useSeason';
+import { useConstructorStandings, useDriverStandings, useResults } from '../hooks/useSeason';
 import { useSettings } from '../lib/settings';
 import { teamColour } from '../lib/teams';
+import { StarIcon } from '../components/Icons';
+import { useFavourite } from '../hooks/useFavourite';
 
 export function Standings() {
   const { season } = useSettings();
   const drivers = useDriverStandings(season);
   const teams = useConstructorStandings(season);
+  const fav = useFavourite();
+  const results = useResults(season);
+  const doneRound = (results.data?.races ?? []).reduce((m, r) => (r.Results?.length ? Math.max(m, Number(r.round)) : m), 0);
   const leader = Number(drivers.data?.standings[0]?.points ?? 0);
   const teamLeader = Number(teams.data?.standings[0]?.points ?? 0);
 
@@ -17,7 +22,7 @@ export function Standings() {
         <section className="card w3" aria-labelledby="d">
           <div className="card-head">
             <h1 className="h2" id="d">Drivers' Championship</h1>
-            {drivers.data && <span className="muted">After round {drivers.data.round}</span>}
+            {results.data && <span className="muted">After round {doneRound}</span>}
           </div>
           {drivers.error ? <ErrorBox error={drivers.error} what="driver standings" /> : drivers.isLoading ? <Loading rows={12} /> : !drivers.data?.standings.length ? <Empty>No standings yet.</Empty> : (
             <div className="scroll-x">
@@ -36,12 +41,13 @@ export function Standings() {
                   {drivers.data.standings.map((d, i) => {
                     const team = d.Constructors[d.Constructors.length - 1];
                     return (
-                      <tr key={d.Driver.driverId}>
+                      <tr key={d.Driver.driverId} className={fav?.code === d.Driver.code ? 'fav' : undefined}>
                         <td className="mono muted">{d.position ?? d.positionText}</td>
                         <td>
                           <div className="who">
                             <span className="team-bar" style={{ background: teamColour(team?.constructorId ?? team?.name) }} />
                             <span style={{ fontWeight: 600 }}>{d.Driver.givenName} {d.Driver.familyName}</span>
+                            {fav?.code === d.Driver.code && <span className="fav-star" aria-label="Favourite"><StarIcon filled size={14} /></span>}
                             <span className="faint mono" style={{ fontSize: 12 }}>{d.Driver.permanentNumber}</span>
                           </div>
                         </td>

@@ -155,3 +155,100 @@ export const SESSION_FIELDS: { key: keyof Race; label: string }[] = [
   { key: 'Sprint', label: 'Sprint' },
   { key: 'Qualifying', label: 'Qualifying' },
 ];
+
+export interface QualifyingResult {
+  number: string;
+  position: string;
+  Driver: Driver;
+  Constructor: Constructor;
+  Q1?: string;
+  Q2?: string;
+  Q3?: string;
+}
+
+export interface RaceWithQualifying extends Race {
+  QualifyingResults?: QualifyingResult[];
+}
+
+const DAY = 24 * 60 * MIN;
+
+/** Qualifying results of one season. Pass a driverId to get only that driver. */
+export async function getQualifying(season: string, driverId?: string): Promise<RaceWithQualifying[]> {
+  const path = driverId ? `${season}/drivers/${driverId}/qualifying` : `${season}/qualifying`;
+  const races: RaceWithQualifying[] = [];
+  let offset = 0;
+  for (let page = 0; page < 20; page++) {
+    const data = await fetchJson<MR<{ RaceTable: { Races: RaceWithQualifying[] } }>>(`${BASE}/${path}/?limit=100&offset=${offset}`, {
+      limiter,
+      cacheTtlMs: 15 * MIN,
+    });
+    for (const r of data.MRData.RaceTable.Races) {
+      const existing = races.find((x) => x.round === r.round);
+      if (existing) existing.QualifyingResults = [...(existing.QualifyingResults ?? []), ...(r.QualifyingResults ?? [])];
+      else races.push({ ...r });
+    }
+    offset += Number(data.MRData.limit);
+    if (offset >= Number(data.MRData.total)) break;
+  }
+  return races.sort((a, b) => Number(a.round) - Number(b.round));
+}
+
+/** Number of matching rows, read from the API's "total" with a 1-row request. */
+async function countOf(path: string): Promise<number> {
+  const data = await fetchJson<MR<object>>(`${BASE}/${path}/?limit=1`, { limiter, cacheTtlMs: DAY });
+  return Number(data.MRData.total) || 0;
+}
+
+export interface CareerStats {
+  starts: number;
+  wins: number;
+  podiums: number;
+  poles: number;
+  fastestLaps: number;
+  titles: number;
+  points: number;
+  seasons: number;
+}
+
+/**
+ * Career totals. Titles count completed seasons only (the current season is
+ * not over). Points add up each season's final championship points.
+ */
+export async function getCareer(driverId: string, currentYear: number): Promise<CareerStats> {
+  const d = `drivers/${driverId}`;
+  const [starts, wins, p2, p3, poles, fastestLaps] = await Promise.all([
+    countOf(`${d}/results`),
+    countOf(`${d}/results/1`),
+    countOf(`${d}/results/2`),
+    countOf(`${d}/results/3`),
+    countOf(`${d}/qualifying/1`),
+    countOf(`${d}/fastest/1/results`),
+  ]);
+  const seasonData = await fetchJson<MR<{ SeasonTable: { Seasons: { season: string }[] } }>>(`${BASE}/${d}/seasons/?limit=100`, {
+    limiter,
+    cacheTtlMs: DAY,
+  });
+  const seasons = seasonData.MRData.SeasonTable.Seasons.map((s) => s.season);
+  let titles = 0;
+  let points = 0;
+  for (const season of seasons) {
+    const st = await fetchJson<MR<{ StandingsTable: { StandingsLists: { DriverStandings: DriverStanding[] }[] } }>>(
+      `${BASE}/${season}/${d}/driverstandings/`,
+      { limiter, cacheTtlMs: Number(season) < currentYear ? 7 * DAY : 30 * MIN },
+    );
+    const row = st.MRData.StandingsTable.StandingsLists[0]?.DriverStandings[0];
+    if (!row) continue;
+    points += Number(row.points) || 0;
+    if (row.position === '1' && Number(season) < currentYear) titles++;
+  }
+  return { starts, wins, podiums: wins + p2 + p3, poles, fastestLaps, titles, points, seasons: seasons.length };
+}
+
+/** A driver's Grand Prix results at one circuit, all seasons. */
+export async function getCircuitHistory(circuitId: string, driverId: string): Promise<RaceWithResults[]> {
+  const data = await fetchJson<MR<{ RaceTable: { Races: RaceWithResults[] } }>>(
+    `${BASE}/circuits/${circuitId}/drivers/${driverId}/results/?limit=100`,
+    { limiter, cacheTtlMs: DAY },
+  );
+  return data.MRData.RaceTable.Races;
+}

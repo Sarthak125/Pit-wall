@@ -159,3 +159,46 @@ export function isSessionLive(s: Pick<Session, 'date_start' | 'date_end'>, now =
   const end = Date.parse(s.date_end) + 15 * 60_000;
   return now >= start && now <= end;
 }
+
+export interface PitDetail extends Pit {
+  lane_duration?: number | null;
+  stop_duration?: number | null;
+}
+
+export interface TeamRadio {
+  date: string;
+  driver_number: number;
+  recording_url: string;
+}
+
+export interface CarLocation {
+  date: string;
+  driver_number: number;
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface Overtake {
+  date: string;
+  overtaking_driver_number: number;
+  overtaken_driver_number: number;
+  position: number;
+}
+
+export interface GridSlot {
+  driver_number: number;
+  position: number;
+  lap_duration: number | null;
+}
+
+export interface SessionResult {
+  driver_number: number;
+  position: number | null;
+  number_of_laps: number | null;
+  duration: number | number[] | null;
+  gap_to_leader: number | string | (number | string | null)[] | null;
+  dnf: boolean;
+  dns: boolean;
+  dsq: boolean;
+}

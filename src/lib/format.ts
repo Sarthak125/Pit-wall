@@ -69,3 +69,8 @@ export function splitCountdown(ms: number) {
 }
 
 export const pad2 = (n: number) => String(n).padStart(2, '0');
+
+/** OpenF1 writes surnames in capitals ("Max VERSTAPPEN"); show them as "Max Verstappen". */
+export function niceName(name: string): string {
+  return name.replace(/\p{Lu}{2,}/gu, (w) => w[0] + w.slice(1).toLowerCase());
+}

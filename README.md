@@ -2,6 +2,17 @@
 
 An installable web app (PWA) for Formula 1: live timing, FIA race control and stewards' messages, standings, calendar and drivers. One codebase runs in a laptop browser and installs on an Android tablet like an app.
 
+## Favourite driver
+
+Tap the star on a driver (Drivers page) or pick one in Settings. Your driver is then:
+
+- highlighted in standings, Live Timing and the FIA message feed, and shown in a strip on the Dashboard;
+- followed on the **My Driver** page: season stats, grid vs finish chart, comparison with any driver, title maths, career totals, history at the next circuit and race-by-race results;
+- tracked live during sessions on My Driver: position, gaps to the cars ahead and behind, tyre, pit stops, lap times, car data, overtakes, FIA messages and team radio, plus an optional live track map (Settings; uses extra API requests);
+- the subject of pop-up alerts (position change, pit stop, FIA decision) while the app is open, optionally as device notifications.
+
+The favourite and alert settings are saved per device.
+
 ## Data sources
 
 Formula 1 has no public official API. This app uses two free community APIs:
