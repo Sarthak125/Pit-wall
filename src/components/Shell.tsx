@@ -4,10 +4,10 @@ import { href, useRouteParam, type Route } from '../lib/router';
 import { updateSettings, useSettings } from '../lib/settings';
 import { CalendarIcon, DashIcon, GearIcon, HelmetIcon, RefreshIcon, StarIcon, TimerIcon, TrophyIcon } from './Icons';
 
-const NAV: { route: Route; label: string; icon: () => ReactNode }[] = [
-  { route: 'dashboard', label: 'Dashboard', icon: DashIcon },
-  { route: 'live', label: 'Live Timing', icon: TimerIcon },
-  { route: 'driver', label: 'Favourites', icon: () => <StarIcon size={20} /> },
+const NAV: { route: Route; label: string; short?: string; icon: () => ReactNode }[] = [
+  { route: 'dashboard', label: 'Dashboard', short: 'Home', icon: DashIcon },
+  { route: 'live', label: 'Live Timing', short: 'Live', icon: TimerIcon },
+  { route: 'driver', label: 'Favourites', short: 'Faves', icon: () => <StarIcon size={20} /> },
   { route: 'standings', label: 'Standings', icon: TrophyIcon },
   { route: 'calendar', label: 'Calendar', icon: CalendarIcon },
   { route: 'drivers', label: 'Drivers', icon: HelmetIcon },
@@ -51,7 +51,7 @@ export function Shell({ route, live, children }: { route: Route; live: boolean; 
         </nav>
         <div className="topbar-tools">
           <label className="field">
-            Season
+            <span className="field-label">Season</span>
             <select className="select" value={season} onChange={(e) => updateSettings({ season: e.target.value })}>
               {seasons.map((s) => (
                 <option key={s} value={s}>
@@ -80,8 +80,9 @@ export function Shell({ route, live, children }: { route: Route; live: boolean; 
         {NAV.map((n) => (
           <a key={n.route} href={href(n.route)} aria-current={active === n.route ? 'page' : undefined}>
             <n.icon />
-            <span>
-              {n.label}
+            <span className="bn-label">
+              <span className={n.short ? 'bn-long' : undefined}>{n.label}</span>
+              {n.short && <span className="bn-short" aria-hidden="true">{n.short}</span>}
               {n.route === 'live' && live ? ' ●' : ''}
             </span>
           </a>

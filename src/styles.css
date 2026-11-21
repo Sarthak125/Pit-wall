@@ -109,7 +109,7 @@ button, select, input { font: inherit; color: inherit; }
 .stat .u { font-size: 12px; color: var(--faint); }
 
 /* Tables */
-.scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.scroll-x { position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .tbl { width: 100%; border-collapse: collapse; }
 .tbl th { padding: 8px; color: var(--muted); font-size: 12px; font-weight: 500; text-align: left; white-space: nowrap; }
 .tbl td { padding: 10px 8px; border-top: 1px solid var(--line-soft); white-space: nowrap; }
@@ -487,3 +487,32 @@ html { zoom: 1.1; }
 .inv-when { font-size: 11px; color: var(--faint); }
 .inv-title { font-weight: 600; }
 .inv-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+
+/* Phones */
+.bn-short { display: none; }
+@media (min-width: 960px) { .standings-drivers { min-width: 560px; } }
+@media (max-width: 599px) {
+  html { zoom: 1; }
+  .topbar { flex-wrap: nowrap; gap: 8px; padding: 8px 12px; padding-top: max(8px, env(safe-area-inset-top)); }
+  .brand-name { font-size: 20px; }
+  .brand-mark { height: 22px; width: 8px; }
+  .topbar-tools { gap: 6px; flex-wrap: nowrap; }
+  .field-label { display: none; }
+  .topbar .select { min-height: 40px; max-width: 128px; padding: 0 6px; }
+  .icon-btn { width: 40px; height: 40px; }
+  .main { padding: 12px 12px calc(84px + env(safe-area-inset-bottom)); }
+  .card { padding: 14px; }
+  .bottomnav { padding: 4px 2px calc(6px + env(safe-area-inset-bottom)); }
+  .bottomnav a { min-height: 54px; font-size: 11px; gap: 3px; min-width: 0; }
+  .bn-label { white-space: nowrap; overflow: hidden; text-overflow: clip; max-width: 100%; }
+  .bottomnav { overflow: hidden; }
+  .bn-long { display: none; }
+  .bn-short { display: inline; }
+  .hide-sm { display: none; }
+  .row > .card, .row > .col { flex-basis: 100%; }
+  .race-title { font-size: 30px; }
+  .h2 { font-size: 20px; }
+  .update-banner { bottom: 80px; }
+}
+@media (max-width: 380px) { .bottomnav a { font-size: 10px; } .bottomnav svg { width: 20px; height: 20px; } }
+@media (min-width: 600px) { .cal-tbl { min-width: 640px; } }

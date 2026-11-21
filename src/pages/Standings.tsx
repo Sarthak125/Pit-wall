@@ -32,13 +32,13 @@ export function Standings() {
           </div>
           {drivers.error ? <ErrorBox error={drivers.error} what="driver standings" /> : drivers.isLoading ? <Loading rows={12} /> : !drivers.data?.standings.length ? <Empty>No standings yet.</Empty> : (
             <div className="scroll-x">
-              <table className="tbl" style={{ minWidth: 560 }}>
+              <table className="tbl standings-drivers">
                 <thead>
                   <tr>
                     <th>Pos</th>
                     <th>Driver</th>
-                    <th>Team</th>
-                    <th className="r">Wins</th>
+                    <th className="hide-sm">Team</th>
+                    <th className="r hide-sm">Wins</th>
                     <th className="r">Gap</th>
                     <th className="r">Points</th>
                   </tr>
@@ -58,11 +58,11 @@ export function Standings() {
                               <span style={{ fontWeight: 600 }}>{d.Driver.givenName} {d.Driver.familyName}</span>
                             )}
                             {fav?.code === d.Driver.code && <span className="fav-star" aria-label="Favourite"><StarIcon filled size={14} /></span>}
-                            <span className="faint mono" style={{ fontSize: 12 }}>{d.Driver.permanentNumber}</span>
+                            <span className="faint mono hide-sm" style={{ fontSize: 12 }}>{d.Driver.permanentNumber}</span>
                           </div>
                         </td>
-                        <td className="muted">{d.Constructors.map((c) => c.name).join(' / ')}</td>
-                        <td className="r mono">{d.wins}</td>
+                        <td className="muted hide-sm">{d.Constructors.map((c) => c.name).join(' / ')}</td>
+                        <td className="r mono hide-sm">{d.wins}</td>
                         <td className="r mono muted">{i === 0 ? 'Leader' : `-${leader - Number(d.points)}`}</td>
                         <td className="r mono" style={{ fontWeight: 600 }}>{d.points}</td>
                       </tr>
@@ -80,6 +80,7 @@ export function Standings() {
             <span className="muted" style={{ fontSize: 12 }}>Tap the flag to pick your team</span>
           </div>
           {teams.error ? <ErrorBox error={teams.error} what="constructor standings" /> : teams.isLoading ? <Loading rows={10} /> : !teams.data?.standings.length ? <Empty>No standings yet.</Empty> : (
+            <div className="scroll-x">
             <table className="tbl">
               <thead>
                 <tr>
@@ -118,6 +119,7 @@ export function Standings() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </section>
       </div>

@@ -438,6 +438,11 @@ function FiaSection({ messages, drivers, favNum, team, teamNums, isRace }: { mes
   // Routine sector and blue flags crowd out the important messages, so All hides them unless asked.
   const minor = tab === 'All' ? byDriver.filter(isMinor).length : 0;
   const shown = tab === 'All' ? byDriver.filter((m) => showMinor || !isMinor(m)) : byDriver.filter((m) => m.tab === tab);
+  // On phones the full feed makes the page very long, so it starts with the newest messages.
+  const [showAll, setShowAll] = useState(false);
+  const phone = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 599px)').matches;
+  const PHONE_LIMIT = 15;
+  const visible = phone && !showAll ? shown.slice(0, PHONE_LIMIT) : shown;
   const penalties = summarisePenalties(messages);
   const limits = summariseTrackLimits(messages);
   const open = openInvestigations(messages);
@@ -498,7 +503,7 @@ function FiaSection({ messages, drivers, favNum, team, teamNums, isRace }: { mes
           <Empty>No messages in this category.</Empty>
         ) : (
           <div role="log" aria-live="polite" aria-label="Race control messages">
-            {shown.map((m) => (
+            {visible.map((m) => (
               <div className={favNum != null && m.cars.includes(favNum) ? 'msg fav' : 'msg'} key={m.id}>
                 <FiaWhen m={m} />
                 <span className={`badge tone-${m.tone}`}>{m.label}</span>
@@ -517,6 +522,9 @@ function FiaSection({ messages, drivers, favNum, team, teamNums, isRace }: { mes
                 </FiaText>
               </div>
             ))}
+            {visible.length < shown.length && (
+              <button className="tab" style={{ marginTop: 12 }} onClick={() => setShowAll(true)}>Show all {shown.length} messages</button>
+            )}
           </div>
         )}
       </section>

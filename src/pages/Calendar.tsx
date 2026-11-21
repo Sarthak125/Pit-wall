@@ -25,13 +25,13 @@ export function Calendar() {
         </div>
         {schedule.error ? <ErrorBox error={schedule.error} what="the calendar" /> : schedule.isLoading ? <Loading rows={12} /> : !schedule.data?.length ? <Empty>No races published for this season.</Empty> : (
           <div className="scroll-x">
-            <table className="tbl" style={{ minWidth: 640 }}>
+            <table className="tbl cal-tbl">
               <thead>
                 <tr>
                   <th>Rd</th>
                   <th>Grand Prix</th>
                   <th>Date</th>
-                  <th>Sessions</th>
+                  <th className="hide-sm">Sessions</th>
                   <th>Winner</th>
                 </tr>
               </thead>
@@ -42,12 +42,12 @@ export function Calendar() {
                   return (
                     <tr key={r.round} className={i === nextIdx ? 'me' : undefined}>
                       <td className="mono muted">{r.round}</td>
-                      <td>
+                      <td style={{ whiteSpace: 'normal', minWidth: 150 }}>
                         <a className="name-link" href={raceHref(r.round)}>{r.raceName}</a>
-                        <div className="muted" style={{ fontSize: 12 }}>{r.Circuit.circuitName} · {r.Circuit.Location.locality}, {r.Circuit.Location.country}</div>
+                        <div className="muted hide-sm" style={{ fontSize: 12 }}>{r.Circuit.circuitName} · {r.Circuit.Location.locality}, {r.Circuit.Location.country}</div>
                       </td>
                       <td className="mono">{start ? fmtDayMonth(start) : r.date}</td>
-                      <td style={{ whiteSpace: 'normal' }}>
+                      <td className="hide-sm" style={{ whiteSpace: 'normal', minWidth: 200 }}>
                         <Sessions race={r} />
                       </td>
                       <td>
