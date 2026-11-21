@@ -3,8 +3,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { clearCache } from '../api/http';
 import { Footer } from '../components/Shell';
 import { timeZoneLabel } from '../lib/format';
-import { setFavorite, updateSettings, useSettings } from '../lib/settings';
-import { useDriverStandings } from '../hooks/useSeason';
+import { setFavorite, setFavoriteTeam, updateSettings, useSettings } from '../lib/settings';
+import { useConstructorStandings, useDriverStandings } from '../hooks/useSeason';
 
 export function Settings() {
   const s = useSettings();
@@ -76,12 +76,14 @@ function FavouriteSettings() {
   const s = useSettings();
   const standings = useDriverStandings('current');
   const drivers = standings.data?.standings ?? [];
+  const teamStandings = useConstructorStandings('current');
+  const teams = teamStandings.data?.standings ?? [];
   const notifSupported = typeof Notification !== 'undefined';
   const [perm, setPerm] = useState(notifSupported ? Notification.permission : 'denied');
 
   return (
     <section className="card">
-      <h2 className="h2 sm" style={{ marginBottom: 16 }}>Favourite driver</h2>
+      <h2 className="h2 sm" style={{ marginBottom: 16 }}>Favourites</h2>
       <div className="form">
         <label>
           Favourite driver
@@ -103,6 +105,28 @@ function FavouriteSettings() {
               <option key={d.Driver.driverId} value={d.Driver.code}>
                 {d.Driver.givenName} {d.Driver.familyName} ({d.Constructors[d.Constructors.length - 1]?.name})
               </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Favourite team
+          <span className="hint">Its drivers are tinted in the standings and Live Timing, and it gets a Team tab under Favourites.</span>
+          <select
+            className="input"
+            style={{ maxWidth: 360 }}
+            value={s.favoriteTeam}
+            onChange={(e) => {
+              const id = e.target.value;
+              if (!id) return updateSettings({ favoriteTeam: '', favoriteTeamName: '' });
+              const t = teams.find((x) => x.Constructor.constructorId === id);
+              if (t && id !== s.favoriteTeam) setFavoriteTeam(id, t.Constructor.name);
+            }}
+          >
+            <option value="">None</option>
+            {s.favoriteTeam && !teams.some((t) => t.Constructor.constructorId === s.favoriteTeam) && <option value={s.favoriteTeam}>{s.favoriteTeamName || s.favoriteTeam}</option>}
+            {teams.map((t) => (
+              <option key={t.Constructor.constructorId} value={t.Constructor.constructorId}>{t.Constructor.name}</option>
             ))}
           </select>
         </label>

@@ -252,3 +252,22 @@ button, select, input { font: inherit; color: inherit; }
 .radio-row audio { height: 36px; flex: 1 1 240px; min-width: 0; }
 .delta-up { color: var(--green); }
 .delta-down { color: #f87171; }
+
+/* Favourite team */
+.team-flag { color: var(--team, #ff5c77); display: inline-flex; vertical-align: middle; }
+.tbl tr.team td { background: color-mix(in srgb, var(--team) 9%, transparent); }
+.tbl tr.team td:first-child { box-shadow: inset 3px 0 0 var(--team); }
+.tbl tr.fav.team td { background: #1d1b12; }
+.flag-btn { width: 40px; height: 40px; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid var(--line-strong); background: transparent; color: var(--faint); cursor: pointer; }
+.flag-btn:hover { color: var(--text); }
+.flag-btn[aria-pressed='true'] { color: var(--team, #ff5c77); border-color: color-mix(in srgb, var(--team, #ff5c77) 45%, black); background: color-mix(in srgb, var(--team, #ff5c77) 18%, black); }
+.team-card { border-left: 4px solid; }
+.team-split { display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: var(--line-soft); }
+.tab.team-toggle[aria-pressed='true'] { color: var(--team); border-color: color-mix(in srgb, var(--team) 45%, black); background: color-mix(in srgb, var(--team) 16%, black); font-weight: 600; }
+.subtabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.subtabs a { min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 0 18px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--inset); color: #c9d1db; }
+.subtabs a[aria-current='page'] { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 600; }
+.stack-bars { display: flex; align-items: flex-end; gap: 4px; height: 150px; }
+.stack-bars > div { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; height: 150px; min-width: 4px; }
+.transcript { font-size: 14px; line-height: 1.5; margin-top: 6px; }
+.transcript.pending { color: var(--faint); font-style: italic; font-size: 13px; }

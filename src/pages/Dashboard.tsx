@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { SESSION_FIELDS, type Race } from '../api/jolpica';
@@ -7,7 +8,10 @@ import { Footer } from '../components/Shell';
 import { PointsChart } from '../components/PointsChart';
 import { FavouriteStrip } from '../components/FavouriteStrip';
 import { StarIcon } from '../components/Icons';
-import { useFavourite } from '../hooks/useFavourite';
+import { useFavourite, useFavouriteTeam } from '../hooks/useFavourite';
+import { TeamStrip } from '../components/TeamStrip';
+import { rowProps } from '../lib/rowStyle';
+import { FlagIcon } from '../components/Icons';
 import { useNow } from '../hooks/usePoll';
 import {
   pointsProgression,
@@ -50,6 +54,7 @@ export function Dashboard() {
   const teams = useConstructorStandings(season);
   const results = useResults(season);
   const fav = useFavourite();
+  const favTeam = useFavouriteTeam();
 
   const races = useMemo(() => schedule.data ?? [], [schedule.data]);
   const nowMinute = Math.floor(useNow(60_000) / 60_000);
@@ -98,6 +103,7 @@ export function Dashboard() {
       </div>
 
       <FavouriteStrip standings={drivers.data?.standings ?? []} races={results.data?.races ?? []} season={season} />
+      <TeamStrip teams={teams.data?.standings ?? []} drivers={drivers.data?.standings ?? []} races={results.data?.races ?? []} />
 
       <div className="row">
         <section className="card w3" aria-labelledby="wdc">
@@ -124,7 +130,7 @@ export function Dashboard() {
                   {drivers.data.standings.filter((d, i) => i < 10 || d.Driver.code === fav?.code).map((d, i) => {
                     const team = d.Constructors[d.Constructors.length - 1];
                     return (
-                      <tr key={d.Driver.driverId} className={fav?.code === d.Driver.code ? 'fav' : undefined}>
+                      <tr key={d.Driver.driverId} {...rowProps(d.Driver.code, fav?.code, favTeam)}>
                         <td className="mono muted">{d.position ?? d.positionText}</td>
                         <td>
                           <div className="who">
@@ -163,7 +169,12 @@ export function Dashboard() {
                   <div className="pos">{t.position ?? t.positionText}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
-                      <span>{t.Constructor.name}</span>
+                      <span style={favTeam?.id === t.Constructor.constructorId ? { fontWeight: 700 } : undefined}>
+                        {t.Constructor.name}
+                        {favTeam?.id === t.Constructor.constructorId && (
+                          <span className="team-flag" style={{ marginLeft: 6, '--team': favTeam.colour } as React.CSSProperties} aria-label="Your team"><FlagIcon filled size={13} /></span>
+                        )}
+                      </span>
                       <span className="mono">{t.points}</span>
                     </div>
                     <div className="bar-track">

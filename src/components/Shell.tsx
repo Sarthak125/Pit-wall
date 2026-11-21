@@ -7,7 +7,7 @@ import { CalendarIcon, DashIcon, GearIcon, HelmetIcon, RefreshIcon, StarIcon, Ti
 const NAV: { route: Route; label: string; icon: () => ReactNode }[] = [
   { route: 'dashboard', label: 'Dashboard', icon: DashIcon },
   { route: 'live', label: 'Live Timing', icon: TimerIcon },
-  { route: 'driver', label: 'My Driver', icon: () => <StarIcon size={20} /> },
+  { route: 'driver', label: 'Favourites', icon: () => <StarIcon size={20} /> },
   { route: 'standings', label: 'Standings', icon: TrophyIcon },
   { route: 'calendar', label: 'Calendar', icon: CalendarIcon },
   { route: 'drivers', label: 'Drivers', icon: HelmetIcon },
@@ -29,7 +29,7 @@ export function Shell({ route, live, children }: { route: Route; live: boolean; 
         </a>
         <nav className="topnav" aria-label="Main">
           {NAV.map((n) => (
-            <a key={n.route} href={href(n.route)} aria-current={route === n.route ? 'page' : undefined}>
+            <a key={n.route} href={href(n.route)} aria-current={route === n.route || (n.route === 'driver' && route === 'team') ? 'page' : undefined}>
               {n.route === 'driver' && <span className="fav-star"><StarIcon filled size={14} /></span>}
               {n.label}
               {n.route === 'live' && live && <span className={`live-dot on`} aria-label="Session live" />}
@@ -65,7 +65,7 @@ export function Shell({ route, live, children }: { route: Route; live: boolean; 
 
       <nav className="bottomnav" aria-label="Main">
         {NAV.map((n) => (
-          <a key={n.route} href={href(n.route)} aria-current={route === n.route ? 'page' : undefined}>
+          <a key={n.route} href={href(n.route)} aria-current={route === n.route || (n.route === 'driver' && route === 'team') ? 'page' : undefined}>
             <n.icon />
             <span>
               {n.label}

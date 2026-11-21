@@ -10,11 +10,12 @@ import { LiveTiming } from './pages/LiveTiming';
 import { Settings } from './pages/Settings';
 import { Standings } from './pages/Standings';
 import { MyDriver } from './pages/MyDriver';
+import { MyTeam } from './pages/MyTeam';
 import { Toasts } from './components/Toasts';
 import { useAlertWatcher } from './hooks/useFavourite';
 import { useRoute } from './lib/router';
 
-const TITLES = { dashboard: 'Dashboard', live: 'Live Timing', driver: 'My Driver', standings: 'Standings', calendar: 'Calendar', drivers: 'Drivers', settings: 'Settings' };
+const TITLES = { dashboard: 'Dashboard', live: 'Live Timing', driver: 'My Driver', team: 'My Team', standings: 'Standings', calendar: 'Calendar', drivers: 'Drivers', settings: 'Settings' };
 
 export default function App() {
   const route = useRoute();
@@ -34,6 +35,7 @@ export default function App() {
       {route === 'dashboard' && <Dashboard />}
       {route === 'live' && <LiveTiming />}
       {route === 'driver' && <MyDriver />}
+      {route === 'team' && <MyTeam />}
       {route === 'standings' && <Standings />}
       {route === 'calendar' && <Calendar />}
       {route === 'drivers' && <Drivers />}

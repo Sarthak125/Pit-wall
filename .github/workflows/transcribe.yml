@@ -1,0 +1,93 @@
+name: Transcribe team radio
+
+# Every 10 minutes: if a session is live or ended in the last 3 hours, transcribe
+# new team radio clips and publish them to the `transcripts` branch, which the app
+# reads. Outside race weekends the run stops after a few seconds.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      session_key:
+        description: 'OpenF1 session key to transcribe (leave empty for live or recent sessions)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: transcribe
+  cancel-in-progress: false
+
+jobs:
+  transcribe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SESSION_KEY: ${{ inputs.session_key }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check for sessions to transcribe
+        id: check
+        run: |
+          if [ -n "$SESSION_KEY" ]; then
+            case "$SESSION_KEY" in (*[!0-9]*) echo "session_key must be a number" >&2; exit 1;; esac
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif python3 scripts/transcribe.py --check; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Get the transcripts branch
+        if: steps.check.outputs.run == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads "$remote" transcripts > /dev/null; then
+            git clone --quiet --depth 1 --branch transcripts "$remote" out
+          else
+            mkdir out && git -C out init --quiet -b transcripts && git -C out remote add origin "$remote"
+          fi
+
+      - uses: actions/setup-python@v6
+        if: steps.check.outputs.run == 'true'
+        with:
+          python-version: '3.12'
+
+      - name: Cache the speech model
+        if: steps.check.outputs.run == 'true'
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/huggingface
+          key: whisper-large-v3-turbo-v1
+
+      - name: Install Whisper
+        if: steps.check.outputs.run == 'true'
+        run: pip install --quiet faster-whisper==1.2.1 av==16.1.0
+
+      - name: Transcribe
+        if: steps.check.outputs.run == 'true'
+        run: |
+          if [ -n "$SESSION_KEY" ]; then
+            python scripts/transcribe.py --out out --session "$SESSION_KEY" --minutes 35
+          else
+            python scripts/transcribe.py --out out --minutes 25
+          fi
+
+      - name: Publish transcripts
+        if: steps.check.outputs.run == 'true'
+        run: |
+          cd out
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No new transcripts"
+          else
+            git commit --quiet -m "Update radio transcripts"
+            git push --quiet origin transcripts
+          fi

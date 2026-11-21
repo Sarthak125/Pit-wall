@@ -252,3 +252,12 @@ export async function getCircuitHistory(circuitId: string, driverId: string): Pr
   );
   return data.MRData.RaceTable.Races;
 }
+
+/** A team's Grand Prix results at one circuit, all seasons (both cars). */
+export async function getTeamCircuitHistory(circuitId: string, constructorId: string): Promise<RaceWithResults[]> {
+  const data = await fetchJson<MR<{ RaceTable: { Races: RaceWithResults[] } }>>(
+    `${BASE}/circuits/${circuitId}/constructors/${constructorId}/results/?limit=100`,
+    { limiter, cacheTtlMs: DAY },
+  );
+  return data.MRData.RaceTable.Races;
+}

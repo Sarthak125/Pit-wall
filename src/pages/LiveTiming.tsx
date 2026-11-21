@@ -17,7 +17,12 @@ import {
 } from '../lib/raceControl';
 import { teamColour, tyre, TYRE } from '../lib/teams';
 import { StarIcon } from '../components/Icons';
-import { useFavourite } from '../hooks/useFavourite';
+import { useFavourite, useFavouriteTeam, type FavouriteTeam } from '../hooks/useFavourite';
+import { RadioList, type DriverLabel } from '../components/RadioList';
+import { usePoll } from '../hooks/usePoll';
+import { openf1, type TeamRadio } from '../api/openf1';
+import { FlagIcon } from '../components/Icons';
+import type React from 'react';
 import { ingestFavourite } from '../lib/alerts';
 
 export function LiveTiming() {
@@ -33,6 +38,8 @@ export function LiveTiming() {
 
   const t = useLiveTiming(session, live, carDriver);
   const fav = useFavourite();
+  const favTeam = useFavouriteTeam();
+  const teamNums = t.rows.filter((r) => favTeam?.codes.has(r.driver.name_acronym)).map((r) => r.driver.driver_number);
   const favNum = t.rows.find((r) => r.driver.name_acronym === fav?.code)?.driver.driver_number ?? null;
   // Car data opens on the favourite when they are in this session, else the leader.
   const effectiveCar = carDriver ?? favNum ?? t.rows[0]?.driver.driver_number ?? null;
@@ -129,7 +136,7 @@ export function LiveTiming() {
             </div>
           </div>
           {t.loading ? <Loading rows={12} /> : t.rows.length === 0 ? <Empty>No timing data for this session yet.</Empty> : (
-            <TimingTable rows={t.rows} isRace={isRace} fastest={t.fastest} selected={effectiveCar} favNum={favNum} onSelect={setCarDriver} />
+            <TimingTable rows={t.rows} isRace={isRace} fastest={t.fastest} selected={effectiveCar} favNum={favNum} team={favTeam} onSelect={setCarDriver} />
           )}
         </section>
 
@@ -139,13 +146,14 @@ export function LiveTiming() {
         </div>
       </div>
 
-      <FiaSection messages={t.messages} drivers={t.driversByNumber} favNum={favNum} />
+      <FiaSection messages={t.messages} drivers={t.driversByNumber} favNum={favNum} team={favTeam} teamNums={teamNums} />
+      <RadioPanel session={session} live={live} drivers={t.driversByNumber} favNum={favNum} teamNums={teamNums} />
       <Footer />
     </>
   );
 }
 
-function TimingTable({ rows, isRace, fastest, selected, favNum, onSelect }: { rows: TimingRow[]; isRace: boolean; fastest: number | null; selected: number | null; favNum: number | null; onSelect: (n: number) => void }) {
+function TimingTable({ rows, isRace, fastest, selected, favNum, team, onSelect }: { rows: TimingRow[]; isRace: boolean; fastest: number | null; selected: number | null; favNum: number | null; team: FavouriteTeam | null; onSelect: (n: number) => void }) {
   return (
     <div className="scroll-x">
       <table className="tbl timing" style={{ minWidth: 820 }}>
@@ -170,7 +178,7 @@ function TimingTable({ rows, isRace, fastest, selected, favNum, onSelect }: { ro
             const ty = tyre(r.stint?.compound);
             const l = r.lastLap;
             return (
-              <tr key={r.driver.driver_number} className={[favNum === r.driver.driver_number ? 'fav' : '', selected === r.driver.driver_number ? 'me' : ''].join(' ').trim() || undefined} onClick={() => onSelect(r.driver.driver_number)} style={{ cursor: 'pointer' }}>
+              <tr key={r.driver.driver_number} className={[favNum === r.driver.driver_number ? 'fav' : '', team?.codes.has(r.driver.name_acronym) ? 'team' : '', selected === r.driver.driver_number ? 'me' : ''].join(' ').trim() || undefined} onClick={() => onSelect(r.driver.driver_number)} style={{ cursor: 'pointer', ...(team?.codes.has(r.driver.name_acronym) ? ({ '--team': team.colour } as React.CSSProperties) : {}) }}>
                 <td className="mono muted">{r.position ?? '-'}</td>
                 <td>
                   <div className="who">
@@ -290,10 +298,11 @@ function StrategyPanel({ rows, stints }: { rows: TimingRow[]; stints: Stint[] })
   );
 }
 
-function FiaSection({ messages, drivers, favNum }: { messages: ClassifiedMsg[]; drivers: Map<number, OF1Driver>; favNum: number | null }) {
+function FiaSection({ messages, drivers, favNum, team, teamNums }: { messages: ClassifiedMsg[]; drivers: Map<number, OF1Driver>; favNum: number | null; team: FavouriteTeam | null; teamNums: number[] }) {
   const [tab, setTab] = useState<MsgTab>('All');
   const [driver, setDriver] = useState<number | 0>(0);
-  const byDriver = driver ? messages.filter((m) => m.cars.includes(driver)) : messages;
+  // driver -1 means "the favourite team's cars".
+  const byDriver = driver === -1 ? messages.filter((m) => m.cars.some((c) => teamNums.includes(c))) : driver ? messages.filter((m) => m.cars.includes(driver)) : messages;
   const shown = tab === 'All' ? byDriver : byDriver.filter((m) => m.tab === tab);
   const penalties = summarisePenalties(messages);
   const limits = summariseTrackLimits(messages);
@@ -331,11 +340,18 @@ function FiaSection({ messages, drivers, favNum }: { messages: ClassifiedMsg[]; 
             </button>
           ))}
         </div>
-        {favNum != null && (
+        {(favNum != null || (team && teamNums.length > 0)) && (
           <div className="tabs">
-            <button className="tab fav-toggle" aria-pressed={driver === favNum} onClick={() => setDriver(driver === favNum ? 0 : favNum)}>
-              ★ {code(favNum)} only
-            </button>
+            {favNum != null && (
+              <button className="tab fav-toggle" aria-pressed={driver === favNum} onClick={() => setDriver(driver === favNum ? 0 : favNum)}>
+                ★ {code(favNum)} only
+              </button>
+            )}
+            {team && teamNums.length > 0 && (
+              <button className="tab team-toggle" style={{ '--team': team.colour } as React.CSSProperties} aria-pressed={driver === -1} onClick={() => setDriver(driver === -1 ? 0 : -1)}>
+                <FlagIcon filled size={14} /> {team.name} only
+              </button>
+            )}
           </div>
         )}
         {shown.length === 0 ? (
@@ -427,5 +443,34 @@ function FiaSection({ messages, drivers, favNum }: { messages: ClassifiedMsg[]; 
         </section>
       </div>
     </div>
+  );
+}
+
+/** Team radio for the whole session, with automatic transcripts. */
+function RadioPanel({ session, live, drivers, favNum, teamNums }: { session: Session; live: boolean; drivers: Map<number, OF1Driver>; favNum: number | null; teamNums: number[] }) {
+  const sk = session.session_key;
+  const [who, setWho] = useState<number>(0);
+  const radio = usePoll<TeamRadio[]>(`radio-all-${sk}-${live}`, (_p, signal) => openf1<TeamRadio>('team_radio', { session_key: sk }, signal), live ? 30_000 : 0);
+  const labels = new Map<number, DriverLabel>([...drivers.values()].map((d) => [d.driver_number, { code: d.name_acronym, colour: teamColour(d.team_name, d.team_colour) }]));
+  const clips = (radio.data ?? []).filter((c) => (who === -1 ? teamNums.includes(c.driver_number) : who ? c.driver_number === who : true));
+  const withRadio = [...new Set((radio.data ?? []).map((c) => c.driver_number))].sort((a, b) => (labels.get(a)?.code ?? '').localeCompare(labels.get(b)?.code ?? ''));
+  return (
+    <section className="card tight" aria-labelledby="radio">
+      <div className="card-head">
+        <h2 className="h2" id="radio">Team radio</h2>
+        <label className="field">
+          Driver
+          <select className="select" value={who} onChange={(e) => setWho(Number(e.target.value))}>
+            <option value={0}>All drivers</option>
+            {favNum != null && <option value={favNum}>★ {labels.get(favNum)?.code}</option>}
+            {teamNums.length > 0 && <option value={-1}>⚑ My team</option>}
+            {withRadio.map((n) => (
+              <option key={n} value={n}>{labels.get(n)?.code ?? n}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      {radio.error ? <ErrorBox error={radio.error} what="team radio" /> : radio.loading ? <Loading rows={3} /> : <RadioList clips={clips} sessionKey={sk} live={live} labels={labels} limit={6} />}
+    </section>
   );
 }

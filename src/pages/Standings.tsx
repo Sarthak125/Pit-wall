@@ -1,16 +1,21 @@
+import type React from 'react';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { Footer } from '../components/Shell';
 import { useConstructorStandings, useDriverStandings, useResults } from '../hooks/useSeason';
 import { useSettings } from '../lib/settings';
 import { teamColour } from '../lib/teams';
 import { StarIcon } from '../components/Icons';
-import { useFavourite } from '../hooks/useFavourite';
+import { useFavourite, useFavouriteTeam } from '../hooks/useFavourite';
+import { FlagIcon } from '../components/Icons';
+import { rowProps } from '../lib/rowStyle';
+import { setFavoriteTeam } from '../lib/settings';
 
 export function Standings() {
   const { season } = useSettings();
   const drivers = useDriverStandings(season);
   const teams = useConstructorStandings(season);
   const fav = useFavourite();
+  const favTeam = useFavouriteTeam();
   const results = useResults(season);
   const doneRound = (results.data?.races ?? []).reduce((m, r) => (r.Results?.length ? Math.max(m, Number(r.round)) : m), 0);
   const leader = Number(drivers.data?.standings[0]?.points ?? 0);
@@ -41,7 +46,7 @@ export function Standings() {
                   {drivers.data.standings.map((d, i) => {
                     const team = d.Constructors[d.Constructors.length - 1];
                     return (
-                      <tr key={d.Driver.driverId} className={fav?.code === d.Driver.code ? 'fav' : undefined}>
+                      <tr key={d.Driver.driverId} {...rowProps(d.Driver.code, fav?.code, favTeam)}>
                         <td className="mono muted">{d.position ?? d.positionText}</td>
                         <td>
                           <div className="who">
@@ -67,6 +72,7 @@ export function Standings() {
         <section className="card w2" aria-labelledby="c">
           <div className="card-head">
             <h2 className="h2" id="c">Constructors' Championship</h2>
+            <span className="muted" style={{ fontSize: 12 }}>Tap the flag to pick your team</span>
           </div>
           {teams.error ? <ErrorBox error={teams.error} what="constructor standings" /> : teams.isLoading ? <Loading rows={10} /> : !teams.data?.standings.length ? <Empty>No standings yet.</Empty> : (
             <table className="tbl">
@@ -77,11 +83,12 @@ export function Standings() {
                   <th className="r">Wins</th>
                   <th className="r">Gap</th>
                   <th className="r">Points</th>
+                  <th><span className="sr-only">Favourite</span></th>
                 </tr>
               </thead>
               <tbody>
                 {teams.data.standings.map((t, i) => (
-                  <tr key={t.Constructor.constructorId}>
+                  <tr key={t.Constructor.constructorId} className={favTeam?.id === t.Constructor.constructorId ? 'team' : undefined} style={{ '--team': teamColour(t.Constructor.constructorId) } as React.CSSProperties}>
                     <td className="mono muted">{t.position ?? t.positionText}</td>
                     <td>
                       <div className="who">
@@ -92,6 +99,16 @@ export function Standings() {
                     <td className="r mono">{t.wins}</td>
                     <td className="r mono muted">{i === 0 ? 'Leader' : `-${teamLeader - Number(t.points)}`}</td>
                     <td className="r mono" style={{ fontWeight: 600 }}>{t.points}</td>
+                    <td style={{ padding: '4px 8px', width: 52 }}>
+                      <button
+                        className="flag-btn"
+                        aria-pressed={favTeam?.id === t.Constructor.constructorId}
+                        aria-label={favTeam?.id === t.Constructor.constructorId ? `Remove ${t.Constructor.name} as your team` : `Make ${t.Constructor.name} your team`}
+                        onClick={() => setFavoriteTeam(t.Constructor.constructorId, t.Constructor.name)}
+                      >
+                        <FlagIcon filled={favTeam?.id === t.Constructor.constructorId} />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

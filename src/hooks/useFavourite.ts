@@ -5,7 +5,8 @@ import { ingestFavourite } from '../lib/alerts';
 import { classify } from '../lib/raceControl';
 import { useSettings } from '../lib/settings';
 import { useNow } from './usePoll';
-import { useLatestSessions } from './useSeason';
+import { useDriverStandings, useLatestSessions } from './useSeason';
+import { teamColour } from '../lib/teams';
 
 /** The favourite driver's code and name, or null when none is set. */
 export function useFavourite() {
@@ -70,4 +71,27 @@ export function useAlertWatcher(enabled: boolean) {
       messages: rc.data.map(classify).filter((m) => m.cars.includes(num)),
     });
   }, [active, sk, fav, num, pos.data, pits.data, rc.data]);
+}
+
+export interface FavouriteTeam {
+  id: string;
+  name: string;
+  colour: string;
+  /** Three-letter codes of the drivers who last drove for the team this season. */
+  codes: Set<string>;
+}
+
+/** The favourite team, with its drivers worked out from the season's standings. */
+export function useFavouriteTeam(): FavouriteTeam | null {
+  const { favoriteTeam, favoriteTeamName, season } = useSettings();
+  const standings = useDriverStandings(season);
+  return useMemo(() => {
+    if (!favoriteTeam) return null;
+    const codes = new Set(
+      (standings.data?.standings ?? [])
+        .filter((d) => d.Constructors[d.Constructors.length - 1]?.constructorId === favoriteTeam && d.Driver.code)
+        .map((d) => d.Driver.code!),
+    );
+    return { id: favoriteTeam, name: favoriteTeamName, colour: teamColour(favoriteTeam), codes };
+  }, [favoriteTeam, favoriteTeamName, standings.data]);
 }

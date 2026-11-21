@@ -11,7 +11,18 @@ Tap the star on a driver (Drivers page) or pick one in Settings. Your driver is 
 - tracked live during sessions on My Driver: position, gaps to the cars ahead and behind, tyre, pit stops, lap times, car data, overtakes, FIA messages and team radio, plus an optional live track map (Settings; uses extra API requests);
 - the subject of pop-up alerts (position change, pit stop, FIA decision) while the app is open, optionally as device notifications.
 
+Pick a **favourite team** with the flag button in the Constructors' standings or in Settings. Its drivers are tinted in the standings and Live Timing, the Dashboard shows a "Your team" strip, and Favourites gets a **Team** tab: season stats, points per round, team-mate comparison, constructors' title maths, history at the next circuit, race-by-race results and both cars live during sessions.
+
 The favourite and alert settings are saved per device.
+
+## Team radio transcripts
+
+The **Transcribe team radio** workflow (`.github/workflows/transcribe.yml`) runs every 10 minutes. While a session is on, or up to 3 hours after it ends, it downloads new team radio clips, transcribes them with the open-source Whisper model (`large-v3-turbo`) and publishes one JSON file per session to the `transcripts` branch. The app reads them from there, so transcripts appear roughly 10 to 30 minutes after a clip. Outside race weekends each run stops after a few seconds.
+
+- Transcripts are automatic and often imperfect, especially with engine noise; the app labels them as such.
+- To transcribe an older session, run the workflow manually (Actions tab, "Transcribe team radio", Run workflow) with its OpenF1 session key.
+- GitHub pauses scheduled workflows in repositories with no activity for 60 days; re-enable it in the Actions tab if that happens.
+- No API key is needed. Browsers cannot transcribe the clips themselves because F1's audio server does not allow cross-site access.
 
 ## Data sources
 

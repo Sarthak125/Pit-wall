@@ -62,3 +62,10 @@ export const StarIcon = ({ filled = false, size = 18 }: { filled?: boolean; size
     <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z" />
   </svg>
 );
+
+export const FlagIcon = ({ filled = false, size = 18 }: { filled?: boolean; size?: number }) => (
+  <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round">
+    <path d="M5 21V4" />
+    <path d="M5 4h12l-2.5 4L17 12H5" fill={filled ? 'currentColor' : 'none'} />
+  </svg>
+);

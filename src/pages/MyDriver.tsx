@@ -3,7 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { getCareer, getCircuitHistory, getQualifying, type DriverStanding } from '../api/jolpica';
 import { openf1, type OF1Driver, type Session, type SessionResult, type TeamRadio } from '../api/openf1';
 import { StarIcon } from '../components/Icons';
-import { LiveDriver, RadioList } from '../components/LiveDriver';
+import { FavTabs } from '../components/FavTabs';
+import { LiveDriver } from '../components/LiveDriver';
+import { RadioList } from '../components/RadioList';
 import { Footer } from '../components/Shell';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { useFavourite, useLiveSession } from '../hooks/useFavourite';
@@ -26,6 +28,7 @@ export function MyDriver() {
 function PickFavourite({ standings, loading }: { standings: DriverStanding[]; loading: boolean }) {
   return (
     <>
+      <FavTabs active="driver" />
       <section className="card">
         <h1 className="h2" style={{ marginBottom: 6 }}>My Driver</h1>
         <p className="muted" style={{ marginTop: 0 }}>Pick a favourite driver to see all their stats here, including live data during sessions.</p>
@@ -92,6 +95,7 @@ function Profile({ code, name, season }: { code: string; name: string; season: s
 
   return (
     <>
+      <FavTabs active="driver" />
       <section className="card profile-head" style={{ borderLeftColor: colour }}>
         {of1?.headshot_url ? <img src={of1.headshot_url} alt="" /> : <div className="ph" aria-hidden="true" />}
         <div style={{ flex: '1 1 260px', minWidth: 0 }}>
@@ -199,7 +203,7 @@ function Profile({ code, name, season }: { code: string; name: string; season: s
 
 const pct = (n: number, d: number) => (d ? `${Math.round((n / d) * 100)}% of races` : '');
 
-function GridFinishChart({ rows, colour }: { rows: RoundRow[]; colour: string }) {
+export function GridFinishChart({ rows, colour }: { rows: RoundRow[]; colour: string }) {
   const maxPos = Math.max(20, ...rows.map((r) => Math.max(r.grid ?? 0, r.finish ?? 0)));
   const maxRound = Math.max(...rows.map((r) => r.round));
   const W = 640, H = 250, L = 40, R = 620, T = 20, B = 218;
@@ -234,7 +238,7 @@ function GridFinishChart({ rows, colour }: { rows: RoundRow[]; colour: string })
   );
 }
 
-function Compare({ code, standings, races, quali, colour }: { code: string; standings: DriverStanding[]; races: Parameters<typeof headToHead>[0]; quali: Parameters<typeof headToHead>[1]; colour: string }) {
+export function Compare({ code, standings, races, quali, colour }: { code: string; standings: DriverStanding[]; races: Parameters<typeof headToHead>[0]; quali: Parameters<typeof headToHead>[1]; colour: string }) {
   const me = standings.find((s) => s.Driver.code === code);
   const myTeam = me?.Constructors[me.Constructors.length - 1]?.constructorId;
   const mate = standings.find((s) => s.Driver.code !== code && s.Constructors.some((c) => c.constructorId === myTeam));
@@ -525,7 +529,7 @@ function ThisWeekend({ code }: { code: string }) {
       <section className="card w2" aria-labelledby="radio-last">
         <h2 className="h2" id="radio-last" style={{ marginBottom: 4 }}>Team radio</h2>
         <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>{last.session_name}</div>
-        {radio.isLoading ? <Loading rows={2} /> : <RadioList clips={radio.data ?? []} />}
+        {radio.isLoading ? <Loading rows={2} /> : <RadioList clips={radio.data ?? []} sessionKey={last.session_key} live={false} />}
       </section>
     </div>
   );

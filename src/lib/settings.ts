@@ -18,10 +18,13 @@ export interface Settings {
   systemNotifications: boolean;
   /** Live track map on the My Driver page (uses extra API requests). */
   trackMap: boolean;
+  /** Favourite team's Jolpica constructorId (e.g. "ferrari"). Empty for none. */
+  favoriteTeam: string;
+  favoriteTeamName: string;
 }
 
 const KEY = 'pitwall:settings';
-const DEFAULTS: Settings = { openf1Token: '', openf1PerMinute: 30, season: 'current', favoriteDriver: '', favoriteName: '', alertsEnabled: true, systemNotifications: false, trackMap: false };
+const DEFAULTS: Settings = { openf1Token: '', openf1PerMinute: 30, season: 'current', favoriteDriver: '', favoriteName: '', alertsEnabled: true, systemNotifications: false, trackMap: false, favoriteTeam: '', favoriteTeamName: '' };
 
 let current: Settings = load();
 const listeners = new Set<() => void>();
@@ -63,4 +66,9 @@ export function setFavorite(code: string, name: string) {
   const { favoriteDriver } = getSettings();
   // Choosing the current favourite again clears it.
   updateSettings(favoriteDriver === code ? { favoriteDriver: '', favoriteName: '' } : { favoriteDriver: code, favoriteName: name });
+}
+
+export function setFavoriteTeam(id: string, name: string) {
+  const { favoriteTeam } = getSettings();
+  updateSettings(favoriteTeam === id ? { favoriteTeam: '', favoriteTeamName: '' } : { favoriteTeam: id, favoriteTeamName: name });
 }

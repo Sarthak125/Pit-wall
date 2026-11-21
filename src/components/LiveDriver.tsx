@@ -11,6 +11,7 @@ import { useSettings } from '../lib/settings';
 import { teamColour, tyre } from '../lib/teams';
 import { Empty, ErrorBox, Loading } from './States';
 import { TrackMap } from './TrackMap';
+import { RadioList } from './RadioList';
 
 /** Live section of the My Driver page, shown while a session is running. */
 export function LiveDriver({ session, code }: { session: Session; code: string }) {
@@ -206,7 +207,7 @@ export function LiveDriver({ session, code }: { session: Session; code: string }
         </div>
         <div className="inset w2" style={{ padding: 16 }}>
           <div style={{ fontWeight: 600, marginBottom: 6 }}>Team radio</div>
-          <RadioList clips={radio.data ?? []} />
+          <RadioList clips={radio.data ?? []} sessionKey={sk} live limit={6} />
         </div>
       </div>
       <div className="faint" style={{ fontSize: 12 }}>Updates every 10 to 30 seconds while this page is open.</div>
@@ -299,16 +300,3 @@ function LapChart({ laps: all, pitLaps, colour, joined }: { laps: { lap: number;
   );
 }
 
-export function RadioList({ clips }: { clips: TeamRadio[] }) {
-  if (!clips.length) return <span className="muted">No team radio published yet.</span>;
-  return (
-    <div>
-      {[...clips].reverse().slice(0, 8).map((c) => (
-        <div className="radio-row" key={c.recording_url}>
-          <span className="mono faint" style={{ fontSize: 12, width: 72 }}>{fmtClock(new Date(c.date))}</span>
-          <audio controls preload="none" src={c.recording_url} aria-label={`Team radio at ${fmtClock(new Date(c.date))}`} />
-        </div>
-      ))}
-    </div>
-  );
-}
