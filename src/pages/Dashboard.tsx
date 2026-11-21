@@ -149,8 +149,8 @@ export function Dashboard() {
       </div>
 
       {nextRace && (
-        <div className="row top">
-          <div className="w2" style={{ minWidth: 0 }}><NextRaceCircuit race={nextRace} /></div>
+        <div className="row">
+          <div className="w2" style={{ minWidth: 0, display: 'flex' }}><NextRaceCircuit race={nextRace} /></div>
           <div className="w3 col" style={{ minWidth: 0 }}>
             <WeekendWeather race={nextRace} now={nowMinute * 60_000} />
             {lastRaceCard}

@@ -41,7 +41,7 @@ export function NextRaceCircuit({ race }: { race: Race }) {
   const length = c ? lapLengthKm(c) : null;
   const type = meeting.data?.circuit_type === 'Temporary - Street' ? 'Street circuit' : meeting.data?.circuit_type === 'Temporary - Road' ? 'Temporary road course' : meeting.data?.circuit_type === 'Permanent' ? 'Permanent circuit' : null;
   return (
-    <section className="card" aria-labelledby="next-circuit">
+    <section className="card next-circuit" aria-labelledby="next-circuit">
       <div className="card-head">
         <div>
           <h2 className="h2" id="next-circuit">{race.Circuit.circuitName}</h2>
@@ -50,7 +50,10 @@ export function NextRaceCircuit({ race }: { race: Race }) {
         <a className="link" href={raceHref(race.round)}>Circuit and race page →</a>
       </div>
       {c ? (
-        <TrackOutline circuit={c} sectorLines={sectorLines.data} label={`Layout of ${race.Circuit.circuitName}`} />
+        // The map grows to fill the card, so it matches the height of the forecast and last race column beside it.
+        <div className="next-circuit-map">
+          <TrackOutline circuit={c} sectorLines={sectorLines.data} label={`Layout of ${race.Circuit.circuitName}`} />
+        </div>
       ) : layout.isLoading || meeting.isLoading ? (
         <div className="empty">Loading the circuit…</div>
       ) : (
