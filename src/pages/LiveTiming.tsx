@@ -163,7 +163,7 @@ export function LiveTiming() {
             <span><i className="sw" style={{ background: 'var(--accent)' }} />Red flag</span>
           </div>
         </div>
-        <LiveTrackMap session={session} live={live} drivers={[...t.driversByNumber.values()]} messages={t.messages} favNum={favNum} teamNums={teamNums} />
+        <LiveTrackMap session={session} live={live} drivers={[...t.driversByNumber.values()]} messages={t.messages} laps={t.laps} favNum={favNum} teamNums={teamNums} />
       </section>
 
       <FiaSection messages={t.messages} drivers={t.driversByNumber} favNum={favNum} team={favTeam} teamNums={teamNums} />

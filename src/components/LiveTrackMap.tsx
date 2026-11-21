@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getCircuit, type Circuit } from '../api/circuit';
-import { openf1, type CarLocation, type OF1Driver, type Session } from '../api/openf1';
+import { openf1, type CarLocation, type Lap, type OF1Driver, type Session } from '../api/openf1';
 import { driverHref } from '../lib/router';
 import type { ClassifiedMsg } from '../lib/raceControl';
 import { teamColour } from '../lib/teams';
@@ -22,12 +22,14 @@ interface Props {
   live: boolean;
   drivers: OF1Driver[];
   messages: ClassifiedMsg[];
+  laps: Lap[];
   favNum: number | null;
   teamNums: number[];
 }
 
 /** Whole-field track map: circuit outline with turn numbers, flagged sectors and every car moving. */
-export function LiveTrackMap({ session, live, drivers, messages, favNum, teamNums }: Props) {
+export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, teamNums }: Props) {
+  const [showSectors, setShowSectors] = useState(true);
   const circuit = useQuery({
     queryKey: ['circuit', session.circuit_key, session.year],
     enabled: !!session.circuit_key,
@@ -158,6 +160,28 @@ export function LiveTrackMap({ session, live, drivers, messages, favNum, teamNum
   }, [playing, live, speed, end]);
 
   const geo = useMemo(() => (circuit.data ? geometry(circuit.data) : null), [circuit.data]);
+
+  // Timing sector boundaries: where a car was when it crossed each sector line on a clean lap.
+  const refLap = laps
+    .filter((l) => l.date_start && l.duration_sector_1 && l.duration_sector_2 && l.lap_duration && !l.is_pit_out_lap)
+    .sort((a, b) => a.lap_duration! - b.lap_duration!)[0];
+  const bounds = useQuery({
+    queryKey: ['sector-bounds', session.session_key],
+    enabled: !!refLap,
+    staleTime: Infinity,
+    queryFn: async ({ signal }) => {
+      const t1 = Date.parse(refLap!.date_start!) + refLap!.duration_sector_1! * 1000;
+      const t2 = t1 + refLap!.duration_sector_2! * 1000;
+      const rows = await openf1<CarLocation>('location', { session_key: session.session_key, driver_number: refLap!.driver_number, 'date>': new Date(t1 - 2_000).toISOString(), 'date<': new Date(t2 + 2_000).toISOString() }, signal);
+      const samples = rows.filter((r) => r.x || r.y).map((r) => ({ t: Date.parse(r.date), x: r.x, y: r.y })).sort((a, b) => a.t - b.t);
+      const p1 = position(samples, t1);
+      const p2 = position(samples, t2);
+      if (!p1 || !p2) throw new Error('No positions for the sector lines');
+      return [p1, p2];
+    },
+  });
+  const sectorPaths = useMemo(() => (geo && bounds.data ? geo.split(bounds.data) : null), [geo, bounds.data]);
+  const bests = useMemo(() => sectorBests(laps, head), [laps, head]);
   const flags = useMemo(() => flagState(messages, head), [messages, head]);
 
   const seek = (t: number) => {
@@ -180,17 +204,32 @@ export function LiveTrackMap({ session, live, drivers, messages, favNum, teamNum
     return n === favNum ? 2 : teamNums.includes(n) ? 1 : 0;
   }
 
+  const flagBanner = banner(flags, geo.sectors);
   const r = geo.size * 0.016;
   const sw = geo.size * 0.011;
 
   return (
-    <div className="tmap">
+    <div className={`tmap${flags.red ? ' is-red' : flags.sectors.size ? ' is-yellow' : flags.neutralised ? ' is-sc' : ''}`}>
+      <div className="tmap-stage">
+      {flagBanner && <div className={`tmap-banner ${flagBanner.tone}`} role="status">{flagBanner.text}</div>}
       <svg viewBox={geo.viewBox} className="tmap-svg" role="img" aria-label={`Track map of ${session.circuit_short_name} with car positions`}>
         <path d={geo.path} className="tmap-edge" style={{ strokeWidth: sw * 2.2 }} />
-        <path d={geo.path} className={`tmap-track${flags.red ? ' red' : flags.neutralised ? ' sc' : ''}`} style={{ strokeWidth: sw, strokeDasharray: flags.neutralised && !flags.red ? `${sw * 2.5} ${sw * 1.5}` : undefined }} />
+        {showSectors && sectorPaths && !flags.red && !flags.neutralised ? (
+          sectorPaths.map((sp, i) => <path key={i} d={sp.path} className={`tmap-sector s${i + 1}`} style={{ strokeWidth: sw }} />)
+        ) : null}
+        <path
+          d={geo.path}
+          className={`tmap-track${flags.red ? ' red' : flags.neutralised ? ' sc' : ''}`}
+          style={{ display: showSectors && sectorPaths && !flags.red && !flags.neutralised ? 'none' : undefined, strokeWidth: sw, strokeDasharray: flags.neutralised && !flags.red ? `${sw * 2.5} ${sw * 1.5}` : undefined }}
+        />
         {!flags.red &&
           geo.sectors.map((s) =>
-            flags.sectors.get(s.number) ? <path key={s.number} d={s.path} className={`tmap-flag ${flags.sectors.get(s.number)}`} style={{ strokeWidth: sw * 1.1 }} /> : null,
+            flags.sectors.get(s.number) ? (
+              <g key={s.number}>
+                <path d={s.path} className={`tmap-flag glow ${flags.sectors.get(s.number)}`} style={{ strokeWidth: sw * 3.2 }} />
+                <path d={s.path} className={`tmap-flag ${flags.sectors.get(s.number)}`} style={{ strokeWidth: sw * 1.3 }} />
+              </g>
+            ) : null,
           )}
         {geo.finish && (
           <g transform={`translate(${geo.finish.x} ${geo.finish.y}) rotate(${geo.finish.angle})`}>
@@ -206,6 +245,13 @@ export function LiveTrackMap({ session, live, drivers, messages, favNum, teamNum
             <text x={c.x} y={c.y} style={{ fontSize: r * 1.15 }}>{c.number}</text>
           </g>
         ))}
+        {showSectors &&
+          sectorPaths?.map((sp, i) => (
+            <g key={`sl${i}`} className={`tmap-slabel s${i + 1}`}>
+              <rect x={sp.label.x - r * 1.5} y={sp.label.y - r * 0.85} width={r * 3} height={r * 1.7} rx={r * 0.4} />
+              <text x={sp.label.x} y={sp.label.y} style={{ fontSize: r * 1.05 }}>S{i + 1}</text>
+            </g>
+          ))}
         {cars.map(({ d, x, y, stale }) => {
           const code = d.name_acronym;
           const fav = d.driver_number === favNum;
@@ -222,6 +268,36 @@ export function LiveTrackMap({ session, live, drivers, messages, favNum, teamNum
           );
         })}
       </svg>
+      </div>
+      {showSectors && (
+        <div className="tmap-sectors">
+          {[0, 1, 2].map((i) => {
+            const b = bests.overall[i];
+            const mine = favNum != null ? bests.byDriver.get(favNum)?.[i] : undefined;
+            const d = b ? drivers.find((x) => x.driver_number === b.driver) : undefined;
+            const fd = favNum != null ? drivers.find((x) => x.driver_number === favNum) : undefined;
+            return (
+              <div key={i} className={`tmap-sbox s${i + 1}`}>
+                <div className="tmap-sname">Sector {i + 1}</div>
+                {b ? (
+                  <div className="tmap-sbest">
+                    <span className="mono tone-overall">{b.time.toFixed(3)}</span>{' '}
+                    {d ? <a className="name-link" href={driverHref(d.name_acronym)}>{d.name_acronym}</a> : `#${b.driver}`}
+                    <span className="faint"> fastest so far</span>
+                  </div>
+                ) : (
+                  <div className="faint">No sector times yet</div>
+                )}
+                {fd && mine != null && b && fd.driver_number !== b.driver && (
+                  <div className="faint" style={{ fontSize: 12 }}>
+                    ★ {fd.name_acronym} best {mine.toFixed(3)} (+{(mine - b.time).toFixed(3)})
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
       <div className="tmap-bar">
         {live ? (
           <span className="muted">
@@ -252,7 +328,8 @@ export function LiveTrackMap({ session, live, drivers, messages, favNum, teamNum
         )}
         {loading && cars.length === 0 && <span className="faint">Loading positions…</span>}
         {error && <span style={{ color: 'var(--amber)' }}>Positions: {error}</span>}
-        <span className="faint" style={{ marginLeft: 'auto' }}>Layout: MultiViewer · Positions: OpenF1</span>
+        <button className="tab" aria-pressed={showSectors} onClick={() => setShowSectors(!showSectors)} style={{ marginLeft: 'auto' }}>Sectors</button>
+        <span className="faint">Layout: MultiViewer · Positions: OpenF1</span>
       </div>
     </div>
   );
@@ -305,7 +382,14 @@ function geometry(c: Circuit) {
   const sectors = marks.map((m, k) => {
     const next = marks[(k + 1) % marks.length].i;
     const idx = next > m.i ? range(m.i, next) : [...range(m.i, pts.length - 1), ...range(0, next)];
-    return { number: m.number, path: toPath(idx.map((i) => pts[i])) };
+    // Name the sector after the closest turn, which is easier to picture than a marshal sector number.
+    const mid = idx[Math.floor(idx.length / 2)];
+    let turn = 0, best = Infinity;
+    for (const k of c.corners) {
+      const d = (k.trackPosition.x - c.x[mid]) ** 2 + (k.trackPosition.y - c.y[mid]) ** 2;
+      if (d < best) { best = d; turn = k.number; }
+    }
+    return { number: m.number, path: toPath(idx.map((i) => pts[i])), turn };
   });
 
   // Start/finish line at the first marshal sector marker, drawn across the track.
@@ -317,8 +401,23 @@ function geometry(c: Circuit) {
     finish = { ...pts[i], angle: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI + 90 };
   }
 
+  // Split the outline into the three timing sectors at the start/finish line and the two sector lines.
+  const fi = s1 ? nearest(s1.trackPosition.x, s1.trackPosition.y) : 0;
+  const walk = (from: number, to: number) => (to >= from ? range(from, to) : [...range(from, pts.length - 1), ...range(0, to)]);
+  const split = (lines: { x: number; y: number }[]) => {
+    const [a, b] = lines.map((l) => nearest(l.x, l.y));
+    const along = (i: number) => (i - fi + pts.length) % pts.length;
+    // Keep them in driving order even if the outline runs the other way.
+    const [i1, i2] = along(a) <= along(b) ? [a, b] : [b, a];
+    return [walk(fi, i1), walk(i1, i2), walk(i2, fi)].map((idx) => {
+      const mid = pts[idx[Math.floor(idx.length / 2)]];
+      return { path: toPath(idx.map((i) => pts[i])), label: mid };
+    });
+  };
+
   return {
     project,
+    split,
     size,
     viewBox: `${(minX - pad).toFixed(0)} ${(minY - pad).toFixed(0)} ${(maxX - minX + pad * 2).toFixed(0)} ${(maxY - minY + pad * 2).toFixed(0)}`,
     path: toPath(pts) + ' Z',
@@ -388,4 +487,40 @@ function textOn(hex: string): string {
   const n = parseInt(m[1], 16);
   const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
   return lum > 0.6 ? '#111' : '#fff';
+}
+
+/** Fastest time in each sector up to time t, overall and per driver. */
+function sectorBests(laps: Lap[], t: number) {
+  const overall: ({ time: number; driver: number } | undefined)[] = [undefined, undefined, undefined];
+  const byDriver = new Map<number, (number | undefined)[]>();
+  for (const l of laps) {
+    if (!l.date_start) continue;
+    let end = Date.parse(l.date_start);
+    const secs = [l.duration_sector_1, l.duration_sector_2, l.duration_sector_3];
+    secs.forEach((d, i) => {
+      if (d == null) return;
+      end += d * 1000;
+      if (end > t || l.is_pit_out_lap) return;
+      const cur = overall[i];
+      if (!cur || d < cur.time) overall[i] = { time: d, driver: l.driver_number };
+      const mine = byDriver.get(l.driver_number) ?? [undefined, undefined, undefined];
+      if (mine[i] == null || d < mine[i]!) mine[i] = d;
+      byDriver.set(l.driver_number, mine);
+    });
+  }
+  return { overall, byDriver };
+}
+
+/** Headline for the flag state shown over the map, or null when the track is green. */
+function banner(f: ReturnType<typeof flagState>, sectors: { number: number; turn: number }[]): { text: string; tone: string } | null {
+  if (f.red) return { text: 'Red flag · Session stopped', tone: 'red' };
+  if (f.sectors.size) {
+    const list = [...f.sectors.entries()].sort((a, b) => a[0] - b[0]);
+    const dbl = list.some(([, v]) => v === 'double');
+    const turns = [...new Set(list.map(([n]) => sectors.find((s) => s.number === n)?.turn).filter((t): t is number => !!t))].sort((a, b) => a - b);
+    const where = turns.length ? `Turn${turns.length > 1 ? 's' : ''} ${turns.join(', ')}` : `Marshal sector ${list.map(([n]) => n).join(', ')}`;
+    return { text: `${dbl ? 'Double yellow' : 'Yellow flag'} · ${where}`, tone: dbl ? 'double' : 'yellow' };
+  }
+  if (f.neutralised) return { text: 'Safety car', tone: 'sc' };
+  return null;
 }

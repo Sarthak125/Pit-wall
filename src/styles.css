@@ -320,3 +320,33 @@ a.round:hover, a.round:focus-visible { border-color: #6b7380; opacity: 1; }
 .tmap-bar .tab { min-height: 36px; }
 .tmap-scrub { flex: 1 1 200px; accent-color: var(--accent); min-height: 36px; }
 .tmap-clock { min-width: 80px; }
+/* Timing sectors on the track map */
+.tmap-sector { fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.tmap-sector.s1, .tmap-slabel.s1 rect { stroke: #ff5a6a; fill: none; }
+.tmap-sector.s2, .tmap-slabel.s2 rect { stroke: #4f9dff; fill: none; }
+.tmap-sector.s3, .tmap-slabel.s3 rect { stroke: #2dd4bf; fill: none; }
+.tmap-slabel rect { fill: #0b0b0d !important; stroke-width: 18; }
+.tmap-slabel.s1 text { fill: #ff8a95; } .tmap-slabel.s2 text { fill: #8ab8ff; } .tmap-slabel.s3 text { fill: #5eead4; }
+.tmap-slabel text { font-family: var(--mono); font-weight: 700; text-anchor: middle; dominant-baseline: central; }
+.tmap-sectors { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.tmap-sbox { background: var(--inset); border-radius: 8px; padding: 8px 12px; border-left: 3px solid; font-size: 13px; min-width: 0; }
+.tmap-sbox.s1 { border-left-color: #ff5a6a; } .tmap-sbox.s2 { border-left-color: #4f9dff; } .tmap-sbox.s3 { border-left-color: #2dd4bf; }
+.tmap-sname { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--faint); margin-bottom: 2px; }
+.tmap-sbest .name-link { padding: 2px 0; }
+@media (max-width: 599px) { .tmap-sectors { grid-template-columns: 1fr; } }
+/* Flag highlights on the track map */
+.tmap-stage { position: relative; }
+.tmap-svg { border: 2px solid transparent; transition: border-color 0.3s, box-shadow 0.3s; }
+.tmap.is-yellow .tmap-svg { border-color: #f5c518; box-shadow: 0 0 24px rgba(245, 197, 24, 0.25); }
+.tmap.is-red .tmap-svg { border-color: var(--accent); box-shadow: 0 0 28px rgba(225, 6, 0, 0.35); }
+.tmap.is-sc .tmap-svg { border-color: var(--amber); }
+.tmap-flag.glow { opacity: 0.35; animation: tmap-pulse 1.2s ease-in-out infinite; }
+.tmap-track.red { animation: tmap-pulse-red 1.2s ease-in-out infinite; }
+@keyframes tmap-pulse { 50% { opacity: 0.08; } }
+@keyframes tmap-pulse-red { 50% { opacity: 0.55; } }
+.tmap-banner { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 1; padding: 6px 14px; border-radius: 6px; font-weight: 700; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; max-width: calc(100% - 24px); overflow: hidden; text-overflow: ellipsis; }
+.tmap-banner.yellow { background: #f5c518; color: #111; }
+.tmap-banner.double { background: #ff9f1a; color: #111; }
+.tmap-banner.red { background: var(--accent); color: #fff; }
+.tmap-banner.sc { background: var(--amber); color: #111; }
+@media (prefers-reduced-motion: reduce) { .tmap-flag.glow, .tmap-track.red { animation: none; } }
