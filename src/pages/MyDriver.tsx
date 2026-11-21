@@ -153,8 +153,7 @@ function Profile({ code, name: givenName, season, isFav }: { code: string; name:
             <div className="card-head">
               <h2 className="h2">{seasonLabel} season</h2>
               <span className="muted" style={{ fontSize: 12 }}>
-                After round {doneRound}
-                {schedule.data ? ` of ${schedule.data.length}` : ''}
+                {results.data ? `After round ${doneRound}${schedule.data ? ` of ${schedule.data.length}` : ''}` : ''}
               </span>
             </div>
             {results.isLoading || quali.isLoading ? <Loading rows={3} /> : results.error ? <ErrorBox error={results.error} what="results" /> : (

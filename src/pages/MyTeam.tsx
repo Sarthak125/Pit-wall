@@ -172,7 +172,7 @@ function TeamProfile({ team, season }: { team: FavouriteTeam; season: string }) 
           <section className="card">
             <div className="card-head">
               <h2 className="h2">{seasonLabel} season</h2>
-              <span className="muted" style={{ fontSize: 12 }}>After round {doneRound}{schedule.data ? ` of ${schedule.data.length}` : ''}</span>
+              <span className="muted" style={{ fontSize: 12 }}>{results.data ? `After round ${doneRound}${schedule.data ? ` of ${schedule.data.length}` : ''}` : ''}</span>
             </div>
             {results.isLoading || quali.isLoading ? <Loading rows={3} /> : (
               <div className="tile-grid">

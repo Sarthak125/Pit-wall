@@ -274,3 +274,7 @@ button, select, input { font: inherit; color: inherit; }
 .card-link { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; color: inherit; border-radius: 8px; }
 .card-link:hover .dname, .card-link:focus-visible .dname { text-decoration: underline; }
 .driver-card:hover { border-color: #3a414d; }
+
+/* Driver names in tables open the driver's stats page */
+.name-link { font-weight: 600; color: inherit; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color 0.15s; padding: 6px 0; }
+.name-link:hover, .name-link:focus-visible { text-decoration-color: currentColor; }
