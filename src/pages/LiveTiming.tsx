@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { isSessionLive, type OF1Driver, type Session, type Stint } from '../api/openf1';
 import { Empty, ErrorBox, Loading } from '../components/States';
+import { FiaText, FiaWhen } from '../components/FiaText';
 import { Footer } from '../components/Shell';
 import { useNow } from '../hooks/usePoll';
 import { useLatestSessions } from '../hooks/useSeason';
 import { useLiveTiming, type TimingRow } from '../hooks/useLiveTiming';
 import { fmtClock, fmtDuration, fmtGap, fmtLap, fmtSector, fmtShortClock } from '../lib/format';
 import {
+  isMinor,
   openInvestigations,
   summarisePenalties,
   summariseTrackLimits,
@@ -304,7 +306,10 @@ function FiaSection({ messages, drivers, favNum, team, teamNums }: { messages: C
   const [driver, setDriver] = useState<number | 0>(0);
   // driver -1 means "the favourite team's cars".
   const byDriver = driver === -1 ? messages.filter((m) => m.cars.some((c) => teamNums.includes(c))) : driver ? messages.filter((m) => m.cars.includes(driver)) : messages;
-  const shown = tab === 'All' ? byDriver : byDriver.filter((m) => m.tab === tab);
+  const [showMinor, setShowMinor] = useState(false);
+  // Routine sector and blue flags crowd out the important messages, so All hides them unless asked.
+  const minor = tab === 'All' ? byDriver.filter(isMinor).length : 0;
+  const shown = tab === 'All' ? byDriver.filter((m) => showMinor || !isMinor(m)) : byDriver.filter((m) => m.tab === tab);
   const penalties = summarisePenalties(messages);
   const limits = summariseTrackLimits(messages);
   const open = openInvestigations(messages);
@@ -337,7 +342,7 @@ function FiaSection({ messages, drivers, favNum, team, teamNums }: { messages: C
           {TABS.map((tb) => (
             <button key={tb} role="tab" className="tab" aria-selected={tab === tb} onClick={() => setTab(tb)}>
               {tb}
-              <span className="n">{tb === 'All' ? byDriver.length : byDriver.filter((m) => m.tab === tb).length}</span>
+              <span className="n">{tb === 'All' ? (showMinor ? byDriver.length : byDriver.filter((m) => !isMinor(m)).length) : byDriver.filter((m) => m.tab === tb).length}</span>
             </button>
           ))}
         </div>
@@ -355,19 +360,21 @@ function FiaSection({ messages, drivers, favNum, team, teamNums }: { messages: C
             )}
           </div>
         )}
+        {minor > 0 && (
+          <div className="minor-note muted">
+            {showMinor ? 'Showing' : 'Hiding'} {minor} routine sector and blue flag message{minor === 1 ? '' : 's'}.{' '}
+            <button className="link-btn" onClick={() => setShowMinor(!showMinor)}>{showMinor ? 'Hide them' : 'Show them'}</button>
+          </div>
+        )}
         {shown.length === 0 ? (
           <Empty>No messages in this category.</Empty>
         ) : (
           <div role="log" aria-live="polite" aria-label="Race control messages">
             {shown.map((m) => (
               <div className={favNum != null && m.cars.includes(favNum) ? 'msg fav' : 'msg'} key={m.id}>
-                <div className="when">
-                  <div className="muted">{m.lap_number ? `LAP ${m.lap_number}` : ' '}</div>
-                  <div>{fmtClock(new Date(m.date))}</div>
-                </div>
+                <FiaWhen m={m} />
                 <span className={`badge tone-${m.tone}`}>{m.label}</span>
-                <div className="text">
-                  <div>{m.message}</div>
+                <FiaText m={m} codeOf={code}>
                   {m.cars.length > 0 && (
                     <div className="chips">
                       {m.cars.map((c) => (
@@ -379,7 +386,7 @@ function FiaSection({ messages, drivers, favNum, team, teamNums }: { messages: C
                       ))}
                     </div>
                   )}
-                </div>
+                </FiaText>
               </div>
             ))}
           </div>

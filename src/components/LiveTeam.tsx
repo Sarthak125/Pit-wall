@@ -1,9 +1,10 @@
+import { FiaText, FiaWhen } from './FiaText';
 import { useQuery } from '@tanstack/react-query';
 import { openf1, type OF1Driver, type Session, type TeamRadio } from '../api/openf1';
 import type { FavouriteTeam } from '../hooks/useFavourite';
 import { useLiveTiming } from '../hooks/useLiveTiming';
 import { usePoll } from '../hooks/usePoll';
-import { fmtClock, fmtGap, fmtLap } from '../lib/format';
+import { fmtGap, fmtLap } from '../lib/format';
 import { trackStatus } from '../lib/raceControl';
 import { href } from '../lib/router';
 import { tyre } from '../lib/teams';
@@ -93,9 +94,9 @@ export function LiveTeam({ session, team }: { session: Session; team: FavouriteT
           ) : (
             msgs.slice(0, 6).map((m) => (
               <div className="msg" key={m.id}>
-                <div className="when">{m.lap_number ? `LAP ${m.lap_number}` : fmtClock(new Date(m.date))}</div>
+                <FiaWhen m={m} />
                 <span className={`badge tone-${m.tone}`}>{m.label}</span>
-                <div className="text">{m.message}</div>
+                <FiaText m={m} />
               </div>
             ))
           )}

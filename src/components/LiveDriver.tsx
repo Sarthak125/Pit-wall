@@ -1,10 +1,11 @@
+import { FiaText, FiaWhen } from './FiaText';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { openf1, type GridSlot, type OF1Driver, type Overtake, type Position, type Session, type TeamRadio } from '../api/openf1';
 import { useLiveTiming } from '../hooks/useLiveTiming';
 import { usePoll } from '../hooks/usePoll';
 import { ingestFavourite } from '../lib/alerts';
-import { fmtClock, fmtLap, fmtSector } from '../lib/format';
+import { fmtLap, fmtSector } from '../lib/format';
 import { summarisePenalties, summariseTrackLimits, trackStatus } from '../lib/raceControl';
 import { href } from '../lib/router';
 import { useSettings } from '../lib/settings';
@@ -198,9 +199,9 @@ export function LiveDriver({ session, code, alerts = true }: { session: Session;
           ) : (
             myMsgs.slice(0, 6).map((m) => (
               <div className="msg" key={m.id}>
-                <div className="when">{m.lap_number ? `LAP ${m.lap_number}` : fmtClock(new Date(m.date))}</div>
+                <FiaWhen m={m} />
                 <span className={`badge tone-${m.tone}`}>{m.label}</span>
-                <div className="text">{m.message}</div>
+                <FiaText m={m} />
               </div>
             ))
           )}
