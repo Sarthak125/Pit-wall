@@ -8,16 +8,40 @@ export interface PollState<T> {
 }
 
 /**
+ * Last good result for each key, kept in memory for this visit. Switching session or page and coming back shows the
+ * saved data straight away: a finished session is not fetched again (unless the saved copy is over 5 minutes old),
+ * and a live one carries on polling from where it left off instead of starting over.
+ */
+const memory = new Map<string, { data: unknown; at: number }>();
+const MEMORY_MAX = 80;
+const FINISHED_FRESH_MS = 5 * 60_000;
+
+function remember(key: string, data: unknown) {
+  memory.delete(key);
+  memory.set(key, { data, at: Date.now() });
+  if (memory.size > MEMORY_MAX) memory.delete(memory.keys().next().value!);
+}
+
+/**
  * Runs `fn` now and then every `intervalMs` (when intervalMs > 0).
  * Pauses while the tab or app is in the background to save API quota.
  * `fn` receives the previous value, so callers can fetch incrementally.
+ * The first request waits `startDelayMs`, so flicking quickly through sessions or pages does not spend the
+ * OpenF1 request budget on screens that are gone a moment later. Less urgent panels pass a longer delay so the
+ * timing tower's requests go first.
  */
 export function usePoll<T>(
   key: string | null,
   fn: (prev: T | undefined, signal: AbortSignal) => Promise<T>,
   intervalMs: number,
+  startDelayMs = 400,
 ): PollState<T> {
-  const [state, setState] = useState<PollState<T>>({ data: undefined, error: null, loading: !!key, updatedAt: null });
+  // The state remembers which key it belongs to, so right after the key changes the previous key's data is never
+  // handed out as if it were the new one's (for example last session's laps for a newly picked session).
+  const [state, setState] = useState<PollState<T> & { key: string | null }>(() => {
+    const saved = key ? memory.get(key) : undefined;
+    return { key, data: saved?.data as T | undefined, error: null, loading: !!key && !saved, updatedAt: saved?.at ?? null };
+  });
   const fnRef = useRef(fn);
   useLayoutEffect(() => {
     fnRef.current = fn;
@@ -25,14 +49,15 @@ export function usePoll<T>(
 
   useEffect(() => {
     if (!key) {
-      setState({ data: undefined, error: null, loading: false, updatedAt: null });
+      setState({ key, data: undefined, error: null, loading: false, updatedAt: null });
       return;
     }
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    let latest: T | undefined;
+    const saved = memory.get(key);
+    let latest = saved?.data as T | undefined;
     const ctrl = new AbortController();
-    setState({ data: undefined, error: null, loading: true, updatedAt: null });
+    setState({ key, data: latest, error: null, loading: !saved, updatedAt: saved?.at ?? null });
 
     const run = async () => {
       if (cancelled) return;
@@ -44,7 +69,8 @@ export function usePoll<T>(
         const next = await fnRef.current(latest, ctrl.signal);
         if (cancelled) return;
         latest = next;
-        setState({ data: next, error: null, loading: false, updatedAt: Date.now() });
+        remember(key, next);
+        setState({ key, data: next, error: null, loading: false, updatedAt: Date.now() });
       } catch (error) {
         if (cancelled) return;
         setState((s) => ({ ...s, error, loading: false }));
@@ -61,7 +87,13 @@ export function usePoll<T>(
       }
     };
 
-    run();
+    if (saved && intervalMs === 0 && Date.now() - saved.at < FINISHED_FRESH_MS) {
+      // Nothing to poll and the saved copy is recent: no request needed.
+    } else if (saved) {
+      run();
+    } else {
+      timer = setTimeout(run, startDelayMs);
+    }
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelled = true;
@@ -71,6 +103,10 @@ export function usePoll<T>(
     };
   }, [key, intervalMs]);
 
+  if (state.key !== key) {
+    const saved = key ? memory.get(key) : undefined;
+    return { data: saved?.data as T | undefined, error: null, loading: !!key && !saved, updatedAt: saved?.at ?? null };
+  }
   return state;
 }
 

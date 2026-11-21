@@ -221,6 +221,20 @@ export interface SessionResult {
   dsq: boolean;
 }
 
+const meetingSessionsMemo = new Map<number, { at: number; p: Promise<Session[]> }>();
+
+/** A weekend's sessions, remembered for 10 minutes so switching sessions does not ask OpenF1 again. */
+export function meetingSessions(meetingKey: number, _signal?: AbortSignal): Promise<Session[]> {
+  const hit = meetingSessionsMemo.get(meetingKey);
+  if (hit && Date.now() - hit.at < 10 * 60_000) return hit.p;
+  // Shared between callers, so one caller cancelling must not cancel it for the others.
+  const p = openf1<Session>('sessions', { meeting_key: meetingKey });
+  meetingSessionsMemo.set(meetingKey, { at: Date.now(), p });
+  // A failed or cancelled lookup is forgotten so the next call tries again.
+  p.catch(() => meetingSessionsMemo.delete(meetingKey));
+  return p;
+}
+
 /**
  * Starting grid for a race or sprint. OpenF1 files the grid under the qualifying session it came from
  * (penalties included), so this finds the matching qualifying session of the same meeting. If the grid
@@ -228,7 +242,7 @@ export interface SessionResult {
  */
 export async function getStartingGrid(race: Pick<Session, 'meeting_key' | 'session_name'>, signal?: AbortSignal): Promise<GridSlot[]> {
   const sprint = /sprint/i.test(race.session_name);
-  const sessions = await openf1<Session>('sessions', { meeting_key: race.meeting_key }, signal);
+  const sessions = await meetingSessions(race.meeting_key, signal);
   const quali = sessions
     .filter((x) => /qualifying|shootout/i.test(x.session_name) && (sprint ? /sprint/i.test(x.session_name) : !/sprint/i.test(x.session_name)))
     .pop();

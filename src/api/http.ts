@@ -19,15 +19,20 @@ export class RateLimiter {
     this.perMinute = perMinute;
   }
 
-  /** Resolves when a request slot is free. Requests are served in order. */
-  acquire(): Promise<void> {
-    const next = this.queue.then(() => this.waitForSlot());
+  /**
+   * Resolves when a request slot is free. Requests are served in order. A request whose signal is aborted while it
+   * waits (for example because the user switched session or page) leaves the queue without using up a slot, so it
+   * never delays the requests that replaced it.
+   */
+  acquire(signal?: AbortSignal): Promise<void> {
+    const next = this.queue.then(() => this.waitForSlot(signal));
     this.queue = next.catch(() => undefined);
     return next;
   }
 
-  private async waitForSlot(): Promise<void> {
+  private async waitForSlot(signal?: AbortSignal): Promise<void> {
     for (;;) {
+      if (signal?.aborted) throw abortError();
       const now = Date.now();
       this.stamps = this.stamps.filter((t) => now - t < 60_000);
       const lastSecond = this.stamps.filter((t) => now - t < 1_000);
@@ -37,9 +42,13 @@ export class RateLimiter {
       }
       const waitMinute = this.stamps.length >= this.perMinute ? 60_000 - (now - this.stamps[0]) : 0;
       const waitSecond = lastSecond.length >= this.perSecond ? 1_000 - (now - lastSecond[0]) : 0;
-      await sleep(Math.max(waitMinute, waitSecond, 25));
+      await sleep(Math.max(waitMinute, waitSecond, 25), signal);
     }
   }
+}
+
+function abortError(): Error {
+  return new DOMException('The request was cancelled', 'AbortError');
 }
 
 export class HttpError extends Error {
@@ -72,7 +81,8 @@ export async function fetchJson<T>(url: string, opts: FetchOptions): Promise<T> 
 
   const retries = opts.retries ?? 2;
   for (let attempt = 0; ; attempt++) {
-    await opts.limiter.acquire();
+    if (opts.signal?.aborted) throw abortError();
+    await opts.limiter.acquire(opts.signal);
     let res: Response;
     try {
       res = await fetch(url, { headers: { Accept: 'application/json', ...opts.headers }, signal: opts.signal });
@@ -83,7 +93,7 @@ export async function fetchJson<T>(url: string, opts: FetchOptions): Promise<T> 
         throw err;
       }
       // A network error is often a rate-limit reply the browser could not read; wait it out.
-      await sleep(3_000 * 2 ** attempt);
+      await sleep(3_000 * 2 ** attempt, opts.signal);
       continue;
     }
 
@@ -101,7 +111,7 @@ export async function fetchJson<T>(url: string, opts: FetchOptions): Promise<T> 
     }
     const retryAfter = Number(res.headers.get('Retry-After'));
     // Honour Retry-After, but never stall a page for long: a server asking for minutes or hours gets an error instead on the next try.
-    await sleep(Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter, 10) * 1_000 : 2_000 * (attempt + 1));
+    await sleep(Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter, 10) * 1_000 : 2_000 * (attempt + 1), opts.signal);
   }
 }
 
@@ -135,6 +145,18 @@ export function clearCache() {
   }
 }
 
-export function sleep(ms: number) {
-  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+/** Waits `ms`; with a signal, stops early (rejecting) when it is aborted. */
+export function sleep(ms: number, signal?: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) return reject(abortError());
+    const t = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      clearTimeout(t);
+      reject(abortError());
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
 }

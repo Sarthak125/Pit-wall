@@ -115,11 +115,18 @@ export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, t
         if (!cancelled) setLoading(false);
       }
     };
-    tick();
-    const id = setInterval(tick, live ? liveEvery(LIVE_POLL_MS) : 1_000);
+    // Nothing to show before the session starts. Otherwise wait a moment, so the timing tower's requests go first
+    // and quickly flicking through sessions does not spend the request budget on car positions.
+    if (!live && Date.now() < start) return () => { cancelled = true; };
+    let id: ReturnType<typeof setInterval> | undefined;
+    const first = setTimeout(() => {
+      tick();
+      id = setInterval(tick, live ? liveEvery(LIVE_POLL_MS) : 1_000);
+    }, 1_500);
     return () => {
       cancelled = true;
       ctrl.abort();
+      clearTimeout(first);
       clearInterval(id);
     };
   }, [session.session_key, live, start, end, speed]);

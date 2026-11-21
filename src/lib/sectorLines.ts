@@ -1,4 +1,4 @@
-import { openf1, type CarLocation, type Lap, type Session } from '../api/openf1';
+import { meetingSessions, openf1, type CarLocation, type Lap } from '../api/openf1';
 
 /**
  * Where the two timing sector lines are on track, in layout coordinates. OpenF1 does not publish them, so this
@@ -6,7 +6,7 @@ import { openf1, type CarLocation, type Lap, type Session } from '../api/openf1'
  * sector 1 and sector 2 times ended.
  */
 export async function getSectorLines(meetingKey: number, signal?: AbortSignal): Promise<{ x: number; y: number }[] | null> {
-  const sessions = await openf1<Session>('sessions', { meeting_key: meetingKey }, signal);
+  const sessions = await meetingSessions(meetingKey, signal);
   const pick = sessions.find((s) => s.session_name === 'Qualifying') ?? sessions.find((s) => s.session_name === 'Race') ?? sessions[sessions.length - 1];
   if (!pick) return null;
   const laps = await openf1<Lap>('laps', { session_key: pick.session_key }, signal);
@@ -43,7 +43,7 @@ export interface PositionTrace {
  * position at the end of a lap is the last change at or before the moment that lap finished.
  */
 export async function getRacePositions(meetingKey: number, sprint: boolean, signal?: AbortSignal): Promise<{ laps: number; traces: PositionTrace[] } | null> {
-  const sessions = await openf1<Session>('sessions', { meeting_key: meetingKey }, signal);
+  const sessions = await meetingSessions(meetingKey, signal);
   const race = sessions.find((s) => (sprint ? s.session_name === 'Sprint' : s.session_name === 'Race'));
   if (!race) return null;
   const [pos, laps] = await Promise.all([
