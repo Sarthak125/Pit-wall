@@ -24,7 +24,7 @@ import {
 } from '../hooks/useSeason';
 import { fmtDayMonth, fmtDayTime, fmtShortClock, pad2, raceStart, splitCountdown, timeZoneLabel, toDate } from '../lib/format';
 import { trackStatus } from '../lib/raceControl';
-import { driverHref, href, teamHref } from '../lib/router';
+import { driverHref, href, raceHref, teamHref } from '../lib/router';
 import { useSettings } from '../lib/settings';
 import { teamColour } from '../lib/teams';
 
@@ -223,7 +223,7 @@ export function Dashboard() {
               <div>
                 <p className="kicker">Last race · Round {lastRace.round}</p>
                 <h2 className="h2" id="last-race" style={{ marginTop: 4 }}>
-                  {lastRace.raceName}
+                  <a className="name-link" style={{ fontWeight: 'inherit' }} href={raceHref(lastRace.round)}>{lastRace.raceName}</a>
                 </h2>
               </div>
               {(lastRace.Results ?? []).slice(0, 3).map((r) => (

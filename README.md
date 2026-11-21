@@ -85,6 +85,8 @@ Where names and codes link to these pages:
 | Standings | Driver names | Team names |
 | Calendar | Winner of each finished race | |
 | Race results | Podium and every driver in the race, sprint and qualifying tables | Team names in those tables |
+
+The race name in the Dashboard's Last race card and race names on the Calendar open the race results page.
 | Drivers | Each driver card (the star stays separate) | |
 | Live Timing | Codes in the timing tower and tyre strategy rows, driver chips under FIA messages, team radio codes | |
 | Favourites and team pages | Team radio codes | |
