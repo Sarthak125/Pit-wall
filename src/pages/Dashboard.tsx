@@ -24,7 +24,7 @@ import {
 } from '../hooks/useSeason';
 import { fmtDayMonth, fmtDayTime, fmtShortClock, pad2, raceStart, splitCountdown, timeZoneLabel, toDate } from '../lib/format';
 import { trackStatus } from '../lib/raceControl';
-import { driverHref, href } from '../lib/router';
+import { driverHref, href, teamHref } from '../lib/router';
 import { useSettings } from '../lib/settings';
 import { teamColour } from '../lib/teams';
 
@@ -147,7 +147,7 @@ export function Dashboard() {
                             {fav?.code === d.Driver.code && <span className="fav-star" aria-label="Favourite"><StarIcon filled size={14} /></span>}
                           </div>
                         </td>
-                        <td className="muted">{team?.name}</td>
+                        <td className="muted">{team ? <a className="name-link" style={{ fontWeight: 400 }} href={teamHref(team.constructorId)}>{team.name}</a> : null}</td>
                         <td className="r mono">{d.wins}</td>
                         <td className="r mono muted">{i === 0 ? 'Leader' : `-${leaderPts - Number(d.points)}`}</td>
                         <td className="r mono" style={{ fontWeight: 600 }}>
@@ -176,7 +176,7 @@ export function Dashboard() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
                       <span style={favTeam?.id === t.Constructor.constructorId ? { fontWeight: 700 } : undefined}>
-                        {t.Constructor.name}
+                        <a className="name-link" style={{ fontWeight: 'inherit', padding: '4px 0' }} href={teamHref(t.Constructor.constructorId)}>{t.Constructor.name}</a>
                         {favTeam?.id === t.Constructor.constructorId && (
                           <span className="team-flag" style={{ marginLeft: 6, '--team': favTeam.colour } as React.CSSProperties} aria-label="Your team"><FlagIcon filled size={13} /></span>
                         )}
