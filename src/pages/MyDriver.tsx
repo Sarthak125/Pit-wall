@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCareerCounts, getCareerTitles, getCircuitHistory, getQualifying, type DriverStanding } from '../api/jolpica';
-import { openf1, type OF1Driver, type Session, type SessionResult, type TeamRadio } from '../api/openf1';
+import { openf1, type Lap, type OF1Driver, type Session, type SessionResult, type TeamRadio } from '../api/openf1';
 import { StarIcon } from '../components/Icons';
 import { FavTabs } from '../components/FavTabs';
 import { LiveDriver } from '../components/LiveDriver';
-import { RadioList } from '../components/RadioList';
+import { RadioCards } from '../components/RadioCards';
 import { Footer } from '../components/Shell';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { useFavourite, useLiveSession } from '../hooks/useFavourite';
@@ -531,6 +531,13 @@ function ThisWeekend({ code }: { code: string }) {
     staleTime: 10 * 60_000,
     queryFn: () => openf1<TeamRadio>('team_radio', { session_key: last!.session_key, driver_number: num }),
   });
+  // Laps of that session, to show which lap each message was sent on.
+  const lastLaps = useQuery({
+    queryKey: ['laps-last', last?.session_key, num],
+    enabled: !!num && !!last && !!radio.data?.length,
+    staleTime: 10 * 60_000,
+    queryFn: () => openf1<Lap>('laps', { session_key: last!.session_key, driver_number: num }),
+  });
   if (!done.length || !num) return null;
   return (
     <div className="row">
@@ -558,7 +565,7 @@ function ThisWeekend({ code }: { code: string }) {
       <section className="card w2" aria-labelledby="radio-last">
         <h2 className="h2" id="radio-last" style={{ marginBottom: 4 }}>Team radio</h2>
         <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>{last.session_name}</div>
-        {radio.isLoading ? <Loading rows={2} /> : <RadioList clips={radio.data ?? []} />}
+        {radio.isLoading ? <Loading rows={2} /> : <RadioCards clips={radio.data ?? []} drivers={new Map((drivers.data ?? []).map((d) => [d.driver_number, d]))} favNum={null} teamNums={[]} laps={lastLaps.data ?? []} />}
       </section>
     </div>
   );

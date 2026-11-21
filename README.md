@@ -41,7 +41,7 @@ Pick a favourite driver with the star on the Drivers page or in Settings. They a
 - Career totals: starts, wins, podiums, poles, fastest laps, titles and career points.
 - History at the next circuit.
 - Race-by-race results for Grands Prix, sprints and qualifying.
-- This weekend's session results and the latest team radio.
+- This weekend's session results and the latest team radio, as the same cards used on Live Timing (photo, play button, lap, date and time).
 - **Live section** during any session: position, gaps to the cars ahead and behind with the change over the last lap, tyre, pit stops, lap time chart, sector times, car data, overtakes made and lost (races), FIA messages about them and team radio. An optional live track map (Settings) shows where they are on the circuit.
 
 ### Favourites: Team tab
@@ -54,7 +54,7 @@ Pick a favourite team with the flag button in the Constructors' standings or in 
 - Team-mate comparison and constructors' title maths.
 - The team's history at the next circuit.
 - Race-by-race results for both cars.
-- This weekend's session results for both drivers and their team radio.
+- This weekend's session results for both drivers and their team radio, as radio cards.
 - **Live view** during sessions: both cars side by side, team FIA messages and team radio.
 
 ### Alerts
@@ -83,7 +83,7 @@ Where names link to (driver page, team page or race results page):
 | --- | --- | --- | --- |
 | Dashboard | Names in the Drivers' Championship table, Last race podium | Constructors' bars, Team column of the drivers' table, Last race podium | Last race name, each round in the calendar strip |
 | Live Timing | Codes in the timing tower, cars on the track map, drivers in the sector top 3, driver chips under FIA messages, team radio codes | | |
-| Driver and team pages | Team radio codes | | Race names in the race-by-race tables, seasons in the circuit history tables |
+| Driver and team pages | Driver names on the team radio cards | | Race names in the race-by-race tables, seasons in the circuit history tables |
 | Standings | Driver names | Team names | |
 | Calendar | Winner of each finished race | Winner's team | Race names |
 | Race results | Podium and every driver in the race, sprint and qualifying tables | Podium teams and team names in those tables | Previous and next race |

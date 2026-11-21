@@ -8,7 +8,8 @@ import { fmtGap, fmtLap } from '../lib/format';
 import { trackStatus } from '../lib/raceControl';
 import { href } from '../lib/router';
 import { tyre } from '../lib/teams';
-import { RadioList, type DriverLabel } from './RadioList';
+import { RadioCards } from './RadioCards';
+import type { DriverLabel } from './RadioList';
 import { ErrorBox, Loading } from './States';
 
 /** Both cars of the favourite team during a live session, from one shared set of live data. */
@@ -103,7 +104,7 @@ export function LiveTeam({ session, team }: { session: Session; team: FavouriteT
         </div>
         <div className="inset w2" style={{ padding: 16 }}>
           <div style={{ fontWeight: 600, marginBottom: 6 }}>Team radio</div>
-          <RadioList clips={radio.data ?? []} labels={labels} limit={6} />
+          <RadioCards clips={radio.data ?? []} drivers={new Map(mine.map((d) => [d.driver_number, d]))} favNum={null} teamNums={[]} laps={t.laps} limit={6} />
         </div>
       </div>
     </section>

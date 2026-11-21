@@ -12,7 +12,7 @@ import { useSettings } from '../lib/settings';
 import { teamColour, tyre } from '../lib/teams';
 import { Empty, ErrorBox, Loading } from './States';
 import { TrackMap } from './TrackMap';
-import { RadioList } from './RadioList';
+import { RadioCards } from './RadioCards';
 
 /** Live section of the My Driver page, shown while a session is running. */
 export function LiveDriver({ session, code, alerts = true }: { session: Session; code: string; alerts?: boolean }) {
@@ -208,7 +208,7 @@ export function LiveDriver({ session, code, alerts = true }: { session: Session;
         </div>
         <div className="inset w2" style={{ padding: 16 }}>
           <div style={{ fontWeight: 600, marginBottom: 6 }}>Team radio</div>
-          <RadioList clips={radio.data ?? []} limit={6} />
+          <RadioCards clips={radio.data ?? []} drivers={new Map((drivers.data ?? []).map((d) => [d.driver_number, d]))} favNum={null} teamNums={[]} laps={t.laps} limit={6} />
         </div>
       </div>
       <div className="faint" style={{ fontSize: 12 }}>Updates every 10 to 30 seconds while this page is open.</div>

@@ -2,11 +2,11 @@ import type React from 'react';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getQualifying, getTeamCircuitHistory, type ConstructorStanding, type Race, type RaceWithResults, type Result } from '../api/jolpica';
-import { openf1, type OF1Driver, type Session, type SessionResult, type TeamRadio } from '../api/openf1';
+import { openf1, type Lap, type OF1Driver, type Session, type SessionResult, type TeamRadio } from '../api/openf1';
 import { FavTabs } from '../components/FavTabs';
 import { FlagIcon } from '../components/Icons';
 import { LiveTeam } from '../components/LiveTeam';
-import { RadioList, type DriverLabel } from '../components/RadioList';
+import { RadioCards } from '../components/RadioCards';
 import { Footer } from '../components/Shell';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { useFavouriteTeam, useLiveSession, useTeam, type FavouriteTeam } from '../hooks/useFavourite';
@@ -234,7 +234,7 @@ function TeamProfile({ team, season, isFav = true }: { team: FavouriteTeam; seas
         </>
       )}
 
-      {!inLive && <TeamWeekend team={team} colours={colours} />}
+      {!inLive && <TeamWeekend team={team} />}
       <Footer />
     </>
   );
@@ -379,7 +379,7 @@ function TeamRaceByRace({ rounds, pair }: { rounds: RoundTeam[]; pair: string[] 
 }
 
 /** This weekend's finished sessions for both cars, plus the latest team radio. */
-function TeamWeekend({ team, colours }: { team: FavouriteTeam; colours: string[] }) {
+function TeamWeekend({ team }: { team: FavouriteTeam }) {
   const sessions = useLatestSessions();
   const now = useNow(60_000);
   const done: Session[] = (sessions.data ?? []).filter((s) => Date.parse(s.date_end) < now);
@@ -406,8 +406,14 @@ function TeamWeekend({ team, colours }: { team: FavouriteTeam; colours: string[]
     staleTime: 10 * 60_000,
     queryFn: async () => (await Promise.all(nums.map((n) => openf1<TeamRadio>('team_radio', { session_key: last!.session_key, driver_number: n })))).flat(),
   });
+  // Laps of that session, to show which lap each message was sent on.
+  const lastLaps = useQuery({
+    queryKey: ['team-laps-last', last?.session_key, nums.join(',')],
+    enabled: nums.length > 0 && !!last && !!radio.data?.length,
+    staleTime: 10 * 60_000,
+    queryFn: async () => (await Promise.all(nums.map((n) => openf1<Lap>('laps', { session_key: last!.session_key, driver_number: n })))).flat(),
+  });
   if (!done.length || !nums.length) return null;
-  const labels = new Map<number, DriverLabel>(mine.map((d, i) => [d.driver_number, { code: d.name_acronym, colour: colours[i] ?? colours[0] }]));
   const show = (r?: SessionResult) => (!r ? '-' : r.dsq ? 'DSQ' : r.dns ? 'DNS' : r.dnf ? 'DNF' : r.position ? `P${r.position}` : '-');
   return (
     <div className="row">
@@ -435,7 +441,7 @@ function TeamWeekend({ team, colours }: { team: FavouriteTeam; colours: string[]
       <section className="card w2" aria-labelledby="team-radio">
         <h2 className="h2" id="team-radio" style={{ marginBottom: 4 }}>Team radio</h2>
         <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>{last.session_name}</div>
-        {radio.isLoading ? <Loading rows={2} /> : <RadioList clips={radio.data ?? []} labels={labels} />}
+        {radio.isLoading ? <Loading rows={2} /> : <RadioCards clips={radio.data ?? []} drivers={new Map(mine.map((d) => [d.driver_number, d]))} favNum={null} teamNums={[]} laps={lastLaps.data ?? []} />}
       </section>
     </div>
   );
