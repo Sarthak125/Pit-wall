@@ -4,8 +4,11 @@ name: Transcribe team radio
 # new team radio clips and publish them to the `transcripts` branch, which the app
 # reads. Outside race weekends the run stops after a few seconds.
 on:
-  schedule:
-    - cron: '*/10 * * * *'
+  # Paused: F1's radio file server (CloudFront) refuses requests from GitHub's
+  # runners, so transcription has to run from another machine. Re-enable the
+  # schedule when this job runs on a runner that can reach the files.
+  # schedule:
+  #   - cron: '*/10 * * * *'
   workflow_dispatch:
     inputs:
       session_key:
