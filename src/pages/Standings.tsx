@@ -9,7 +9,7 @@ import { useFavourite, useFavouriteTeam } from '../hooks/useFavourite';
 import { FlagIcon } from '../components/Icons';
 import { rowProps } from '../lib/rowStyle';
 import { setFavoriteTeam } from '../lib/settings';
-import { driverHref } from '../lib/router';
+import { driverHref, teamHref } from '../lib/router';
 
 export function Standings() {
   const { season } = useSettings();
@@ -98,7 +98,7 @@ export function Standings() {
                     <td>
                       <div className="who">
                         <span className="team-bar" style={{ background: teamColour(t.Constructor.constructorId) }} />
-                        <span style={{ fontWeight: 600 }}>{t.Constructor.name}</span>
+                        <a className="name-link" href={teamHref(t.Constructor.constructorId)}>{t.Constructor.name}</a>
                       </div>
                     </td>
                     <td className="r mono">{t.wins}</td>

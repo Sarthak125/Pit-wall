@@ -81,17 +81,23 @@ export interface FavouriteTeam {
   codes: Set<string>;
 }
 
-/** The favourite team, with its drivers worked out from the season's standings. */
-export function useFavouriteTeam(): FavouriteTeam | null {
-  const { favoriteTeam, favoriteTeamName, season } = useSettings();
+/** Any team by constructor id, with its drivers worked out from the season's standings. */
+export function useTeam(id: string, name: string): FavouriteTeam | null {
+  const { season } = useSettings();
   const standings = useDriverStandings(season);
   return useMemo(() => {
-    if (!favoriteTeam) return null;
+    if (!id) return null;
+    const rows = standings.data?.standings ?? [];
     const codes = new Set(
-      (standings.data?.standings ?? [])
-        .filter((d) => d.Constructors[d.Constructors.length - 1]?.constructorId === favoriteTeam && d.Driver.code)
-        .map((d) => d.Driver.code!),
+      rows.filter((d) => d.Constructors[d.Constructors.length - 1]?.constructorId === id && d.Driver.code).map((d) => d.Driver.code!),
     );
-    return { id: favoriteTeam, name: favoriteTeamName, colour: teamColour(favoriteTeam), codes };
-  }, [favoriteTeam, favoriteTeamName, standings.data]);
+    const fromStandings = rows.flatMap((d) => d.Constructors).find((c) => c.constructorId === id)?.name;
+    return { id, name: name || fromStandings || id, colour: teamColour(id), codes };
+  }, [id, name, standings.data]);
+}
+
+/** The favourite team, with its drivers worked out from the season's standings. */
+export function useFavouriteTeam(): FavouriteTeam | null {
+  const { favoriteTeam, favoriteTeamName } = useSettings();
+  return useTeam(favoriteTeam, favoriteTeamName);
 }

@@ -12,10 +12,15 @@ function read(): Route {
   return ROUTES.includes(r) ? r : 'dashboard';
 }
 
-/** Second part of the hash, e.g. "VER" in #/driver/VER. Empty when absent. */
+/**
+ * Second part of the hash: a driver code in #/driver/VER, a team id in
+ * #/team/red_bull. Empty when absent or malformed.
+ */
 function readParam(): string {
-  const p = parts()[1] ?? '';
-  return /^[A-Za-z]{3}$/.test(p) ? p.toUpperCase() : '';
+  const [route, p = ''] = parts();
+  if (route === 'driver') return /^[A-Za-z]{3}$/.test(p) ? p.toUpperCase() : '';
+  if (route === 'team') return /^[a-z0-9_]{2,40}$/.test(p) ? p : '';
+  return '';
 }
 
 const subscribe = (cb: () => void) => {
@@ -33,5 +38,8 @@ export function useRouteParam(): string {
 
 /** Link to any driver's stats page by their three-letter code. */
 export const driverHref = (code: string) => `#/driver/${code}`;
+
+/** Link to any team's page by its constructor id (e.g. "ferrari"). */
+export const teamHref = (id: string) => `#/team/${id}`;
 
 export const href = (r: Route) => (r === 'dashboard' ? '#/' : `#/${r}`);

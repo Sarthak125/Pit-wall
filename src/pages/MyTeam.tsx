@@ -9,12 +9,12 @@ import { LiveTeam } from '../components/LiveTeam';
 import { RadioList, type DriverLabel } from '../components/RadioList';
 import { Footer } from '../components/Shell';
 import { Empty, ErrorBox, Loading } from '../components/States';
-import { useFavouriteTeam, useLiveSession, type FavouriteTeam } from '../hooks/useFavourite';
+import { useFavouriteTeam, useLiveSession, useTeam, type FavouriteTeam } from '../hooks/useFavourite';
 import { useNow } from '../hooks/usePoll';
 import { useConstructorStandings, useDriverStandings, useLatestSessions, useResults, useSchedule } from '../hooks/useSeason';
 import { isClassified } from '../lib/driverStats';
 import { raceStart } from '../lib/format';
-import { href } from '../lib/router';
+import { href, useRouteParam } from '../lib/router';
 import { setFavoriteTeam, useSettings } from '../lib/settings';
 import { teamColour } from '../lib/teams';
 import { Compare } from './MyDriver';
@@ -23,8 +23,11 @@ const lighter = (c: string) => `color-mix(in srgb, ${c} 45%, white)`;
 
 export function MyTeam() {
   const team = useFavouriteTeam();
+  const param = useRouteParam();
   const { season } = useSettings();
   const teams = useConstructorStandings(season);
+  // #/team/ID shows any team; #/team alone shows the favourite.
+  if (param) return <AnyTeam key={param} id={param} season={season} isFav={team?.id === param} />;
   if (!team) {
     return (
       <>
@@ -66,7 +69,12 @@ interface RoundTeam {
   points: number;
 }
 
-function TeamProfile({ team, season }: { team: FavouriteTeam; season: string }) {
+function AnyTeam({ id, season, isFav }: { id: string; season: string; isFav: boolean }) {
+  const team = useTeam(id, '');
+  return team ? <TeamProfile team={team} season={season} isFav={isFav} /> : null;
+}
+
+function TeamProfile({ team, season, isFav = true }: { team: FavouriteTeam; season: string; isFav?: boolean }) {
   const teams = useConstructorStandings(season);
   const drivers = useDriverStandings(season);
   const results = useResults(season);
@@ -134,13 +142,17 @@ function TeamProfile({ team, season }: { team: FavouriteTeam; season: string }) 
 
   return (
     <>
-      <FavTabs active="team" />
+      {isFav ? (
+        <FavTabs active="team" />
+      ) : (
+        <a className="link" href={href('standings')} style={{ alignSelf: 'flex-start' }}>← Standings</a>
+      )}
       <section className="card profile-head" style={{ borderLeftColor: team.colour, '--team': team.colour } as React.CSSProperties}>
         <span className="team-flag" style={{ width: 72, height: 72, borderRadius: 16, background: `color-mix(in srgb, ${team.colour} 18%, black)`, justifyContent: 'center', alignItems: 'center', flex: 'none' }}>
           <FlagIcon filled size={34} />
         </span>
         <div style={{ flex: '1 1 260px', minWidth: 0 }}>
-          <div className="kicker">Your team</div>
+          <div className="kicker">{isFav ? 'Your team' : 'Team'}</div>
           <h1>{me?.Constructor.name ?? team.name}</h1>
           <div className="muted" style={{ marginTop: 6 }}>{pair.join(' · ')}{me?.Constructor.nationality ? ` · ${me.Constructor.nationality}` : ''}</div>
         </div>
@@ -158,8 +170,15 @@ function TeamProfile({ team, season }: { team: FavouriteTeam; season: string }) 
             </div>
           </div>
         )}
-        <button className="flag-btn" style={{ width: 44, height: 44 }} aria-pressed="true" aria-label={`Remove ${team.name} as your team`} onClick={() => setFavoriteTeam(team.id, team.name)}>
-          <FlagIcon filled />
+        <button
+          className="flag-btn"
+          style={{ width: 44, height: 44 }}
+          aria-pressed={isFav}
+          aria-label={isFav ? `Remove ${team.name} as your team` : `Make ${team.name} your team`}
+          title={isFav ? 'Your favourite team' : 'Make favourite team'}
+          onClick={() => setFavoriteTeam(team.id, me?.Constructor.name ?? team.name)}
+        >
+          <FlagIcon filled={isFav} />
         </button>
       </section>
 

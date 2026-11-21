@@ -14,10 +14,18 @@ const NAV: { route: Route; label: string; icon: () => ReactNode }[] = [
 ];
 
 export function Shell({ route, live, children }: { route: Route; live: boolean; children: ReactNode }) {
-  const { season, favoriteDriver } = useSettings();
+  const { season, favoriteDriver, favoriteTeam } = useSettings();
   const param = useRouteParam();
   // A driver page for someone other than the favourite belongs under Drivers.
-  const active: Route = route === 'driver' && param && param !== favoriteDriver ? 'drivers' : route === 'team' ? 'driver' : route;
+  // Pages for drivers or teams other than the favourites belong under Drivers or Standings.
+  const active: Route =
+    route === 'driver' && param && param !== favoriteDriver
+      ? 'drivers'
+      : route === 'team' && param && param !== favoriteTeam
+        ? 'standings'
+        : route === 'team'
+          ? 'driver'
+          : route;
   const qc = useQueryClient();
   const fetching = useIsFetching();
   const year = new Date().getFullYear();
