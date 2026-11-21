@@ -102,7 +102,7 @@ export function LiveTeam({ session, team }: { session: Session; team: FavouriteT
         </div>
         <div className="inset w2" style={{ padding: 16 }}>
           <div style={{ fontWeight: 600, marginBottom: 6 }}>Team radio</div>
-          <RadioList clips={radio.data ?? []} sessionKey={sk} live labels={labels} limit={6} />
+          <RadioList clips={radio.data ?? []} labels={labels} limit={6} />
         </div>
       </div>
     </section>

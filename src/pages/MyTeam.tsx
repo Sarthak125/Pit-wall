@@ -359,7 +359,7 @@ function TeamRaceByRace({ rounds, pair }: { rounds: RoundTeam[]; pair: string[] 
   );
 }
 
-/** This weekend's finished sessions for both cars, plus the latest team radio with transcripts. */
+/** This weekend's finished sessions for both cars, plus the latest team radio. */
 function TeamWeekend({ team, colours }: { team: FavouriteTeam; colours: string[] }) {
   const sessions = useLatestSessions();
   const now = useNow(60_000);
@@ -416,7 +416,7 @@ function TeamWeekend({ team, colours }: { team: FavouriteTeam; colours: string[]
       <section className="card w2" aria-labelledby="team-radio">
         <h2 className="h2" id="team-radio" style={{ marginBottom: 4 }}>Team radio</h2>
         <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>{last.session_name}</div>
-        {radio.isLoading ? <Loading rows={2} /> : <RadioList clips={radio.data ?? []} sessionKey={last.session_key} live={false} labels={labels} />}
+        {radio.isLoading ? <Loading rows={2} /> : <RadioList clips={radio.data ?? []} labels={labels} />}
       </section>
     </div>
   );

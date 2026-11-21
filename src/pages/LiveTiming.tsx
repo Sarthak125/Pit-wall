@@ -446,7 +446,7 @@ function FiaSection({ messages, drivers, favNum, team, teamNums }: { messages: C
   );
 }
 
-/** Team radio for the whole session, with automatic transcripts. */
+/** Team radio for the whole session. */
 function RadioPanel({ session, live, drivers, favNum, teamNums }: { session: Session; live: boolean; drivers: Map<number, OF1Driver>; favNum: number | null; teamNums: number[] }) {
   const sk = session.session_key;
   const [who, setWho] = useState<number>(0);
@@ -470,7 +470,7 @@ function RadioPanel({ session, live, drivers, favNum, teamNums }: { session: Ses
           </select>
         </label>
       </div>
-      {radio.error ? <ErrorBox error={radio.error} what="team radio" /> : radio.loading ? <Loading rows={3} /> : <RadioList clips={clips} sessionKey={sk} live={live} labels={labels} limit={6} />}
+      {radio.error ? <ErrorBox error={radio.error} what="team radio" /> : radio.loading ? <Loading rows={3} /> : <RadioList clips={clips} labels={labels} limit={6} />}
     </section>
   );
 }

@@ -529,7 +529,7 @@ function ThisWeekend({ code }: { code: string }) {
       <section className="card w2" aria-labelledby="radio-last">
         <h2 className="h2" id="radio-last" style={{ marginBottom: 4 }}>Team radio</h2>
         <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>{last.session_name}</div>
-        {radio.isLoading ? <Loading rows={2} /> : <RadioList clips={radio.data ?? []} sessionKey={last.session_key} live={false} />}
+        {radio.isLoading ? <Loading rows={2} /> : <RadioList clips={radio.data ?? []} />}
       </section>
     </div>
   );

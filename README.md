@@ -15,15 +15,6 @@ Pick a **favourite team** with the flag button in the Constructors' standings or
 
 The favourite and alert settings are saved per device.
 
-## Team radio transcripts
-
-The **Transcribe team radio** workflow (`.github/workflows/transcribe.yml`) runs every 10 minutes. While a session is on, or up to 3 hours after it ends, it downloads new team radio clips, transcribes them with the open-source Whisper model (`large-v3-turbo`) and publishes one JSON file per session to the `transcripts` branch. The app reads them from there, so transcripts appear roughly 10 to 30 minutes after a clip. Outside race weekends each run stops after a few seconds.
-
-- Transcripts are automatic and often imperfect, especially with engine noise; the app labels them as such.
-- To transcribe an older session, run the workflow manually (Actions tab, "Transcribe team radio", Run workflow) with its OpenF1 session key.
-- GitHub pauses scheduled workflows in repositories with no activity for 60 days; re-enable it in the Actions tab if that happens.
-- No API key is needed. Browsers cannot transcribe the clips themselves because F1's audio server does not allow cross-site access.
-
 ## Data sources
 
 Formula 1 has no public official API. This app uses two free community APIs:

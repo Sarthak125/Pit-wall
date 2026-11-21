@@ -207,7 +207,7 @@ export function LiveDriver({ session, code }: { session: Session; code: string }
         </div>
         <div className="inset w2" style={{ padding: 16 }}>
           <div style={{ fontWeight: 600, marginBottom: 6 }}>Team radio</div>
-          <RadioList clips={radio.data ?? []} sessionKey={sk} live limit={6} />
+          <RadioList clips={radio.data ?? []} limit={6} />
         </div>
       </div>
       <div className="faint" style={{ fontSize: 12 }}>Updates every 10 to 30 seconds while this page is open.</div>
