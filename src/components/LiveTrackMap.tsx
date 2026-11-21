@@ -229,6 +229,7 @@ export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, t
               <g key={s.number}>
                 <path d={s.path} className={`tmap-flag glow ${flags.sectors.get(s.number)}`} style={{ strokeWidth: sw * 3.2 }} />
                 <path d={s.path} className={`tmap-flag ${flags.sectors.get(s.number)}`} style={{ strokeWidth: sw * 1.3 }} />
+                <path d={s.path} className="tmap-flag stripe" style={{ strokeWidth: sw * 0.45, strokeDasharray: `${sw * 1.2} ${sw * 1.2}` }} />
               </g>
             ) : null,
           )}

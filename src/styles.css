@@ -15,11 +15,11 @@
   --purple: #c084fc;
   --red-soft: #ff8a8a;
   --blue-soft: #8ab8ff;
-  /* Timing sector colours, used everywhere a sector is shown. Chosen not to clash with the timing colours
-     (purple, green, yellow), flags (yellow, orange, red) or the pit lane (blue). */
-  --s1: #f472b6;
-  --s2: #22d3ee;
-  --s3: #e2e8f0;
+  /* Timing sector colours, used everywhere a sector is shown: red, light blue, yellow.
+     Flags drawn on the map get a dashed stripe so they still stand out on the yellow sector. */
+  --s1: #ef4444;
+  --s2: #7dd3fc;
+  --s3: #facc15;
   --violet-soft: #c4b5fd;
   --display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
   --body: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -443,3 +443,4 @@ html { zoom: 1.1; }
 .pos-tip { position: absolute; top: 8px; pointer-events: none; background: var(--bar); border: 1px solid var(--line-strong); border-radius: 8px; padding: 8px 10px; font-size: 12px; min-width: 110px; box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
 .pos-tip-row { display: grid; grid-template-columns: 34px 10px 1fr; align-items: center; gap: 6px; }
 .pos-tip-row i { width: 10px; height: 3px; border-radius: 2px; display: block; }
+.tmap-flag.stripe { stroke: #0b0b0d; stroke-linecap: butt; opacity: 0.85; }
