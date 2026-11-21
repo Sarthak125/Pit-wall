@@ -194,7 +194,7 @@ The screen designs live on a design canvas: [Pit Wall design canvas](https://cla
 
 | Page | Laptop board | Android tablet board (portrait) |
 | --- | --- | --- |
-| Dashboard | Dashboard (laptop) | Dashboard (Android tablet, portrait) |
+| Dashboard (LIVE banner, next race, circuit map and facts, weekend forecast, last race, favourites, standings) | Dashboard (laptop) | Dashboard (Android tablet, portrait) |
 | Live Timing (timing tower with mini-sectors, tyre history, DIFF, PIT NOW, speed and pedals; championship if it ended now; track map with sector top 3; team radio cards; FIA feed) | Live Timing (laptop), and Live Timing before the race starts (laptop) for the starting-grid view | Live Timing (Android tablet, portrait), and Live Timing: track map and team radio (Android tablet, portrait) for the screen further down |
 | Favourites: Driver tab | Favourites: Driver tab (laptop) | Favourites: Driver tab (Android tablet, portrait) |
 | Favourites: Team tab | Favourites: Team tab and where the team appears | Favourites: Team tab (Android tablet, portrait) |
