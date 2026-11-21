@@ -37,6 +37,8 @@ Opened from a race name on the Calendar (or anywhere a race links): results for 
 - Lap length (measured along the recorded track outline, so it can be a little off the official figure), number of turns, circuit type (permanent, street or temporary road course, from OpenF1), race laps and distance, and pit stop time loss normally and under safety car / VSC.
 - History from every Grand Prix held there (Jolpica-F1): first Grand Prix, how many have been held, how often the pole sitter won, the win from furthest back, the fastest race lap on record (fastest laps are recorded from 2004, and layouts change over the years), most wins by a driver and by a team, and the last six winners with grid slot and pole sitter.
 - A link to a map of the area.
+- **Weekend weather** for each day of the weekend, with the sessions on that day (in local track time): a forecast once the weekend is within about 16 days, and the recorded weather for past races. From Open-Meteo (free, no key, for non-commercial use).
+- **Positions lap by lap** for finished races and sprints from 2023 onward (OpenF1): one line per driver in team colours (team-mates share a colour, the second car is dashed), the top 10 by default with a button for everyone, and a hover tooltip with the order on each lap. These are positions on track, so post-race penalties are not reflected.
 
 ### Favourites: Driver tab
 
@@ -149,6 +151,7 @@ Formula 1 has no public official API. This app uses free community APIs:
 | --- | --- | --- |
 | [OpenF1](https://openf1.org) | Live timing, positions, gaps, laps and sectors, tyres, pit stops, race control messages, weather, car data, car positions (track map), overtakes, starting grid, session results, team radio | Historical data is free. Check OpenF1's current terms for real-time access during sessions; if it needs an account, paste your access token in **Settings**. Default budget is 30 requests per minute, adjustable in Settings. |
 | [Jolpica-F1](https://github.com/jolpica/jolpica-f1) | Calendar, results, qualifying, sprints, driver and constructor standings, career totals, circuit history | Ergast-compatible. Responses are cached on the device, from 10 minutes for standings up to a week for past seasons. |
+| [Open-Meteo](https://open-meteo.com) | Weekend weather on race pages (forecast and recorded) | Free, no key, for non-commercial use. Requests come from your own device. |
 | [MultiViewer](https://multiviewer.app) circuit API | Track outlines, turn numbers, marshal sectors and map rotation for the Live Timing track map | Unofficial and free, no key. Layouts are cached on the device for a week. If a layout is missing, the map says so and the rest of the page works as normal. |
 
 How some values are worked out:

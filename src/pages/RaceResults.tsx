@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getRound, SESSION_FIELDS, type Race, type Result } from '../api/jolpica';
 import { CircuitOverview } from '../components/CircuitOverview';
+import { PositionChart } from '../components/PositionChart';
+import { WeekendWeather } from '../components/WeekendWeather';
 import { Footer } from '../components/Shell';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { useFavourite, useFavouriteTeam } from '../hooks/useFavourite';
@@ -81,6 +83,7 @@ export function RaceResults() {
       </section>
 
       <CircuitOverview race={info} />
+      <WeekendWeather race={info} now={now} />
 
       {upcoming ? (
         <section className="card" aria-labelledby="sched">
@@ -116,6 +119,14 @@ export function RaceResults() {
           ) : (
             <ResultsTable rows={shownTab === 'sprint' ? sprint : results} showFastest={shownTab === 'race'} />
           )}
+        </section>
+      )}
+      {finished && Number(info.season) >= 2023 && shownTab !== 'quali' && (
+        <section className="card" aria-labelledby="positions">
+          <div className="card-head">
+            <h2 className="h2" id="positions">Positions lap by lap{shownTab === 'sprint' ? ': sprint' : ''}</h2>
+          </div>
+          <PositionChart key={shownTab} race={info} results={shownTab === 'sprint' ? sprint : results} sprint={shownTab === 'sprint'} />
         </section>
       )}
       <Footer />

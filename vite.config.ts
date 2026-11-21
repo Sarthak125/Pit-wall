@@ -40,6 +40,12 @@ export default defineConfig({
             options: { cacheName: 'jolpica', networkTimeoutSeconds: 8, expiration: { maxEntries: 200, maxAgeSeconds: 7 * 24 * 3600 } },
           },
           {
+            // Weather: show the last copy when offline.
+            urlPattern: ({ url }) => url.hostname.endsWith('open-meteo.com'),
+            handler: 'NetworkFirst',
+            options: { cacheName: 'weather', networkTimeoutSeconds: 8, expiration: { maxEntries: 60, maxAgeSeconds: 7 * 24 * 3600 } },
+          },
+          {
             // Circuit layouts for the track map rarely change.
             urlPattern: ({ url }) => url.hostname === 'api.multiviewer.app',
             handler: 'StaleWhileRevalidate',
