@@ -100,7 +100,8 @@ export async function fetchJson<T>(url: string, opts: FetchOptions): Promise<T> 
       throw new HttpError(res.status, url);
     }
     const retryAfter = Number(res.headers.get('Retry-After'));
-    await sleep(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1_000 : 2_000 * (attempt + 1));
+    // Honour Retry-After, but never stall a page for long: a server asking for minutes or hours gets an error instead on the next try.
+    await sleep(Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter, 10) * 1_000 : 2_000 * (attempt + 1));
   }
 }
 

@@ -37,7 +37,7 @@ export async function getWeekendWeather(lat: string, long: string, start: string
   const base = old ? 'https://archive-api.open-meteo.com/v1/archive' : 'https://api.open-meteo.com/v1/forecast';
   const fields = ['weather_code', 'temperature_2m_max', 'temperature_2m_min', 'precipitation_sum', 'wind_speed_10m_max', ...(old ? [] : ['precipitation_probability_max'])];
   const url = `${base}?latitude=${lat}&longitude=${long}&daily=${fields.join(',')}&timezone=auto&start_date=${start}&end_date=${end}`;
-  const data = await fetchJson<Resp>(url, { limiter, retries: 1, cacheTtlMs: old ? 7 * 86_400_000 : 60 * 60_000 });
+  const data = await fetchJson<Resp>(url, { limiter, retries: 0, cacheTtlMs: old ? 7 * 86_400_000 : 60 * 60_000 });
   const d = data.daily;
   const days = new Map<string, DayWeather>();
   d.time.forEach((t, i) => {
