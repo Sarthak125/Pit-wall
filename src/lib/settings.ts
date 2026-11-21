@@ -8,10 +8,14 @@ export interface Settings {
   openf1PerMinute: number;
   /** Selected season for standings and calendar ("current" or a year). */
   season: string;
+  /** Favourite driver's three-letter code (e.g. "VER"), shared by both APIs. Empty for none. */
+  favoriteDriver: string;
+  /** Display name for the favourite, so it shows before data loads. */
+  favoriteName: string;
 }
 
 const KEY = 'pitwall:settings';
-const DEFAULTS: Settings = { openf1Token: '', openf1PerMinute: 30, season: 'current' };
+const DEFAULTS: Settings = { openf1Token: '', openf1PerMinute: 30, season: 'current', favoriteDriver: '', favoriteName: '' };
 
 let current: Settings = load();
 const listeners = new Set<() => void>();
@@ -47,4 +51,10 @@ export function useSettings(): Settings {
     },
     () => current,
   );
+}
+
+export function setFavorite(code: string, name: string) {
+  const { favoriteDriver } = getSettings();
+  // Choosing the current favourite again clears it.
+  updateSettings(favoriteDriver === code ? { favoriteDriver: '', favoriteName: '' } : { favoriteDriver: code, favoriteName: name });
 }
