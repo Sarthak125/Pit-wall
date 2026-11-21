@@ -219,7 +219,7 @@ The screen designs live on a design canvas: [Pit Wall design canvas](https://cla
 
 There is also a "Favourite driver: where it appears" board that maps every place the favourite driver shows up in the app.
 
-The tablet boards show one screen (800 × 1280) with the bottom menu (Dashboard, Live Timing, Favourites, Standings, Calendar, Drivers). The app's tablet layout is a single scrolling column with the same sections, so some boards note what sits further down the page. There are no phone boards yet; the phone layout follows the tablet one with the changes listed under [Works everywhere](#works-everywhere).
+The tablet boards show one screen (800 × 1280) with the bottom menu (Dashboard, Live Timing, Favourites, Standings, Calendar, Drivers). The app's tablet layout is a single scrolling column with the same sections, so some boards note what sits further down the page. Four phone boards (390 × 844) show the phone layout: Dashboard (phone), Live Timing (phone), Standings (phone) and Calendar (phone). They use the compact header, the short bottom menu labels and the trimmed tables described under [Works everywhere](#works-everywhere); other pages on a phone follow their tablet boards.
 
 ## Data sources
 
