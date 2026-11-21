@@ -50,8 +50,45 @@ export interface TimingRow {
   sectorTone: ('overall' | 'personal' | 'slower' | 'none')[];
   lastLapTone: 'overall' | 'personal' | 'slower' | 'none';
   stint: Stint | undefined;
+  /** Every stint so far, oldest first. */
+  stints: Stint[];
   tyreAge: number | null;
   pits: number;
+  /** Live: the newest lap row, still in progress, so sectors fill in as the car goes round. After the session: the best lap. */
+  currentLap: Lap | undefined;
+  currentSectorTone: ('overall' | 'personal' | 'slower' | 'none')[];
+  status: 'IN PIT' | 'PIT OUT' | null;
+  /** Live speed, throttle and brake, when the session is live. */
+  car: CarData | undefined;
+  /** Fastest speed-trap reading this session. */
+  trapSpeed: number | null;
+}
+
+/** Last mini-sector code recorded on a lap. */
+function lastSegment(l: Lap): number | null {
+  const all = [...(l.segments_sector_1 ?? []), ...(l.segments_sector_2 ?? []), ...(l.segments_sector_3 ?? [])].filter((v): v is number => v != null && v > 0);
+  return all.length ? all[all.length - 1] : null;
+}
+
+/** Whether a car is in the pit lane, or on its way out, from pit records and mini-sector codes. */
+function pitStatus(mine: Lap[], pits: Pit[], t: number): TimingRow['status'] {
+  const latest = mine[mine.length - 1];
+  const p = pits.filter((x) => Date.parse(x.date) <= t).sort((a, b) => a.date.localeCompare(b.date)).pop();
+  if (p) {
+    const entered = Date.parse(p.date);
+    const laterLap = mine.some((l) => l.date_start && Date.parse(l.date_start) > entered + 5_000);
+    if (p.pit_duration != null ? t < entered + p.pit_duration * 1000 : !laterLap) return 'IN PIT';
+  }
+  if (!latest) return null;
+  if (latest.lap_duration == null) {
+    if (latest.is_pit_out_lap) {
+      const segs = (latest.segments_sector_1 ?? []).filter((v): v is number => v != null && v > 0);
+      return segs.length === 0 || segs.every((v) => v === 2064) ? 'IN PIT' : 'PIT OUT';
+    }
+    return null;
+  }
+  // The newest lap is finished and ended in the pit lane, with no lap after it: the car is in the garage.
+  return lastSegment(latest) === 2064 ? 'IN PIT' : null;
 }
 
 export function useLiveTiming(session: Session | undefined, live: boolean, carDriver: number | null) {
@@ -104,14 +141,15 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
   const pits = usePoll<Pit[]>(sk ? `pit-${sk}-${live}` : null, (_p, signal) => openf1('pit', { session_key: sk }, signal), every(LIVE_MS.pit));
   const weather = usePoll<Weather[]>(sk ? `wx-${sk}-${live}` : null, (_p, signal) => openf1('weather', { session_key: sk }, signal), every(LIVE_MS.weather));
 
-  const car = usePoll<CarData | null>(
-    sk && carDriver ? `car-${sk}-${carDriver}-${live}` : null,
+  // Speed, throttle and brake for every car, in one request. Only while live: after the session the cars are parked.
+  const cars = usePoll<Latest<CarData>>(
+    sk && live ? `cars-${sk}` : null,
     async (prev, signal) => {
-      const since = live ? iso(Date.now() - 20_000) : iso(endMs - 5 * 60_000);
-      const rows = await openf1<CarData>('car_data', { session_key: sk, driver_number: carDriver ?? undefined, 'date>': prev?.date ?? since }, signal);
-      return rows.length ? rows[rows.length - 1] : (prev ?? null);
+      const since = iso(Date.now() - 5_000);
+      const rows = await openf1<CarData>('car_data', { session_key: sk, 'date>': prev?.last && prev.last > since ? prev.last : since }, signal);
+      return mergeLatest(prev, rows);
     },
-    every(LIVE_MS.car),
+    LIVE_MS.car,
   );
 
   const messages: ClassifiedMsg[] = useMemo(
@@ -144,6 +182,11 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
       const lapsDone = mine.length ? mine[mine.length - 1].lap_number : 0;
       const tyreAge = stint ? (stint.tyre_age_at_start ?? 0) + Math.max(0, lapsDone - (stint.lap_start ?? lapsDone)) : null;
       const iv = intervals.data?.byDriver.get(d.driver_number);
+      // Live: the lap in progress, so sectors fill in as the car goes round. Afterwards: the driver's best lap.
+      const bestRow = completed.filter((l) => l.lap_duration === pbLap)[0];
+      const currentLap = live ? mine[mine.length - 1] : (bestRow ?? mine[mine.length - 1]);
+      const myPits = (pits.data ?? []).filter((p) => p.driver_number === d.driver_number);
+      const traps = mine.map((l) => l.st_speed ?? 0).filter((v) => v > 0);
       return {
         driver: d,
         colour: teamColour(d.team_name, d.team_colour),
@@ -162,12 +205,21 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
           ),
         ),
         stint,
+        stints: myStints,
         tyreAge,
-        pits: (pits.data ?? []).filter((p) => p.driver_number === d.driver_number).length,
+        pits: myPits.length,
+        currentLap,
+        currentSectorTone: [0, 1, 2].map((i) =>
+          tone(currentLap ? [currentLap.duration_sector_1, currentLap.duration_sector_2, currentLap.duration_sector_3][i] : null, pbS[i], overall.s[i]),
+        ),
+        // Once a session is over every car is parked, so the pit status only means something while live.
+        status: live ? pitStatus(mine, myPits, Date.now()) : null,
+        car: cars.data?.byDriver.get(d.driver_number),
+        trapSpeed: traps.length ? Math.max(...traps) : null,
       };
     });
     return out.sort((a, b) => (a.position ?? 99) - (b.position ?? 99));
-  }, [drivers.data, laps.data, stints.data, intervals.data, positions.data, pits.data]);
+  }, [drivers.data, laps.data, stints.data, intervals.data, positions.data, pits.data, cars.data, live, endMs]);
 
   const currentLap = rows.reduce((m, r) => Math.max(m, r.lapsDone), 0);
   const fastest = rows.reduce<number | null>((m, r) => (r.bestLap != null && (m == null || r.bestLap < m) ? r.bestLap : m), null);
@@ -182,7 +234,7 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
     messages,
     stints: stints.data ?? [],
     weather: latestWeather,
-    car: car.data ?? null,
+    car: (carDriver != null ? cars.data?.byDriver.get(carDriver) : undefined) ?? null,
     currentLap,
     fastest,
     loading,

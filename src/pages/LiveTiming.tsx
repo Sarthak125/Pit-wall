@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { isSessionLive, type OF1Driver, type Session, type Stint } from '../api/openf1';
+import { isSessionLive, type OF1Driver, type Session } from '../api/openf1';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { FiaText, FiaWhen } from '../components/FiaText';
 import { LiveTrackMap } from '../components/LiveTrackMap';
@@ -19,7 +19,7 @@ import {
   type ClassifiedMsg,
   type MsgTab,
 } from '../lib/raceControl';
-import { teamColour, tyre, TYRE } from '../lib/teams';
+import { teamColour, tyre } from '../lib/teams';
 import { StarIcon } from '../components/Icons';
 import { useFavourite, useFavouriteTeam, type FavouriteTeam } from '../hooks/useFavourite';
 import type { DriverLabel } from '../components/RadioList';
@@ -34,22 +34,17 @@ export function LiveTiming() {
   const sessions = useLatestSessions();
   const now = useNow(1000);
   const [picked, setPicked] = useState<number | null>(null);
-  const [carDriver, setCarDriver] = useState<number | null>(null);
 
   const list = sessions.data ?? [];
   const defaultSession = list.find((s) => isSessionLive(s, now)) ?? [...list].reverse().find((s) => Date.parse(s.date_start) <= now) ?? list[0];
   const session = list.find((s) => s.session_key === picked) ?? defaultSession;
   const live = session ? isSessionLive(session, now) : false;
 
-  const t = useLiveTiming(session, live, carDriver);
+  const t = useLiveTiming(session, live, null);
   const fav = useFavourite();
   const favTeam = useFavouriteTeam();
   const teamNums = t.rows.filter((r) => favTeam?.codes.has(r.driver.name_acronym)).map((r) => r.driver.driver_number);
   const favNum = t.rows.find((r) => r.driver.name_acronym === fav?.code)?.driver.driver_number ?? null;
-  // Car data opens on the favourite when they are in this session, else the leader.
-  const effectiveCar = carDriver ?? favNum ?? t.rows[0]?.driver.driver_number ?? null;
-  // Once rows load, select the leader for the car data panel.
-  if (carDriver == null && effectiveCar != null && t.rows[0]?.position != null) setCarDriver(effectiveCar);
 
   useEffect(() => {
     if (!live || !session || !fav || favNum == null || t.loading) return;
@@ -137,18 +132,14 @@ export function LiveTiming() {
               <span><i className="sw" style={{ background: 'var(--purple)' }} />Overall best</span>
               <span><i className="sw" style={{ background: 'var(--green)' }} />Personal best</span>
               <span><i className="sw" style={{ background: 'var(--amber)' }} />Slower</span>
+              <span><i className="sw" style={{ background: '#4f9dff' }} />Pit lane</span>
               {t.updatedAt && <span className="faint">Updated {fmtClock(new Date(t.updatedAt))}</span>}
             </div>
           </div>
           {t.loading ? <Loading rows={12} /> : t.rows.length === 0 ? <Empty>No timing data for this session yet.</Empty> : (
-            <TimingTable rows={t.rows} isRace={isRace} fastest={t.fastest} selected={effectiveCar} favNum={favNum} team={favTeam} onSelect={setCarDriver} />
+            <TimingTable rows={t.rows} isRace={isRace} live={live} fastest={t.fastest} favNum={favNum} team={favTeam} />
           )}
         </section>
-
-        <div className="col w1">
-          <CarPanel rows={t.rows} car={t.car} selected={effectiveCar} onSelect={setCarDriver} />
-          <StrategyPanel rows={t.rows} stints={t.stints} />
-        </div>
       </div>
 
       <section className="card tight" aria-labelledby="map">
@@ -174,148 +165,105 @@ export function LiveTiming() {
   );
 }
 
-function TimingTable({ rows, isRace, fastest, selected, favNum, team, onSelect }: { rows: TimingRow[]; isRace: boolean; fastest: number | null; selected: number | null; favNum: number | null; team: FavouriteTeam | null; onSelect: (n: number) => void }) {
+const SEG: Record<number, string> = { 2048: 'yellow', 2049: 'green', 2051: 'purple', 2064: 'pit' };
+
+/** Mini-sector bar: one block per timing loop, coloured like the official timing screens. */
+function Segments({ segs }: { segs: (number | null)[] | null | undefined }) {
+  if (!segs?.length) return <div className="segs" aria-hidden="true" />;
+  return (
+    <div className="segs" aria-hidden="true">
+      {segs.map((v, i) => <i key={i} className={v ? SEG[v] ?? 'none' : 'none'} />)}
+    </div>
+  );
+}
+
+function TimingTable({ rows, isRace, live, fastest, favNum, team }: { rows: TimingRow[]; isRace: boolean; live: boolean; fastest: number | null; favNum: number | null; team: FavouriteTeam | null }) {
   return (
     <div className="scroll-x">
-      <table className="tbl timing" style={{ minWidth: 820 }}>
+      <table className="tbl timing" style={{ minWidth: live ? 1180 : 1060 }}>
         <thead>
           <tr>
             <th>POS</th>
             <th>DRIVER</th>
             <th className="r">{isRace ? 'GAP' : 'GAP (BEST)'}</th>
             <th className="r">INT</th>
-            <th className="r">LAST LAP</th>
+            <th>LAST LAP</th>
             <th className="r">BEST</th>
-            <th className="r">S1</th>
-            <th className="r">S2</th>
-            <th className="r">S3</th>
-            <th>TYRE</th>
-            <th className="r">PITS</th>
+            <th className="r" title={live ? 'Current lap' : 'Best lap'}>SECTOR 1{live ? '' : ' (BEST LAP)'}</th>
+            <th className="r">SECTOR 2</th>
+            <th className="r">SECTOR 3</th>
+            <th>TYRES</th>
+            <th className="r" title={live ? 'Current speed' : 'Fastest speed trap reading this session'}>{live ? 'SPEED' : 'TOP TRAP'}</th>
+            {live && <th>PEDALS</th>}
           </tr>
         </thead>
         <tbody>
           {rows.map((r, i) => {
             const gap = isRace ? (i === 0 ? 'Leader' : fmtGap(r.gap)) : r.bestLap != null && fastest != null ? (i === 0 ? 'Fastest' : `+${(r.bestLap - fastest).toFixed(3)}`) : '-';
-            const ty = tyre(r.stint?.compound);
             const l = r.lastLap;
+            const c = r.currentLap;
+            const isTeam = team?.codes.has(r.driver.name_acronym);
+            const speed = live ? r.car?.speed : r.trapSpeed;
             return (
-              <tr key={r.driver.driver_number} className={[favNum === r.driver.driver_number ? 'fav' : '', team?.codes.has(r.driver.name_acronym) ? 'team' : '', selected === r.driver.driver_number ? 'me' : ''].join(' ').trim() || undefined} onClick={() => onSelect(r.driver.driver_number)} style={{ cursor: 'pointer', ...(team?.codes.has(r.driver.name_acronym) ? ({ '--team': team.colour } as React.CSSProperties) : {}) }}>
+              <tr key={r.driver.driver_number} className={[favNum === r.driver.driver_number ? 'fav' : '', isTeam ? 'team' : '', r.status === 'IN PIT' ? 'in-pit' : ''].join(' ').trim() || undefined} style={isTeam ? ({ '--team': team!.colour } as React.CSSProperties) : undefined}>
                 <td className="mono muted">{r.position ?? '-'}</td>
                 <td>
                   <div className="who">
                     <span className="team-bar" style={{ height: 20, background: r.colour }} />
-                    <a className="code name-link" style={{ fontWeight: 700 }} href={driverHref(r.driver.name_acronym)} title={`${r.driver.name_acronym}: full stats`} onClick={(e) => e.stopPropagation()}>{r.driver.name_acronym}</a>
+                    <a className="code name-link" style={{ fontWeight: 700 }} href={driverHref(r.driver.name_acronym)} title={`${r.driver.name_acronym}: full stats`}>{r.driver.name_acronym}</a>
                     <span className="faint" style={{ fontSize: 11 }}>{r.driver.driver_number}</span>
                     {favNum === r.driver.driver_number && <span className="fav-star" aria-label="Favourite"><StarIcon filled size={14} /></span>}
                   </div>
                 </td>
                 <td className="r mono">{gap}</td>
                 <td className="r mono muted">{isRace && i > 0 ? fmtGap(r.interval) : '-'}</td>
-                <td className={`r mono tone-${r.lastLapTone === 'slower' ? 'none' : r.lastLapTone}`}>{fmtLap(l?.lap_duration)}</td>
-                <td className="r mono">{fmtLap(r.bestLap)}</td>
-                {[l?.duration_sector_1, l?.duration_sector_2, l?.duration_sector_3].map((s, k) => (
-                  <td key={k} className={`r mono tone-${r.sectorTone[k]}`}>{fmtSector(s)}</td>
-                ))}
                 <td>
-                  {r.stint ? (
-                    <div className="who" style={{ gap: 8 }}>
-                      <span className="tyre" style={{ borderColor: ty.colour }} title={ty.name}>{ty.letter}</span>
-                      <span className="mono muted" style={{ fontSize: 12 }}>{r.tyreAge ?? '-'} laps</span>
-                    </div>
-                  ) : '-'}
+                  {r.status ? (
+                    <span className={`pit-pill ${r.status === 'IN PIT' ? 'in' : 'out'}`}>{r.status}</span>
+                  ) : (
+                    <span className={`lap-pill tone-${r.lastLapTone === 'slower' ? 'none' : r.lastLapTone}`}>{fmtLap(l?.lap_duration)}</span>
+                  )}
                 </td>
-                <td className="r mono muted">{r.pits}</td>
+                <td className="r mono">{fmtLap(r.bestLap)}</td>
+                {[1, 2, 3].map((k) => {
+                  const dur = c ? [c.duration_sector_1, c.duration_sector_2, c.duration_sector_3][k - 1] : null;
+                  const segs = c ? [c.segments_sector_1, c.segments_sector_2, c.segments_sector_3][k - 1] : null;
+                  return (
+                    <td key={k} className="r sector-cell">
+                      <div className={`mono tone-${r.currentSectorTone[k - 1]}`}>{dur != null ? fmtSector(dur) : '\u00a0'}</div>
+                      <Segments segs={segs} />
+                    </td>
+                  );
+                })}
+                <td>
+                  <div className="tyre-hist">
+                    {r.stints.slice(0, -1).map((st) => {
+                      const ty = tyre(st.compound);
+                      return <span key={st.stint_number} className="tyre small" style={{ borderColor: ty.colour }} title={`Earlier: ${ty.name}, laps ${st.lap_start ?? '?'} to ${st.lap_end ?? '?'}`}>{ty.letter}</span>;
+                    })}
+                    {r.stint ? (
+                      <>
+                        <span className="tyre" style={{ borderColor: tyre(r.stint.compound).colour }} title={`Now: ${tyre(r.stint.compound).name}`}>{tyre(r.stint.compound).letter}</span>
+                        <span className="mono muted" style={{ fontSize: 12 }}>{r.tyreAge ?? '-'}</span>
+                      </>
+                    ) : <span className="faint">-</span>}
+                  </div>
+                </td>
+                <td className="r mono">{speed != null ? <>{speed}<span className="faint" style={{ fontSize: 11 }}> km/h</span></> : '-'}</td>
+                {live && (
+                  <td>
+                    <div className="pedals" title={r.car ? `Throttle ${r.car.throttle}%, brake ${r.car.brake ? 'on' : 'off'}` : 'No car data yet'}>
+                      <i className="thr"><b style={{ width: `${Math.max(0, Math.min(100, r.car?.throttle ?? 0))}%` }} /></i>
+                      <i className="brk"><b style={{ width: `${r.car?.brake ? 100 : 0}%` }} /></i>
+                    </div>
+                  </td>
+                )}
               </tr>
             );
           })}
         </tbody>
       </table>
     </div>
-  );
-}
-
-function CarPanel({ rows, car, selected, onSelect }: { rows: TimingRow[]; car: { speed: number; n_gear: number; rpm: number; throttle: number; brake: number } | null; selected: number | null; onSelect: (n: number) => void }) {
-  return (
-    <section className="card tight" aria-labelledby="car">
-      <div className="card-head">
-        <h2 className="h2 sm" id="car">Car data</h2>
-        <label className="field">
-          Driver
-          <select className="select" value={selected ?? ''} onChange={(e) => onSelect(Number(e.target.value))}>
-            {rows.map((r) => (
-              <option key={r.driver.driver_number} value={r.driver.driver_number}>
-                {r.driver.name_acronym}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      {!car ? (
-        <Empty>No car data received yet.</Empty>
-      ) : (
-        <>
-          <div className="stat-grid three">
-            <div className="stat inset"><div className="l">SPEED</div><div className="v">{car.speed}<span className="u"> km/h</span></div></div>
-            <div className="stat inset"><div className="l">GEAR</div><div className="v">{car.n_gear}</div></div>
-            <div className="stat inset"><div className="l">RPM</div><div className="v">{(car.rpm / 1000).toFixed(1)}k</div></div>
-          </div>
-          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <Meter label="Throttle" value={car.throttle} colour="var(--green)" />
-            {/* OpenF1 reports brake as 0 or 100 (on or off). */}
-            <Meter label="Brake" value={car.brake} colour="#F87171" />
-          </div>
-        </>
-      )}
-    </section>
-  );
-}
-
-function Meter({ label, value, colour }: { label: string; value: number; colour: string }) {
-  const v = Math.max(0, Math.min(100, value));
-  return (
-    <div>
-      <div className="muted" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
-        <span>{label}</span>
-        <span className="mono">{v}%</span>
-      </div>
-      <div className="meter" role="meter" aria-label={label} aria-valuenow={v} aria-valuemin={0} aria-valuemax={100}>
-        <div style={{ width: `${v}%`, background: colour }} />
-      </div>
-    </div>
-  );
-}
-
-function StrategyPanel({ rows, stints }: { rows: TimingRow[]; stints: Stint[] }) {
-  const maxLap = Math.max(1, ...rows.map((r) => r.lapsDone), ...stints.map((s) => s.lap_end ?? 0));
-  return (
-    <section className="card tight" aria-labelledby="strategy">
-      <h2 className="h2 sm" id="strategy" style={{ marginBottom: 14 }}>Tyre strategy</h2>
-      {stints.length === 0 ? <Empty>No stint data yet.</Empty> : (
-        <div className="stints">
-          {rows.slice(0, 10).map((r) => {
-            const mine = stints.filter((s) => s.driver_number === r.driver.driver_number).sort((a, b) => a.stint_number - b.stint_number);
-            return (
-              <div className="stint-row" key={r.driver.driver_number}>
-                <a className="code name-link" style={{ fontWeight: 700 }} href={driverHref(r.driver.name_acronym)} title={`${r.driver.name_acronym}: full stats`} onClick={(e) => e.stopPropagation()}>{r.driver.name_acronym}</a>
-                <div className="stint-track">
-                  {mine.map((s) => {
-                    const startLap = s.lap_start ?? 1;
-                    const endLap = s.lap_end ?? r.lapsDone;
-                    const laps = Math.max(1, endLap - startLap + 1);
-                    return <div key={s.stint_number} title={`${tyre(s.compound).name}: laps ${startLap} to ${endLap}`} style={{ width: `${(laps / maxLap) * 100}%`, background: tyre(s.compound).colour }} />;
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      <div className="legend" style={{ marginTop: 12, fontSize: 11 }}>
-        {Object.values(TYRE).map((ty) => (
-          <span key={ty.name}><i className="sw" style={{ background: ty.colour }} />{ty.name}</span>
-        ))}
-      </div>
-    </section>
   );
 }
 

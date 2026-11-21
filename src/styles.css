@@ -377,3 +377,25 @@ a.round:hover, a.round:focus-visible { border-color: #6b7380; opacity: 1; }
 .rcard-when { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .rcard-bar { height: 3px; background: var(--line); border-radius: 2px; margin-top: 8px; overflow: hidden; }
 .rcard-bar i { display: block; height: 100%; transition: width 0.25s linear; }
+/* Timing tower extras */
+.sector-cell { min-width: 88px; }
+.segs { display: flex; justify-content: flex-end; gap: 2px; margin-top: 4px; height: 4px; }
+.segs i { width: 8px; height: 4px; border-radius: 1px; background: #2e3440; }
+.segs i.yellow { background: var(--amber); }
+.segs i.green { background: var(--green); }
+.segs i.purple { background: var(--purple); }
+.segs i.pit { background: #4f9dff; }
+.lap-pill { font-family: var(--mono); padding: 3px 8px; border-radius: 999px; }
+.lap-pill.tone-personal { background: color-mix(in srgb, var(--green) 20%, transparent); }
+.lap-pill.tone-overall { background: color-mix(in srgb, var(--purple) 22%, transparent); }
+.pit-pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
+.pit-pill.in { background: var(--accent); color: #fff; }
+.pit-pill.out { background: #4f9dff; color: #0b0d10; }
+tr.in-pit td { background: rgba(225, 6, 0, 0.08); }
+.tyre-hist { display: flex; align-items: center; gap: 4px; }
+.tyre.small { width: 16px; height: 16px; border-width: 2px; font-size: 7px; opacity: 0.6; }
+.pedals { display: flex; flex-direction: column; gap: 3px; width: 72px; }
+.pedals i { display: block; height: 4px; border-radius: 2px; background: #1f242c; overflow: hidden; }
+.pedals b { display: block; height: 100%; transition: width 0.4s; }
+.pedals .thr b { background: var(--green); }
+.pedals .brk b { background: #f87171; }

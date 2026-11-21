@@ -22,9 +22,7 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 - Pick any session of the current race weekend; live sessions update automatically.
 - Session bar: lap, elapsed time, track temperature and track status.
-- Timing tower: position, gap, interval, last lap, best lap, sector times coloured purple (overall best), green (personal best) or yellow, current tyre and its age, and pit stops. In practice and qualifying the gap is to the fastest lap.
-- Car data for any driver: speed, gear, RPM, throttle and brake.
-- Tyre strategy bars for each driver's stints.
+- Timing tower, all in one table: position, gap, interval, last lap, best lap, and each sector time with a mini-sector bar underneath (yellow, green for a personal best, purple for the overall best, blue in the pit lane). While live, the sectors fill in as each car goes round, the last-lap column shows **IN PIT** or **PIT OUT** when a car is in the pit lane, and each row shows the car's current speed with throttle and brake bars. After a session, the sectors are each driver's best lap and the speed column shows their top speed-trap reading. The tyre column shows the current tyre and its age, with earlier tyres as small icons before it.
 - **Track map**: the circuit with numbered turns and the start/finish line, and every car moving on it in team colours (your favourite driver ringed in gold, your team's cars in white). The three timing sectors are drawn in their own colours (S1 red, S2 blue, S3 teal; the sector lines are worked out from where a car crossed them on a clean lap), with a top 3 for each sector underneath: each driver's best sector time so far, shown with a team-coloured driver tile (and your favourite driver's position and gap if they are outside the top 3). Flags stand out: the flagged part of the track glows yellow or orange under yellow and double yellow flags, the whole track pulses red under a red flag and turns dashed amber behind the safety car, and a banner over the map says what is happening and where (for example "Yellow flag · Turn 2"). The Sectors button turns the sector colours off. Live, it plays about 6 seconds behind so cars move smoothly; for finished sessions, a replay bar lets you scrub to any moment and play at 1×, 4× or 8×. Tap a car to open that driver's page.
 - **FIA race control and stewards** feed: every official message, newest first, in plain English with the reason underneath (for example "Turn 4 incident involving VER and NOR · Causing a collision"), and the exact official wording one tap away. Labelled as Penalty, Under Investigation, Noted, No Further Action, Track Limits, Flag, Safety Car, Session or Info. The All tab hides routine sector and blue flag messages unless you choose to show them. Filter by type, by driver, by your favourite driver or by your favourite team.
 - Penalties this session (with whether each is marked as served), track limits count per driver, and open investigations.
@@ -83,7 +81,7 @@ Where names link to (driver page, team page or race results page):
 | Where | Driver page | Team page | Race results page |
 | --- | --- | --- | --- |
 | Dashboard | Names in the Drivers' Championship table, Last race podium | Constructors' bars, Team column of the drivers' table, Last race podium | Last race name, each round in the calendar strip |
-| Live Timing | Codes in the timing tower and tyre strategy rows, cars on the track map, driver chips under FIA messages, team radio codes | | |
+| Live Timing | Codes in the timing tower, cars on the track map, drivers in the sector top 3, driver chips under FIA messages, team radio codes | | |
 | Driver and team pages | Team radio codes | | Race names in the race-by-race tables, seasons in the circuit history tables |
 | Standings | Driver names | Team names | |
 | Calendar | Winner of each finished race | Winner's team | Race names |
@@ -92,7 +90,6 @@ Where names link to (driver page, team page or race results page):
 
 Notes:
 
-- On Live Timing, clicking elsewhere in a timing tower row still selects that driver for the Car data panel; only the code itself opens the driver page.
 - Race results addresses come in two forms. `#/race/20` follows the season picker (used by the Dashboard and Calendar). `#/race/2023/21` carries its own season (used by the circuit history tables), and its previous and next links stay in that season.
 - Every link has a faint underline, so it is clear what you can tap (there is no hover on a tablet); the underline brightens on hover or keyboard focus.
 

@@ -105,6 +105,11 @@ export interface Lap {
   duration_sector_2: number | null;
   duration_sector_3: number | null;
   is_pit_out_lap: boolean | null;
+  /** Mini-sector status codes: 2048 slower, 2049 personal best, 2051 overall best, 2064 pit lane. */
+  segments_sector_1?: (number | null)[] | null;
+  segments_sector_2?: (number | null)[] | null;
+  segments_sector_3?: (number | null)[] | null;
+  st_speed?: number | null;
 }
 
 export interface Stint {
