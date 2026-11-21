@@ -1,0 +1,50 @@
+import { useSyncExternalStore } from 'react';
+
+/** Per-device settings, kept in localStorage only. */
+export interface Settings {
+  /** Optional OpenF1 access token, sent as a Bearer header to api.openf1.org only. */
+  openf1Token: string;
+  /** OpenF1 request budget per minute (free tier default is conservative). */
+  openf1PerMinute: number;
+  /** Selected season for standings and calendar ("current" or a year). */
+  season: string;
+}
+
+const KEY = 'pitwall:settings';
+const DEFAULTS: Settings = { openf1Token: '', openf1PerMinute: 30, season: 'current' };
+
+let current: Settings = load();
+const listeners = new Set<() => void>();
+
+function load(): Settings {
+  try {
+    const raw = localStorage.getItem(KEY);
+    return raw ? { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Settings>) } : DEFAULTS;
+  } catch {
+    return DEFAULTS;
+  }
+}
+
+export function getSettings(): Settings {
+  return current;
+}
+
+export function updateSettings(patch: Partial<Settings>) {
+  current = { ...current, ...patch };
+  try {
+    localStorage.setItem(KEY, JSON.stringify(current));
+  } catch {
+    // Settings still apply for this visit.
+  }
+  listeners.forEach((l) => l());
+}
+
+export function useSettings(): Settings {
+  return useSyncExternalStore(
+    (cb) => {
+      listeners.add(cb);
+      return () => listeners.delete(cb);
+    },
+    () => current,
+  );
+}
