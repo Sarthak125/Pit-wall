@@ -12,6 +12,7 @@ import {
   type Stint,
   type Weather,
   type PitDetail,
+  type SessionResult,
 } from '../api/openf1';
 import { classify, type ClassifiedMsg } from '../lib/raceControl';
 import { teamColour } from '../lib/teams';
@@ -57,7 +58,7 @@ export interface TimingRow {
   /** Live: the newest lap row, still in progress, so sectors fill in as the car goes round. After the session: the best lap. */
   currentLap: Lap | undefined;
   currentSectorTone: ('overall' | 'personal' | 'slower' | 'none')[];
-  status: 'IN PIT' | 'PIT OUT' | null;
+  status: 'IN PIT' | 'PIT OUT' | 'STOP' | 'RETIRED' | 'DNS' | 'DSQ' | null;
   /** Live speed, throttle and brake, when the session is live. */
   car: CarData | undefined;
   /** Fastest speed-trap reading this session. */
@@ -138,6 +139,8 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
   );
 
   const stints = usePoll<Stint[]>(sk ? `st-${sk}-${live}` : null, (_p, signal) => openf1('stints', { session_key: sk }, signal), every(LIVE_MS.stints));
+  // Official classification: marks retirements (DNF), non-starters and disqualifications.
+  const results = usePoll<SessionResult[]>(sk ? `res-${sk}-${live}` : null, (_p, signal) => openf1('session_result', { session_key: sk }, signal), every(60_000));
   const pits = usePoll<Pit[]>(sk ? `pit-${sk}-${live}` : null, (_p, signal) => openf1('pit', { session_key: sk }, signal), every(LIVE_MS.pit));
   const weather = usePoll<Weather[]>(sk ? `wx-${sk}-${live}` : null, (_p, signal) => openf1('weather', { session_key: sk }, signal), every(LIVE_MS.weather));
 
@@ -171,6 +174,8 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
     const tone = (v: number | null, pb: number | null, ob: number | null) =>
       v == null ? 'none' : ob != null && v <= ob ? 'overall' : pb != null && v <= pb ? 'personal' : 'slower';
 
+    const isRace = /race|sprint/i.test(session?.session_name ?? '') && !/qualifying|shootout/i.test(session?.session_name ?? '');
+    const newestStart = Math.max(0, ...allLaps.map((l) => (l.date_start ? Date.parse(l.date_start) : 0)));
     const out = list.map((d): TimingRow => {
       const mine = allLaps.filter((l) => l.driver_number === d.driver_number).sort((a, b) => a.lap_number - b.lap_number);
       const completed = mine.filter((l) => l.lap_duration != null);
@@ -213,13 +218,27 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
           tone(currentLap ? [currentLap.duration_sector_1, currentLap.duration_sector_2, currentLap.duration_sector_3][i] : null, pbS[i], overall.s[i]),
         ),
         // Once a session is over every car is parked, so the pit status only means something while live.
-        status: live ? pitStatus(mine, myPits, Date.now()) : null,
+        status: (() => {
+          const res = (results.data ?? []).find((x) => x.driver_number === d.driver_number);
+          if (res?.dsq) return 'DSQ';
+          if (res?.dns) return 'DNS';
+          if (res?.dnf) return 'RETIRED';
+          if (!live) return null;
+          const pit = pitStatus(mine, myPits, Date.now());
+          const car = cars.data?.byDriver.get(d.driver_number);
+          // Out on track at 0 km/h, after the start.
+          const stopped = !!car && car.speed === 0 && pit !== 'IN PIT' && lapsDone > 0;
+          // In a race, a car that is stopped or parked and has not started a lap for 4 minutes while others have.
+          const lastStart = mine.length && mine[mine.length - 1].date_start ? Date.parse(mine[mine.length - 1].date_start!) : 0;
+          if (isRace && (stopped || pit === 'IN PIT') && lastStart && newestStart - lastStart > 4 * 60_000) return 'RETIRED';
+          return stopped ? 'STOP' : pit;
+        })(),
         car: cars.data?.byDriver.get(d.driver_number),
         trapSpeed: traps.length ? Math.max(...traps) : null,
       };
     });
     return out.sort((a, b) => (a.position ?? 99) - (b.position ?? 99));
-  }, [drivers.data, laps.data, stints.data, intervals.data, positions.data, pits.data, cars.data, live, endMs]);
+  }, [drivers.data, laps.data, stints.data, intervals.data, positions.data, pits.data, cars.data, results.data, live, session?.session_name]);
 
   const currentLap = rows.reduce((m, r) => Math.max(m, r.lapsDone), 0);
   const fastest = rows.reduce<number | null>((m, r) => (r.bestLap != null && (m == null || r.bestLap < m) ? r.bestLap : m), null);

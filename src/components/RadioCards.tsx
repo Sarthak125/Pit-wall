@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { OF1Driver, TeamRadio } from '../api/openf1';
+import type { Lap, OF1Driver, TeamRadio } from '../api/openf1';
 import { fmtClock, niceName } from '../lib/format';
 import { driverHref } from '../lib/router';
 import { teamColour } from '../lib/teams';
@@ -10,11 +10,16 @@ const dayFmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'shor
  * Team radio as cards: driver photo with a mic badge, name, when it was sent,
  * and a play button. One clip plays at a time.
  */
-export function RadioCards({ clips, drivers, favNum, teamNums, limit = 8 }: { clips: TeamRadio[]; drivers: Map<number, OF1Driver>; favNum: number | null; teamNums: number[]; limit?: number }) {
+const mmss = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+export function RadioCards({ clips, drivers, favNum, teamNums, laps = [], limit = 8 }: { clips: TeamRadio[]; drivers: Map<number, OF1Driver>; favNum: number | null; teamNums: number[]; laps?: Lap[]; limit?: number }) {
   const [all, setAll] = useState(false);
   const audio = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [time, setTime] = useState<{ cur: number; dur: number }>({ cur: 0, dur: 0 });
+  // Clip lengths learnt while playing, so they stay shown afterwards.
+  const [lengths, setLengths] = useState<Record<string, number>>({});
 
   useEffect(() => () => audio.current?.pause(), []);
 
@@ -29,6 +34,11 @@ export function RadioCards({ clips, drivers, favNum, teamNums, limit = 8 }: { cl
       audio.current.addEventListener('timeupdate', () => {
         const a = audio.current!;
         setProgress(a.duration ? a.currentTime / a.duration : 0);
+        setTime({ cur: a.currentTime, dur: Number.isFinite(a.duration) ? a.duration : 0 });
+      });
+      audio.current.addEventListener('loadedmetadata', () => {
+        const a = audio.current!;
+        if (Number.isFinite(a.duration)) setLengths((l) => ({ ...l, [a.src]: a.duration }));
       });
       audio.current.addEventListener('ended', () => {
         setPlaying(null);
@@ -55,6 +65,11 @@ export function RadioCards({ clips, drivers, favNum, teamNums, limit = 8 }: { cl
           const name = d ? niceName(d.full_name) : `Car ${c.driver_number}`;
           const at = new Date(c.date);
           const on = playing === c.recording_url;
+          // The lap the driver was on when the message was sent.
+          const lap = laps
+            .filter((l) => l.driver_number === c.driver_number && l.date_start && l.date_start <= c.date)
+            .reduce<number | null>((m, l) => (m == null || l.lap_number > m ? l.lap_number : m), null);
+          const len = lengths[c.recording_url];
           const mark = c.driver_number === favNum ? ' fav' : teamNums.includes(c.driver_number) ? ' team' : '';
           return (
             <div className={`rcard${mark}`} key={c.recording_url}>
@@ -70,7 +85,11 @@ export function RadioCards({ clips, drivers, favNum, teamNums, limit = 8 }: { cl
               </button>
               <div className="rcard-body">
                 {d ? <a className="name-link rcard-name" href={driverHref(d.name_acronym)}>{name}</a> : <span className="rcard-name">{name}</span>}
-                <div className="rcard-when">{dayFmt.format(at)}, {fmtClock(at)}</div>
+                <div className="rcard-when">
+                  {lap != null && <span className="rcard-lap">Lap {lap}</span>}
+                  {dayFmt.format(at)}, {fmtClock(at)}
+                  <span className="mono rcard-time">{on ? `${mmss(time.cur)} / ${time.dur ? mmss(time.dur) : '…'}` : len ? mmss(len) : ''}</span>
+                </div>
                 <div className="rcard-bar" aria-hidden="true"><i style={{ width: `${on ? progress * 100 : 0}%`, background: colour }} /></div>
               </div>
             </div>

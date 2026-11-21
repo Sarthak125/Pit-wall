@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { isSessionLive, type OF1Driver, type Session } from '../api/openf1';
+import { isSessionLive, type Lap, type OF1Driver, type Session } from '../api/openf1';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { FiaText, FiaWhen } from '../components/FiaText';
 import { LiveTrackMap } from '../components/LiveTrackMap';
@@ -158,12 +158,22 @@ export function LiveTiming() {
         <LiveTrackMap session={session} live={live} drivers={[...t.driversByNumber.values()]} messages={t.messages} laps={t.laps} favNum={favNum} teamNums={teamNums} />
       </section>
 
-      <RadioPanel session={session} live={live} drivers={t.driversByNumber} favNum={favNum} teamNums={teamNums} />
+      <RadioPanel session={session} live={live} drivers={t.driversByNumber} favNum={favNum} teamNums={teamNums} laps={t.laps} />
       <FiaSection messages={t.messages} drivers={t.driversByNumber} favNum={favNum} team={favTeam} teamNums={teamNums} />
       <Footer />
     </>
   );
 }
+
+const PILL: Record<NonNullable<TimingRow['status']>, string> = { 'IN PIT': 'in', 'PIT OUT': 'pitout', STOP: 'stop', RETIRED: 'ret', DNS: 'ret', DSQ: 'ret' };
+const PILL_TITLE: Record<NonNullable<TimingRow['status']>, string> = {
+  'IN PIT': 'In the pit lane or garage',
+  'PIT OUT': 'On an out-lap after leaving the pits',
+  STOP: 'Stopped out on track (0 km/h)',
+  RETIRED: 'Retired from the session',
+  DNS: 'Did not start',
+  DSQ: 'Disqualified',
+};
 
 const SEG: Record<number, string> = { 2048: 'yellow', 2049: 'green', 2051: 'purple', 2064: 'pit' };
 
@@ -180,13 +190,13 @@ function Segments({ segs }: { segs: (number | null)[] | null | undefined }) {
 function TimingTable({ rows, isRace, live, fastest, favNum, team }: { rows: TimingRow[]; isRace: boolean; live: boolean; fastest: number | null; favNum: number | null; team: FavouriteTeam | null }) {
   return (
     <div className="scroll-x">
-      <table className="tbl timing" style={{ minWidth: 1180 }}>
+      <table className="tbl timing" style={{ minWidth: isRace ? 1120 : 1040 }}>
         <thead>
           <tr>
             <th>POS</th>
             <th>DRIVER</th>
             <th className="r">{isRace ? 'GAP' : 'GAP (BEST)'}</th>
-            <th className="r">INT</th>
+            {isRace && <th className="r">INT</th>}
             <th>LAST LAP</th>
             <th className="r">BEST</th>
             <th className="r" title={live ? 'Current lap' : 'Best lap'}>SECTOR 1{live ? '' : ' (BEST LAP)'}</th>
@@ -207,7 +217,7 @@ function TimingTable({ rows, isRace, live, fastest, favNum, team }: { rows: Timi
             const tel = live ? r.car : undefined;
             const speed = tel?.speed ?? 0;
             return (
-              <tr key={r.driver.driver_number} className={[favNum === r.driver.driver_number ? 'fav' : '', isTeam ? 'team' : '', r.status === 'IN PIT' ? 'in-pit' : ''].join(' ').trim() || undefined} style={isTeam ? ({ '--team': team!.colour } as React.CSSProperties) : undefined}>
+              <tr key={r.driver.driver_number} className={[favNum === r.driver.driver_number ? 'fav' : '', isTeam ? 'team' : '', r.status === 'IN PIT' ? 'in-pit' : '', r.status === 'RETIRED' || r.status === 'DNS' || r.status === 'DSQ' ? 'out' : ''].join(' ').trim() || undefined} style={isTeam ? ({ '--team': team!.colour } as React.CSSProperties) : undefined}>
                 <td className="mono muted">{r.position ?? '-'}</td>
                 <td>
                   <div className="who">
@@ -218,10 +228,10 @@ function TimingTable({ rows, isRace, live, fastest, favNum, team }: { rows: Timi
                   </div>
                 </td>
                 <td className="r mono">{gap}</td>
-                <td className="r mono muted">{isRace && i > 0 ? fmtGap(r.interval) : '-'}</td>
+                {isRace && <td className="r mono muted">{i > 0 ? fmtGap(r.interval) : '-'}</td>}
                 <td>
                   {r.status ? (
-                    <span className={`pit-pill ${r.status === 'IN PIT' ? 'in' : 'out'}`}>{r.status}</span>
+                    <span className={`pit-pill ${PILL[r.status]}`} title={PILL_TITLE[r.status]}>{r.status}</span>
                   ) : (
                     <span className={`lap-pill tone-${r.lastLapTone === 'slower' ? 'none' : r.lastLapTone}`}>{fmtLap(l?.lap_duration)}</span>
                   )}
@@ -428,7 +438,7 @@ function FiaSection({ messages, drivers, favNum, team, teamNums }: { messages: C
 }
 
 /** Team radio for the whole session. */
-function RadioPanel({ session, live, drivers, favNum, teamNums }: { session: Session; live: boolean; drivers: Map<number, OF1Driver>; favNum: number | null; teamNums: number[] }) {
+function RadioPanel({ session, live, drivers, favNum, teamNums, laps }: { session: Session; live: boolean; drivers: Map<number, OF1Driver>; favNum: number | null; teamNums: number[]; laps: Lap[] }) {
   const sk = session.session_key;
   const [who, setWho] = useState<number>(0);
   const radio = usePoll<TeamRadio[]>(`radio-all-${sk}-${live}`, (_p, signal) => openf1<TeamRadio>('team_radio', { session_key: sk }, signal), live ? 30_000 : 0);
@@ -451,7 +461,7 @@ function RadioPanel({ session, live, drivers, favNum, teamNums }: { session: Ses
           </select>
         </label>
       </div>
-      {radio.error ? <ErrorBox error={radio.error} what="team radio" /> : radio.loading ? <Loading rows={3} /> : <RadioCards clips={clips} drivers={drivers} favNum={favNum} teamNums={teamNums} limit={8} />}
+      {radio.error ? <ErrorBox error={radio.error} what="team radio" /> : radio.loading ? <Loading rows={3} /> : <RadioCards clips={clips} drivers={drivers} favNum={favNum} teamNums={teamNums} laps={laps} limit={8} />}
     </section>
   );
 }
