@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import {
+  liveEvery,
   openf1,
   type CarData,
   type Interval,
@@ -20,8 +21,13 @@ import { teamColour } from '../lib/teams';
 import { usePoll } from './usePoll';
 import { useQuery } from '@tanstack/react-query';
 
-/** Poll intervals while a session is live, tuned to stay near 30 requests/minute. */
-const LIVE_MS = { position: 10_000, intervals: 10_000, laps: 20_000, rc: 20_000, stints: 30_000, pit: 60_000, weather: 60_000, car: 10_000, drivers: 300_000 };
+/**
+ * Poll intervals while a session is live. With the track map and team radio on the same page this comes to about
+ * 28 requests a minute, under OpenF1's default budget of 30. Gaps and race control stay quickest; slower-changing
+ * data (laps, tyres, pit stops, weather, classification) is polled less often. `liveEvery` speeds all of it up
+ * when the budget in Settings is higher.
+ */
+const LIVE_MS = { position: 15_000, intervals: 10_000, laps: 30_000, rc: 20_000, stints: 60_000, pit: 60_000, weather: 120_000, car: 15_000, drivers: 300_000, results: 120_000 };
 
 interface Latest<T> {
   byDriver: Map<number, T>;
@@ -100,7 +106,7 @@ function pitStatus(mine: Lap[], pits: Pit[], t: number): TimingRow['status'] {
 
 export function useLiveTiming(session: Session | undefined, live: boolean, carDriver: number | null) {
   const sk = session?.session_key;
-  const every = (ms: number) => (live ? ms : 0);
+  const every = (ms: number) => (live ? liveEvery(ms) : 0);
   const endMs = session ? Date.parse(session.date_end) : 0;
 
   const drivers = usePoll<OF1Driver[]>(sk ? `drv-${sk}` : null, (_p, signal) => openf1('drivers', { session_key: sk }, signal), every(LIVE_MS.drivers));
@@ -156,7 +162,7 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
   });
 
   // Official classification: marks retirements (DNF), non-starters and disqualifications.
-  const results = usePoll<SessionResult[]>(sk ? `res-${sk}-${live}` : null, (_p, signal) => openf1('session_result', { session_key: sk }, signal), every(60_000));
+  const results = usePoll<SessionResult[]>(sk ? `res-${sk}-${live}` : null, (_p, signal) => openf1('session_result', { session_key: sk }, signal), every(LIVE_MS.results));
   const pits = usePoll<Pit[]>(sk ? `pit-${sk}-${live}` : null, (_p, signal) => openf1('pit', { session_key: sk }, signal), every(LIVE_MS.pit));
   const weather = usePoll<Weather[]>(sk ? `wx-${sk}-${live}` : null, (_p, signal) => openf1('weather', { session_key: sk }, signal), every(LIVE_MS.weather));
 
@@ -168,7 +174,7 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
       const rows = await openf1<CarData>('car_data', { session_key: sk, 'date>': prev?.last && prev.last > since ? prev.last : since }, signal);
       return mergeLatest(prev, rows);
     },
-    LIVE_MS.car,
+    liveEvery(LIVE_MS.car),
   );
 
   const messages: ClassifiedMsg[] = useMemo(

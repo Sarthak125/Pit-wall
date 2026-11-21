@@ -1,6 +1,6 @@
 import { FiaText, FiaWhen } from './FiaText';
 import { useQuery } from '@tanstack/react-query';
-import { openf1, type OF1Driver, type Session, type TeamRadio } from '../api/openf1';
+import { liveEvery, openf1, type OF1Driver, type Session, type TeamRadio } from '../api/openf1';
 import type { FavouriteTeam } from '../hooks/useFavourite';
 import { useLiveTiming } from '../hooks/useLiveTiming';
 import { usePoll } from '../hooks/usePoll';
@@ -25,7 +25,7 @@ export function LiveTeam({ session, team }: { session: Session; team: FavouriteT
   const radio = usePoll<TeamRadio[]>(
     nums.length ? `team-radio-${sk}-${nums.join(',')}` : null,
     async (_p, signal) => (await Promise.all(nums.map((n) => openf1<TeamRadio>('team_radio', { session_key: sk, driver_number: n }, signal)))).flat(),
-    30_000,
+    liveEvery(60_000),
   );
   const status = trackStatus([...t.messages].reverse());
   const msgs = t.messages.filter((m) => m.cars.some((c) => nums.includes(c)));

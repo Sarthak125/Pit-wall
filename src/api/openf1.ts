@@ -13,6 +13,15 @@ const BASE = (import.meta.env.VITE_OPENF1_BASE as string | undefined) ?? 'https:
 
 export const openf1Limiter = new RateLimiter(3, getSettings().openf1PerMinute);
 
+/**
+ * Live poll interval for a base value tuned to the default budget of 30 requests a minute. A bigger budget
+ * (Settings) polls faster, down to half the interval at 60 or more a minute.
+ */
+export function liveEvery(baseMs: number): number {
+  const perMinute = getSettings().openf1PerMinute || 30;
+  return Math.round(baseMs * Math.min(1, Math.max(0.5, 30 / perMinute)));
+}
+
 export type Params = Record<string, string | number | undefined>;
 
 /** Builds a query string. Keys may carry comparison operators, e.g. "date>". */

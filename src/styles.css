@@ -444,3 +444,5 @@ html { zoom: 1.1; }
 .pos-tip-row { display: grid; grid-template-columns: 34px 10px 1fr; align-items: center; gap: 6px; }
 .pos-tip-row i { width: 10px; height: 3px; border-radius: 2px; display: block; }
 .tmap-flag.stripe { stroke: #0b0b0d; stroke-linecap: butt; opacity: 0.85; }
+.update-banner { position: fixed; left: 50%; transform: translateX(-50%); bottom: 24px; z-index: 40; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; padding: 10px 14px; background: var(--bar); border: 1px solid var(--line-strong); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: calc(100vw - 32px); }
+@media (max-width: 959px) { .update-banner { bottom: 96px; } }

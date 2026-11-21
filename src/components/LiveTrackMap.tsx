@@ -2,16 +2,16 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getCircuit } from '../api/circuit';
 import { geometry } from '../lib/trackGeometry';
-import { openf1, type CarLocation, type Lap, type OF1Driver, type Session } from '../api/openf1';
+import { liveEvery, openf1, type CarLocation, type Lap, type OF1Driver, type Session } from '../api/openf1';
 import { driverHref } from '../lib/router';
 import type { ClassifiedMsg } from '../lib/raceControl';
 import { teamColour } from '../lib/teams';
 import { fmtClock } from '../lib/format';
 
 /** How far behind the newest position the live map plays, so cars move smoothly between fetches. */
-const LIVE_DELAY_MS = 6_000;
+const LIVE_DELAY_MS = 15_000;
 /** Live fetch interval. OpenF1 allows a limited number of requests a minute, shared with the rest of the page. */
-const LIVE_POLL_MS = 5_000;
+const LIVE_POLL_MS = 12_000;
 /** Replay fetches this much position data at a time. */
 const CHUNK_MS = 60_000;
 const SPEEDS = [1, 4, 8];
@@ -116,7 +116,7 @@ export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, t
       }
     };
     tick();
-    const id = setInterval(tick, live ? LIVE_POLL_MS : 1_000);
+    const id = setInterval(tick, live ? liveEvery(LIVE_POLL_MS) : 1_000);
     return () => {
       cancelled = true;
       ctrl.abort();
@@ -312,7 +312,7 @@ export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, t
       <div className="tmap-bar">
         {live ? (
           <span className="muted">
-            <span className="dot live-dot on" /> Live, about {Math.round(LIVE_DELAY_MS / 1000)} s behind · {fmtClock(new Date(head))}
+            <span className="dot live-dot on" /> Live, about {Math.round((liveEvery(LIVE_POLL_MS) + 3_000) / 1000)} s behind · {fmtClock(new Date(head))}
           </span>
         ) : (
           <>

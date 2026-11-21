@@ -13,6 +13,7 @@ import { MyDriver } from './pages/MyDriver';
 import { MyTeam } from './pages/MyTeam';
 import { RaceResults } from './pages/RaceResults';
 import { Toasts } from './components/Toasts';
+import { UpdateBanner } from './components/UpdateBanner';
 import { useAlertWatcher } from './hooks/useFavourite';
 import { useRoute, useRouteParam } from './lib/router';
 
@@ -44,6 +45,7 @@ export default function App() {
       {route === 'drivers' && <Drivers />}
       {route === 'settings' && <Settings />}
       <Toasts />
+      <UpdateBanner />
     </Shell>
   );
 }

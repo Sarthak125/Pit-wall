@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getCircuitLaps } from '../api/jolpica';
 import { getCircuit } from '../api/circuit';
 import { useSchedule } from '../hooks/useSeason';
-import { isSessionLive, type Lap, type OF1Driver, type Session } from '../api/openf1';
+import { isSessionLive, liveEvery, type Lap, type OF1Driver, type Session } from '../api/openf1';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { FiaText, FiaWhen } from '../components/FiaText';
 import { LiveTrackMap } from '../components/LiveTrackMap';
@@ -539,7 +539,7 @@ function FiaSection({ messages, drivers, favNum, team, teamNums }: { messages: C
 function RadioPanel({ session, live, drivers, favNum, teamNums, laps }: { session: Session; live: boolean; drivers: Map<number, OF1Driver>; favNum: number | null; teamNums: number[]; laps: Lap[] }) {
   const sk = session.session_key;
   const [who, setWho] = useState<number>(0);
-  const radio = usePoll<TeamRadio[]>(`radio-all-${sk}-${live}`, (_p, signal) => openf1<TeamRadio>('team_radio', { session_key: sk }, signal), live ? 30_000 : 0);
+  const radio = usePoll<TeamRadio[]>(`radio-all-${sk}-${live}`, (_p, signal) => openf1<TeamRadio>('team_radio', { session_key: sk }, signal), live ? liveEvery(60_000) : 0);
   const labels = new Map<number, DriverLabel>([...drivers.values()].map((d) => [d.driver_number, { code: d.name_acronym, colour: teamColour(d.team_name, d.team_colour) }]));
   const clips = (radio.data ?? []).filter((c) => (who === -1 ? teamNums.includes(c.driver_number) : who ? c.driver_number === who : true));
   const withRadio = [...new Set((radio.data ?? []).map((c) => c.driver_number))].sort((a, b) => (labels.get(a)?.code ?? '').localeCompare(labels.get(b)?.code ?? ''));

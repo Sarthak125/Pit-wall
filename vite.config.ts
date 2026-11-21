@@ -12,7 +12,8 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt': a new version waits until the user taps Reload on the update banner.
+      registerType: 'prompt',
       includeAssets: ['icons/icon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
         name: 'Pit Wall: F1 Dashboard',

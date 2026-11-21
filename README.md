@@ -45,7 +45,7 @@ Pick any session of the current race weekend; live sessions update automatically
 - The three timing sectors in their own colours: **S1 red, S2 light blue, S3 yellow**, the same everywhere sectors appear. The sector lines are worked out from where a car crossed them on a clean lap. The Sectors button turns the colours off.
 - A top 3 for each sector underneath: each driver's best sector time so far, with a team-coloured driver tile, plus your favourite driver's position and gap if they are outside the top 3.
 - Flags stand out: the flagged part of the track glows yellow (or orange for double yellow) with a dashed black stripe, so it still shows on the yellow sector; the whole track pulses red under a red flag and turns dashed amber behind the safety car; and a banner says what is happening and where (for example "Yellow flag · Turn 2").
-- Live, it plays about 6 seconds behind so cars move smoothly. For finished sessions, a replay bar lets you scrub to any moment and play at 1×, 4× or 8×.
+- Live, it plays about 15 seconds behind (less with a bigger request budget) so cars move smoothly between position updates. For finished sessions, a replay bar lets you scrub to any moment and play at 1×, 4× or 8×.
 
 **Team radio**
 
@@ -150,7 +150,7 @@ All settings are saved on each device separately.
 
 - Laptop layout with a top menu; tablet and phone layout with a bottom menu and large touch targets.
 - Installable on Android (and desktop Chrome or Edge) and opens offline with the last loaded standings, calendar, circuit layouts and weather.
-- After an update, reload once (or use the refresh button) if you still see the previous version: the installed app keeps a copy of the last one.
+- When a new version is published, a banner says "A new version of Pit Wall is ready" with a **Reload** button (or **Later**). The app checks when you open it, when you come back to it, and every 30 minutes.
 - Season picker for standings, results and calendar from previous years.
 - All times in the device's local time zone (weather days use the circuit's local date).
 - Text is about 10% larger on laptops and 5% larger on tablets and phones, for reading from a distance.
@@ -246,7 +246,7 @@ src/components/  App shell, charts, live track map, circuit overview and outline
 
 ## Notes
 
-- Polling pauses while the app is in the background to save API quota. On Live Timing, the track map fetches car positions every 5 seconds (12 requests a minute) and live car data for every car comes in one request every 10 seconds. Replays load a minute of positions at a time. The optional live track map on the driver page (Settings) adds about 15 requests a minute, which can slow other live updates on the free tier.
+- Live Timing stays under OpenF1's default budget of 30 requests a minute (about 28 with the track map and team radio): gaps every 10 seconds, race control every 20, positions, speed and pedals every 15, track map positions every 12, and laps, tyres, pit stops, radio, weather and the classification less often. Raise the budget in Settings (for example with a paid OpenF1 plan) and everything polls faster, up to twice as often at 60 a minute. Polling pauses while the app is in the background. Replays load a minute of positions at a time. The optional live track map on the driver page (Settings) adds about 15 requests a minute.
 - If a data service answers "too many requests", the app waits at most 10 seconds before retrying, so a page never stalls; the weather card says the service is not answering instead.
 - Open-Meteo's free tier is for non-commercial use, which fits a personal dashboard.
 - Team radio is audio only. Automatic transcripts were tried, but F1's radio file server blocks GitHub's servers, so they cannot be produced without running a machine of your own.

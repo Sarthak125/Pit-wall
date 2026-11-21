@@ -1,7 +1,7 @@
 import { FiaText, FiaWhen } from './FiaText';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getStartingGrid, openf1, type OF1Driver, type Overtake, type Position, type Session, type TeamRadio } from '../api/openf1';
+import { getStartingGrid, liveEvery, openf1, type OF1Driver, type Overtake, type Position, type Session, type TeamRadio } from '../api/openf1';
 import { useLiveTiming } from '../hooks/useLiveTiming';
 import { usePoll } from '../hooks/usePoll';
 import { ingestFavourite } from '../lib/alerts';
@@ -24,9 +24,9 @@ export function LiveDriver({ session, code, alerts = true }: { session: Session;
   const t = useLiveTiming(session, true, num);
   const isRace = /race|sprint/i.test(session.session_name) && !/qualifying|shootout/i.test(session.session_name);
 
-  const radio = usePoll<TeamRadio[]>(num ? `radio-${sk}-${num}` : null, (_p, signal) => openf1('team_radio', { session_key: sk, driver_number: num ?? undefined }, signal), 30_000);
-  const overtakes = usePoll<Overtake[]>(num && isRace ? `ot-${sk}` : null, (_p, signal) => openf1('overtakes', { session_key: sk }, signal), 30_000);
-  const history = usePoll<Position[]>(num ? `ph-${sk}-${num}` : null, (_p, signal) => openf1('position', { session_key: sk, driver_number: num ?? undefined }, signal), 20_000);
+  const radio = usePoll<TeamRadio[]>(num ? `radio-${sk}-${num}` : null, (_p, signal) => openf1('team_radio', { session_key: sk, driver_number: num ?? undefined }, signal), liveEvery(60_000));
+  const overtakes = usePoll<Overtake[]>(num && isRace ? `ot-${sk}` : null, (_p, signal) => openf1('overtakes', { session_key: sk }, signal), liveEvery(60_000));
+  const history = usePoll<Position[]>(num ? `ph-${sk}-${num}` : null, (_p, signal) => openf1('position', { session_key: sk, driver_number: num ?? undefined }, signal), liveEvery(30_000));
   const grid = useQuery({
     queryKey: ['grid', sk],
     enabled: isRace && !!session,
