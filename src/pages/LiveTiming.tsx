@@ -3,6 +3,7 @@ import { isSessionLive, type OF1Driver, type Session, type Stint } from '../api/
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { FiaText, FiaWhen } from '../components/FiaText';
 import { LiveTrackMap } from '../components/LiveTrackMap';
+import { RadioCards } from '../components/RadioCards';
 import { Footer } from '../components/Shell';
 import { useNow } from '../hooks/usePoll';
 import { useLatestSessions } from '../hooks/useSeason';
@@ -21,7 +22,7 @@ import {
 import { teamColour, tyre, TYRE } from '../lib/teams';
 import { StarIcon } from '../components/Icons';
 import { useFavourite, useFavouriteTeam, type FavouriteTeam } from '../hooks/useFavourite';
-import { RadioList, type DriverLabel } from '../components/RadioList';
+import type { DriverLabel } from '../components/RadioList';
 import { driverHref } from '../lib/router';
 import { usePoll } from '../hooks/usePoll';
 import { openf1, type TeamRadio } from '../api/openf1';
@@ -499,7 +500,7 @@ function RadioPanel({ session, live, drivers, favNum, teamNums }: { session: Ses
           </select>
         </label>
       </div>
-      {radio.error ? <ErrorBox error={radio.error} what="team radio" /> : radio.loading ? <Loading rows={3} /> : <RadioList clips={clips} labels={labels} limit={6} />}
+      {radio.error ? <ErrorBox error={radio.error} what="team radio" /> : radio.loading ? <Loading rows={3} /> : <RadioCards clips={clips} drivers={drivers} favNum={favNum} teamNums={teamNums} limit={8} />}
     </section>
   );
 }

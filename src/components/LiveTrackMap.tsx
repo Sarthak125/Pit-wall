@@ -272,25 +272,34 @@ export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, t
       {showSectors && (
         <div className="tmap-sectors">
           {[0, 1, 2].map((i) => {
-            const b = bests.overall[i];
-            const mine = favNum != null ? bests.byDriver.get(favNum)?.[i] : undefined;
-            const d = b ? drivers.find((x) => x.driver_number === b.driver) : undefined;
-            const fd = favNum != null ? drivers.find((x) => x.driver_number === favNum) : undefined;
+            const top = bests.top[i];
+            const favPos = favNum != null ? bests.rank[i].findIndex((b) => b.driver === favNum) : -1;
+            const favBest = favPos >= 3 ? bests.rank[i][favPos] : null;
             return (
               <div key={i} className={`tmap-sbox s${i + 1}`}>
                 <div className="tmap-sname">Sector {i + 1}</div>
-                {b ? (
-                  <div className="tmap-sbest">
-                    <span className="mono tone-overall">{b.time.toFixed(3)}</span>{' '}
-                    {d ? <a className="name-link" href={driverHref(d.name_acronym)}>{d.name_acronym}</a> : `#${b.driver}`}
-                    <span className="faint"> fastest so far</span>
-                  </div>
-                ) : (
+                {top.length === 0 ? (
                   <div className="faint">No sector times yet</div>
+                ) : (
+                  <ol className="tmap-top">
+                    {top.map((b, k) => {
+                      const d = drivers.find((x) => x.driver_number === b.driver);
+                      const colour = teamColour(d?.team_name, d?.team_colour);
+                      return (
+                        <li key={b.driver} className={b.driver === favNum ? 'fav' : teamNums.includes(b.driver) ? 'team' : ''}>
+                          <span className="tmap-tile" style={{ '--team': colour } as React.CSSProperties}>
+                            <b>{k + 1}</b>
+                            {d ? <a href={driverHref(d.name_acronym)} title={`${d.name_acronym}: full stats`}>{d.name_acronym}</a> : <span>#{b.driver}</span>}
+                          </span>
+                          <span className={`mono${k === 0 ? ' tone-overall' : ''}`}>{b.time.toFixed(3)}</span>
+                        </li>
+                      );
+                    })}
+                  </ol>
                 )}
-                {fd && mine != null && b && fd.driver_number !== b.driver && (
-                  <div className="faint" style={{ fontSize: 12 }}>
-                    ★ {fd.name_acronym} best {mine.toFixed(3)} (+{(mine - b.time).toFixed(3)})
+                {favBest && (
+                  <div className="faint" style={{ fontSize: 12, marginTop: 4 }}>
+                    ★ {drivers.find((x) => x.driver_number === favNum)?.name_acronym} P{favPos + 1} · {favBest.time.toFixed(3)} (+{(favBest.time - top[0].time).toFixed(3)})
                   </div>
                 )}
               </div>
@@ -508,7 +517,14 @@ function sectorBests(laps: Lap[], t: number) {
       byDriver.set(l.driver_number, mine);
     });
   }
-  return { overall, byDriver };
+  // Each driver's best per sector, fastest first.
+  const rank = [0, 1, 2].map((i) =>
+    [...byDriver.entries()]
+      .filter(([, v]) => v[i] != null)
+      .map(([driver, v]) => ({ driver, time: v[i]! }))
+      .sort((a, b) => a.time - b.time),
+  );
+  return { overall, byDriver, rank, top: rank.map((r) => r.slice(0, 3)) };
 }
 
 /** Headline for the flag state shown over the map, or null when the track is green. */
