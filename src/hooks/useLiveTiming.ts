@@ -61,7 +61,7 @@ export interface TimingRow {
   stints: Stint[];
   tyreAge: number | null;
   pits: number;
-  /** Live: the newest lap row, still in progress, so sectors fill in as the car goes round. After the session: the best lap. */
+  /** The newest lap row; while live it is still in progress, so its sectors fill in as the car goes round. */
   currentLap: Lap | undefined;
   currentSectorTone: ('overall' | 'personal' | 'slower' | 'none')[];
   status: 'IN PIT' | 'PIT OUT' | 'STOP' | 'RETIRED' | 'DNS' | 'DSQ' | null;
@@ -204,9 +204,8 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
       const tyreAge = stint ? (stint.tyre_age_at_start ?? 0) + Math.max(0, lapsDone - (stint.lap_start ?? lapsDone)) : null;
       const iv = intervals.data?.byDriver.get(d.driver_number);
       const gridSlot = grid.data?.find((g) => g.driver_number === d.driver_number);
-      // Live: the lap in progress, so sectors fill in as the car goes round. Afterwards: the driver's best lap.
-      const bestRow = completed.filter((l) => l.lap_duration === pbLap)[0];
-      const currentLap = live ? mine[mine.length - 1] : (bestRow ?? mine[mine.length - 1]);
+      // The driver's newest lap: live, its sectors and mini-sectors fill in as the car goes round.
+      const currentLap = mine[mine.length - 1];
       const myPits = (pits.data ?? []).filter((p) => p.driver_number === d.driver_number);
       const traps = mine.map((l) => l.st_speed ?? 0).filter((v) => v > 0);
       return {

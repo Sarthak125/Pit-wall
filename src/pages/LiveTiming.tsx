@@ -279,7 +279,7 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team }: { 
             {isRace && <th className="r">INT</th>}
             <th>LAST LAP</th>
             <th className="r">BEST</th>
-            <th className="r" title={live ? 'Current lap' : 'Best lap'}><i className="sec-dot" style={{ background: 'var(--s1)' }} />SECTOR 1{live ? '' : ' (BEST LAP)'}</th>
+            <th className="r" title={live ? 'Lap in progress' : 'Latest lap'}><i className="sec-dot" style={{ background: 'var(--s1)' }} />SECTOR 1</th>
             <th className="r"><i className="sec-dot" style={{ background: 'var(--s2)' }} />SECTOR 2</th>
             <th className="r"><i className="sec-dot" style={{ background: 'var(--s3)' }} />SECTOR 3</th>
             <th>TYRES</th>
