@@ -1,6 +1,6 @@
 # Pit Wall: F1 dashboard
 
-An installable web app (PWA) for Formula 1: live timing with a moving track map, pit stop predictions and live championship standings, FIA race control and stewards' messages in plain English, team radio, standings, a calendar with a page for every race and circuit, driver and team pages, and a personal page for your favourite driver and team. One codebase runs in a laptop browser and installs on an Android tablet like an app.
+An installable web app (PWA) for Formula 1: live timing with a moving track map, pit stop predictions and live championship standings, FIA race control and stewards' messages in plain English, team radio, standings, a calendar with a page for every race and circuit, driver and team pages, and a personal page for your favourite driver and team. One codebase runs in a laptop browser and installs on an Android tablet or phone like an app.
 
 Live site: https://sarthak125.github.io/Sarthak125/
 
@@ -8,6 +8,7 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 ## Recently added
 
+- **Phone layout:** the whole app now works on phones (see [Works everywhere](#works-everywhere)).
 - **Live Timing**
   - **Timing tower:** mini-sector bars, IN PIT / PIT OUT / STOP / RETIRED tags, tyre history, places gained or lost (DIFF), live speed and pedals, a purple fastest lap, and pinned POS and DRIVER columns.
   - **PIT NOW predictor:** where each car would rejoin if it pitted this lap.
@@ -145,6 +146,7 @@ While the app is open and a session is live, pop-up alerts tell you when your fa
 
 - **Standings:** full Drivers' and Constructors' tables, with your favourites highlighted and the flag button to pick a team. Driver and team names open their pages (see below).
 - **Calendar:** every round with all session times in your time zone and the winner (and their team) of each finished race. Tap a race name for its race and circuit page (see above).
+- **On phones:** the Drivers' table shows position, driver, gap and points (the colour bar still shows the team), and the Calendar shows round, race, date and winner. The full session times are on each race page. Wider tables can be swiped sideways.
 - **Drivers:** the current grid with photos, numbers, teams and championship position, and the star to pick your favourite. Tap a driver to open their page (see below).
 
 ### Driver and team pages
@@ -186,11 +188,17 @@ All settings are saved on each device separately.
 ### Works everywhere
 
 - Laptop layout with a top menu; tablet and phone layout with a bottom menu and large touch targets.
+- **On phones** (screens under 600px wide):
+  - The header fits on one row: logo, season picker, refresh and settings.
+  - The bottom menu uses short labels: Home, Live, Faves, Standings, Calendar, Drivers.
+  - Cards, padding and headings are a little tighter, and every page fits the screen width with no sideways scrolling (checked at 390px and 360px wide).
+  - Wide tables such as the timing tower swipe sideways, with POS and DRIVER pinned on the left.
+  - The FIA feed on Live Timing starts with the newest 15 messages, with a **Show all** button.
 - Installable on Android (and desktop Chrome or Edge) and opens offline with the last loaded standings, calendar, circuit layouts and weather.
 - When a new version is published, a banner says "A new version of Pit Wall is ready" with a **Reload** button (or **Later**). The app checks when you open it, when you come back to it, and every 30 minutes.
 - Season picker for standings, results and calendar from previous years.
 - All times in the device's local time zone (weather days use the circuit's local date).
-- Text is about 10% larger on laptops and 5% larger on tablets and phones, for reading from a distance.
+- Text is about 10% larger on laptops and 5% larger on tablets, for reading from a distance. Phones use the normal size so more fits on screen.
 
 ## Design
 
@@ -211,7 +219,7 @@ The screen designs live on a design canvas: [Pit Wall design canvas](https://cla
 
 There is also a "Favourite driver: where it appears" board that maps every place the favourite driver shows up in the app.
 
-The tablet boards show one screen (800 × 1280) with the bottom menu (Dashboard, Live Timing, Favourites, Standings, Calendar, Drivers). The app's tablet layout is a single scrolling column with the same sections, so some boards note what sits further down the page.
+The tablet boards show one screen (800 × 1280) with the bottom menu (Dashboard, Live Timing, Favourites, Standings, Calendar, Drivers). The app's tablet layout is a single scrolling column with the same sections, so some boards note what sits further down the page. There are no phone boards yet; the phone layout follows the tablet one with the changes listed under [Works everywhere](#works-everywhere).
 
 ## Data sources
 
@@ -254,11 +262,11 @@ npm run dev
 
 Open the address it prints (http://localhost:3030).
 
-## Use it on your Android tablet
+## Use it on your Android tablet or phone
 
 Open the live site above in Chrome, tap the three-dot menu, then **Install app** (or **Add to Home screen**). Pit Wall then opens from the home screen, full screen like a normal app.
 
-Installing needs the site to be served over **HTTPS**, which GitHub Pages does. For a quick test without hosting, run `npm run dev` on the laptop and open `http://<laptop-ip>:3030` on the tablet while both are on the same Wi-Fi. That works in the browser, but Android will not install it as an app over plain HTTP.
+Installing needs the site to be served over **HTTPS**, which GitHub Pages does. For a quick test without hosting, run `npm run dev` on the laptop and open `http://<laptop-ip>:3030` on the tablet or phone while both are on the same Wi-Fi. That works in the browser, but Android will not install it as an app over plain HTTP.
 
 ## Deploy
 
