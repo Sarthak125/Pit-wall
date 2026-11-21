@@ -97,6 +97,7 @@ The screen designs live on a design canvas: [Pit Wall design canvas](https://cla
 | Standings | Standings (laptop) | Standings (Android tablet, portrait) |
 | Calendar | Calendar (laptop) | Calendar (Android tablet, portrait) |
 | Drivers | Drivers (laptop) | Drivers (Android tablet, portrait) |
+| Driver page, any driver (opened from Drivers) | Driver page, any driver (laptop) | Driver page, any driver (Android tablet, portrait) |
 | Settings | Settings (laptop) | Settings (Android tablet, portrait) |
 
 There is also a "Favourite driver: where it appears" board that maps every place the favourite driver shows up in the app.
