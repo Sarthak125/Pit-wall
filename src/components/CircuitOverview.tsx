@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getCircuit } from '../api/circuit';
 import { getCircuitRecords, type Race, type RaceWithResults } from '../api/jolpica';
 import { findMeeting } from '../api/openf1';
+import { getSectorLines } from '../lib/sectorLines';
 import { useSchedule } from '../hooks/useSeason';
 import { driverHref, raceHref, teamHref } from '../lib/router';
 import { teamColour } from '../lib/teams';
@@ -35,6 +36,12 @@ export function CircuitOverview({ race }: { race: Race }) {
     staleTime: Infinity,
     queryFn: ({ signal }) => getCircuit(meeting.data!.circuit_key, meeting.data!.year, signal),
   });
+  const sectorLines = useQuery({
+    queryKey: ['sector-lines', meeting.data?.meeting_key],
+    enabled: !!meeting.data,
+    staleTime: Infinity,
+    queryFn: ({ signal }) => getSectorLines(meeting.data!.meeting_key, signal),
+  });
   const records = useQuery({ queryKey: ['circuit-records', circuitId], staleTime: 60 * 60_000, queryFn: () => getCircuitRecords(circuitId) });
 
   const c = layout.data;
@@ -61,13 +68,24 @@ export function CircuitOverview({ race }: { race: Race }) {
       <div className="row top">
         <div className="w2" style={{ minWidth: 0 }}>
           {layout.data ? (
-            <TrackOutline circuit={layout.data} label={`Layout of ${race.Circuit.circuitName}`} />
+            <TrackOutline circuit={layout.data} sectorLines={sectorLines.data} label={`Layout of ${race.Circuit.circuitName}`} />
           ) : meeting.isLoading || layout.isLoading || current.isLoading ? (
             <Loading rows={6} />
           ) : (
             <div className="empty">No track layout available for this circuit.</div>
           )}
-          {layout.data && <div className="faint" style={{ fontSize: 12, marginTop: 6 }}>Numbers are turns; the red arrow shows the direction of travel. Layout: MultiViewer.</div>}
+          {layout.data && (
+            <div className="faint" style={{ fontSize: 12, marginTop: 6 }}>
+              {sectorLines.data && (
+                <span className="legend" style={{ display: 'inline-flex', marginRight: 10 }}>
+                  <span><i className="sw" style={{ background: 'var(--s1)' }} />S1</span>
+                  <span><i className="sw" style={{ background: 'var(--s2)' }} />S2</span>
+                  <span><i className="sw" style={{ background: 'var(--s3)' }} />S3</span>
+                </span>
+              )}
+              Numbers are turns; the red arrow shows the direction of travel.{sectorLines.data ? ' Sector lines placed from the fastest lap of that weekend.' : ''} Layout: MultiViewer.
+            </div>
+          )}
         </div>
 
         <div className="w3" style={{ minWidth: 0 }}>

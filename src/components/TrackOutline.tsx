@@ -2,8 +2,9 @@ import type { Circuit } from '../api/circuit';
 import { geometry } from '../lib/trackGeometry';
 
 /** Static circuit drawing: outline, numbered turns, start/finish line and the direction of travel. */
-export function TrackOutline({ circuit, label }: { circuit: Circuit; label: string }) {
+export function TrackOutline({ circuit, label, sectorLines }: { circuit: Circuit; label: string; sectorLines?: { x: number; y: number }[] | null }) {
   const geo = geometry(circuit);
+  const sectors = sectorLines ? geo.split(sectorLines) : null;
   const r = geo.size * 0.016;
   const sw = geo.size * 0.011;
   // Direction arrow a little after the start/finish line.
@@ -14,7 +15,11 @@ export function TrackOutline({ circuit, label }: { circuit: Circuit; label: stri
   return (
     <svg viewBox={geo.viewBox} className="tmap-svg static" role="img" aria-label={label}>
       <path d={geo.path} className="tmap-edge" style={{ strokeWidth: sw * 2.2 }} />
-      <path d={geo.path} className="tmap-track" style={{ strokeWidth: sw }} />
+      {sectors ? (
+        sectors.map((sp, i) => <path key={i} d={sp.path} className={`tmap-sector s${i + 1}`} style={{ strokeWidth: sw }} />)
+      ) : (
+        <path d={geo.path} className="tmap-track" style={{ strokeWidth: sw }} />
+      )}
       {geo.finish && (
         <g transform={`translate(${geo.finish.x} ${geo.finish.y}) rotate(${geo.finish.angle})`}>
           <rect x={-sw * 2.4} y={-sw * 1.2} width={sw * 4.8} height={sw * 2.4} fill="#fff" stroke="#0b0b0d" strokeWidth={sw * 0.25} />
@@ -28,6 +33,12 @@ export function TrackOutline({ circuit, label }: { circuit: Circuit; label: stri
         <g key={c.number} className="tmap-corner">
           <circle cx={c.x} cy={c.y} r={r * 1.15} />
           <text x={c.x} y={c.y} style={{ fontSize: r * 1.15 }}>{c.number}</text>
+        </g>
+      ))}
+      {sectors?.map((sp, i) => (
+        <g key={`sl${i}`} className={`tmap-slabel s${i + 1}`}>
+          <rect x={sp.label.x - r * 1.5} y={sp.label.y - r * 0.85} width={r * 3} height={r * 1.7} rx={r * 0.4} />
+          <text x={sp.label.x} y={sp.label.y} style={{ fontSize: r * 1.05 }}>S{i + 1}</text>
         </g>
       ))}
     </svg>

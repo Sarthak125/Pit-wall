@@ -279,9 +279,9 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team }: { 
             {isRace && <th className="r">INT</th>}
             <th>LAST LAP</th>
             <th className="r">BEST</th>
-            <th className="r" title={live ? 'Current lap' : 'Best lap'}>SECTOR 1{live ? '' : ' (BEST LAP)'}</th>
-            <th className="r">SECTOR 2</th>
-            <th className="r">SECTOR 3</th>
+            <th className="r" title={live ? 'Current lap' : 'Best lap'}><i className="sec-dot" style={{ background: 'var(--s1)' }} />SECTOR 1{live ? '' : ' (BEST LAP)'}</th>
+            <th className="r"><i className="sec-dot" style={{ background: 'var(--s2)' }} />SECTOR 2</th>
+            <th className="r"><i className="sec-dot" style={{ background: 'var(--s3)' }} />SECTOR 3</th>
             <th>TYRES</th>
             {isRace && <th className="r" title="Places gained or lost against the starting grid">DIFF</th>}
             <th className="r" title="Current speed. Shows 0 when there is no live data.">SPEED</th>

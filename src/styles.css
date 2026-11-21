@@ -15,6 +15,11 @@
   --purple: #c084fc;
   --red-soft: #ff8a8a;
   --blue-soft: #8ab8ff;
+  /* Timing sector colours, used everywhere a sector is shown. Chosen not to clash with the timing colours
+     (purple, green, yellow), flags (yellow, orange, red) or the pit lane (blue). */
+  --s1: #f472b6;
+  --s2: #22d3ee;
+  --s3: #e2e8f0;
   --violet-soft: #c4b5fd;
   --display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
   --body: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -322,15 +327,15 @@ a.round:hover, a.round:focus-visible { border-color: #6b7380; opacity: 1; }
 .tmap-clock { min-width: 80px; }
 /* Timing sectors on the track map */
 .tmap-sector { fill: none; stroke-linejoin: round; stroke-linecap: round; }
-.tmap-sector.s1, .tmap-slabel.s1 rect { stroke: #ff5a6a; fill: none; }
-.tmap-sector.s2, .tmap-slabel.s2 rect { stroke: #4f9dff; fill: none; }
-.tmap-sector.s3, .tmap-slabel.s3 rect { stroke: #2dd4bf; fill: none; }
+.tmap-sector.s1, .tmap-slabel.s1 rect { stroke: var(--s1); fill: none; }
+.tmap-sector.s2, .tmap-slabel.s2 rect { stroke: var(--s2); fill: none; }
+.tmap-sector.s3, .tmap-slabel.s3 rect { stroke: var(--s3); fill: none; }
 .tmap-slabel rect { fill: #0b0b0d !important; stroke-width: 18; }
-.tmap-slabel.s1 text { fill: #ff8a95; } .tmap-slabel.s2 text { fill: #8ab8ff; } .tmap-slabel.s3 text { fill: #5eead4; }
+.tmap-slabel.s1 text { fill: var(--s1); } .tmap-slabel.s2 text { fill: var(--s2); } .tmap-slabel.s3 text { fill: var(--s3); }
 .tmap-slabel text { font-family: var(--mono); font-weight: 700; text-anchor: middle; dominant-baseline: central; }
 .tmap-sectors { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .tmap-sbox { background: var(--inset); border-radius: 8px; padding: 8px 12px; border-left: 3px solid; font-size: 13px; min-width: 0; }
-.tmap-sbox.s1 { border-left-color: #ff5a6a; } .tmap-sbox.s2 { border-left-color: #4f9dff; } .tmap-sbox.s3 { border-left-color: #2dd4bf; }
+.tmap-sbox.s1 { border-left-color: var(--s1); } .tmap-sbox.s2 { border-left-color: var(--s2); } .tmap-sbox.s3 { border-left-color: var(--s3); }
 .tmap-sname { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--faint); margin-bottom: 2px; }
 .tmap-sbest .name-link { padding: 2px 0; }
 @media (max-width: 599px) { .tmap-sectors { grid-template-columns: 1fr; } }
@@ -425,3 +430,4 @@ html { zoom: 1.1; }
 .circuit-records { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
 .tmap-svg.static { max-height: 460px; }
 @media (max-width: 599px) { .circuit-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .circuit-records { grid-template-columns: 1fr; } }
+.sec-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
