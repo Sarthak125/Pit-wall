@@ -93,7 +93,7 @@ Notes:
 
 - On Live Timing, clicking elsewhere in a timing tower row still selects that driver for the Car data panel; only the code itself opens the driver page.
 - Race results addresses come in two forms. `#/race/20` follows the season picker (used by the Dashboard and Calendar). `#/race/2023/21` carries its own season (used by the circuit history tables), and its previous and next links stay in that season.
-- Links show a subtle underline on hover, so tables look the same until you point at them.
+- Every link has a faint underline, so it is clear what you can tap (there is no hover on a tablet); the underline brightens on hover or keyboard focus.
 
 ### Settings
 
