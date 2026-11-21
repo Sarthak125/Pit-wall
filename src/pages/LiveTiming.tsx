@@ -180,7 +180,7 @@ function Segments({ segs }: { segs: (number | null)[] | null | undefined }) {
 function TimingTable({ rows, isRace, live, fastest, favNum, team }: { rows: TimingRow[]; isRace: boolean; live: boolean; fastest: number | null; favNum: number | null; team: FavouriteTeam | null }) {
   return (
     <div className="scroll-x">
-      <table className="tbl timing" style={{ minWidth: live ? 1180 : 1060 }}>
+      <table className="tbl timing" style={{ minWidth: 1180 }}>
         <thead>
           <tr>
             <th>POS</th>
@@ -193,8 +193,8 @@ function TimingTable({ rows, isRace, live, fastest, favNum, team }: { rows: Timi
             <th className="r">SECTOR 2</th>
             <th className="r">SECTOR 3</th>
             <th>TYRES</th>
-            <th className="r" title={live ? 'Current speed' : 'Fastest speed trap reading this session'}>{live ? 'SPEED' : 'TOP TRAP'}</th>
-            {live && <th>PEDALS</th>}
+            <th className="r" title="Current speed. Shows 0 when there is no live data.">SPEED</th>
+            <th>PEDALS</th>
           </tr>
         </thead>
         <tbody>
@@ -203,7 +203,9 @@ function TimingTable({ rows, isRace, live, fastest, favNum, team }: { rows: Timi
             const l = r.lastLap;
             const c = r.currentLap;
             const isTeam = team?.codes.has(r.driver.name_acronym);
-            const speed = live ? r.car?.speed : r.trapSpeed;
+            // Live car data only; with none (no live session, or nothing received yet) the car shows 0.
+            const tel = live ? r.car : undefined;
+            const speed = tel?.speed ?? 0;
             return (
               <tr key={r.driver.driver_number} className={[favNum === r.driver.driver_number ? 'fav' : '', isTeam ? 'team' : '', r.status === 'IN PIT' ? 'in-pit' : ''].join(' ').trim() || undefined} style={isTeam ? ({ '--team': team!.colour } as React.CSSProperties) : undefined}>
                 <td className="mono muted">{r.position ?? '-'}</td>
@@ -249,15 +251,13 @@ function TimingTable({ rows, isRace, live, fastest, favNum, team }: { rows: Timi
                     ) : <span className="faint">-</span>}
                   </div>
                 </td>
-                <td className="r mono">{speed != null ? <>{speed}<span className="faint" style={{ fontSize: 11 }}> km/h</span></> : '-'}</td>
-                {live && (
-                  <td>
-                    <div className="pedals" title={r.car ? `Throttle ${r.car.throttle}%, brake ${r.car.brake ? 'on' : 'off'}` : 'No car data yet'}>
-                      <i className="thr"><b style={{ width: `${Math.max(0, Math.min(100, r.car?.throttle ?? 0))}%` }} /></i>
-                      <i className="brk"><b style={{ width: `${r.car?.brake ? 100 : 0}%` }} /></i>
-                    </div>
-                  </td>
-                )}
+                <td className="r mono">{speed}<span className="faint" style={{ fontSize: 11 }}> km/h</span></td>
+                <td>
+                  <div className="pedals" title={tel ? `Throttle ${tel.throttle}%, brake ${tel.brake ? 'on' : 'off'}` : 'No live car data'}>
+                    <i className="thr"><b style={{ width: `${Math.max(0, Math.min(100, tel?.throttle ?? 0))}%` }} /></i>
+                    <i className="brk"><b style={{ width: `${tel?.brake ? 100 : 0}%` }} /></i>
+                  </div>
+                </td>
               </tr>
             );
           })}
