@@ -24,7 +24,7 @@ import {
 } from '../hooks/useSeason';
 import { fmtDayMonth, fmtDayTime, fmtShortClock, pad2, raceStart, splitCountdown, timeZoneLabel, toDate } from '../lib/format';
 import { trackStatus } from '../lib/raceControl';
-import { href } from '../lib/router';
+import { driverHref, href } from '../lib/router';
 import { useSettings } from '../lib/settings';
 import { teamColour } from '../lib/teams';
 
@@ -135,9 +135,15 @@ export function Dashboard() {
                         <td>
                           <div className="who">
                             <span className="team-bar" style={{ background: teamColour(team?.constructorId ?? team?.name) }} />
-                            <span style={{ fontWeight: 600 }}>
-                              {d.Driver.givenName} {d.Driver.familyName}
-                            </span>
+                            {d.Driver.code ? (
+                              <a className="name-link" href={driverHref(d.Driver.code)}>
+                                {d.Driver.givenName} {d.Driver.familyName}
+                              </a>
+                            ) : (
+                              <span style={{ fontWeight: 600 }}>
+                                {d.Driver.givenName} {d.Driver.familyName}
+                              </span>
+                            )}
                             {fav?.code === d.Driver.code && <span className="fav-star" aria-label="Favourite"><StarIcon filled size={14} /></span>}
                           </div>
                         </td>
