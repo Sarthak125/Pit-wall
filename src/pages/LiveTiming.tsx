@@ -81,6 +81,7 @@ export function LiveTiming() {
   const start = Date.parse(session.date_start);
   const elapsed = live ? now - start : Date.parse(session.date_end) - start;
   const remaining = Math.max(0, Date.parse(session.date_end) - now);
+  const upcoming = now < start;
   const total = planned.data?.laps;
   const wx = t.weather;
   const compass = (deg: number) => ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(((deg % 360) + 360) % 360 / 45) % 8];
@@ -92,6 +93,10 @@ export function LiveTiming() {
           <span className="pill tone-solid" style={{ borderRadius: 6, padding: '6px 12px', fontSize: 12, letterSpacing: 1 }}>
             <span className="dot live-dot on" style={{ background: '#fff' }} />
             LIVE
+          </span>
+        ) : upcoming ? (
+          <span className="pill" style={{ borderRadius: 6, padding: '6px 12px', background: '#14233a', color: '#8ab8ff' }}>
+            UPCOMING
           </span>
         ) : (
           <span className="pill tone-grey" style={{ borderRadius: 6, padding: '6px 12px' }}>
@@ -124,8 +129,8 @@ export function LiveTiming() {
             {isRace && total && t.currentLap ? <div className="s">{Math.max(0, total - t.currentLap)} left</div> : null}
           </div>
           <div className="metric">
-            <div className="l">{live ? (isRace ? 'ELAPSED' : 'TIME LEFT') : 'DURATION'}</div>
-            <div className="v">{fmtDuration(live && !isRace ? remaining : elapsed)}</div>
+            <div className="l">{upcoming ? 'STARTS IN' : live ? (isRace ? 'ELAPSED' : 'TIME LEFT') : 'DURATION'}</div>
+            <div className="v">{fmtDuration(upcoming ? start - now : live && !isRace ? remaining : elapsed)}</div>
           </div>
           <div className="metric">
             <div className="l">TRACK</div>
@@ -190,7 +195,7 @@ export function LiveTiming() {
             </div>
           </div>
           {t.loading ? <Loading rows={12} /> : t.rows.length === 0 ? <Empty>No timing data for this session yet.</Empty> : (
-            <TimingTable rows={t.rows} isRace={isRace} live={live} fastest={t.fastest} favNum={favNum} team={favTeam} />
+            <TimingTable rows={t.rows} isRace={isRace} live={live} upcoming={upcoming} fastest={t.fastest} favNum={favNum} team={favTeam} />
           )}
         </section>
       </div>
@@ -240,15 +245,17 @@ function Segments({ segs }: { segs: (number | null)[] | null | undefined }) {
   );
 }
 
-function TimingTable({ rows, isRace, live, fastest, favNum, team }: { rows: TimingRow[]; isRace: boolean; live: boolean; fastest: number | null; favNum: number | null; team: FavouriteTeam | null }) {
+function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team }: { rows: TimingRow[]; isRace: boolean; live: boolean; upcoming: boolean; fastest: number | null; favNum: number | null; team: FavouriteTeam | null }) {
+  // Before a race starts, the order is the starting grid and the gap column shows the qualifying lap.
+  const onGrid = isRace && upcoming;
   return (
     <div className="scroll-x">
       <table className="tbl timing" style={{ minWidth: isRace ? 1120 : 1040 }}>
         <thead>
           <tr>
-            <th>POS</th>
+            <th>{onGrid ? 'GRID' : 'POS'}</th>
             <th>DRIVER</th>
-            <th className="r">{isRace ? 'GAP' : 'GAP (BEST)'}</th>
+            <th className="r">{onGrid ? 'QUALI LAP' : isRace ? 'GAP' : 'GAP (BEST)'}</th>
             {isRace && <th className="r">INT</th>}
             <th>LAST LAP</th>
             <th className="r">BEST</th>
@@ -262,7 +269,7 @@ function TimingTable({ rows, isRace, live, fastest, favNum, team }: { rows: Timi
         </thead>
         <tbody>
           {rows.map((r, i) => {
-            const gap = isRace ? (i === 0 ? 'Leader' : fmtGap(r.gap)) : r.bestLap != null && fastest != null ? (i === 0 ? 'Fastest' : `+${(r.bestLap - fastest).toFixed(3)}`) : '-';
+            const gap = onGrid ? fmtLap(r.gridLap) : isRace ? (i === 0 ? 'Leader' : fmtGap(r.gap)) : r.bestLap != null && fastest != null ? (i === 0 ? 'Fastest' : `+${(r.bestLap - fastest).toFixed(3)}`) : '-';
             const l = r.lastLap;
             const c = r.currentLap;
             const isTeam = team?.codes.has(r.driver.name_acronym);
@@ -271,7 +278,16 @@ function TimingTable({ rows, isRace, live, fastest, favNum, team }: { rows: Timi
             const speed = tel?.speed ?? 0;
             return (
               <tr key={r.driver.driver_number} className={[favNum === r.driver.driver_number ? 'fav' : '', isTeam ? 'team' : '', r.status === 'IN PIT' ? 'in-pit' : '', r.status === 'RETIRED' || r.status === 'DNS' || r.status === 'DSQ' ? 'out' : ''].join(' ').trim() || undefined} style={isTeam ? ({ '--team': team!.colour } as React.CSSProperties) : undefined}>
-                <td className="mono muted">{r.position ?? '-'}</td>
+                <td className="mono muted">
+                  <div className="pos-cell">
+                    {r.position ?? '-'}
+                    {isRace && !onGrid && r.grid != null && r.position != null && (
+                      <span className={`gain ${r.grid - r.position > 0 ? 'up' : r.grid - r.position < 0 ? 'down' : ''}`} title={`Started P${r.grid}`}>
+                        {r.grid - r.position > 0 ? `▲${r.grid - r.position}` : r.grid - r.position < 0 ? `▼${r.position - r.grid}` : '–'}
+                      </span>
+                    )}
+                  </div>
+                </td>
                 <td>
                   <div className="who">
                     <span className="team-bar" style={{ height: 20, background: r.colour }} />
@@ -281,7 +297,7 @@ function TimingTable({ rows, isRace, live, fastest, favNum, team }: { rows: Timi
                   </div>
                 </td>
                 <td className="r mono">{gap}</td>
-                {isRace && <td className="r mono muted">{i > 0 ? fmtGap(r.interval) : '-'}</td>}
+                {isRace && <td className="r mono muted">{i > 0 && !onGrid ? fmtGap(r.interval) : '-'}</td>}
                 <td>
                   {r.status ? (
                     <span className={`pit-pill ${PILL[r.status]}`} title={PILL_TITLE[r.status]}>{r.status}</span>

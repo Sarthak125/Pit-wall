@@ -1,7 +1,7 @@
 import { FiaText, FiaWhen } from './FiaText';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { openf1, type GridSlot, type OF1Driver, type Overtake, type Position, type Session, type TeamRadio } from '../api/openf1';
+import { getStartingGrid, openf1, type OF1Driver, type Overtake, type Position, type Session, type TeamRadio } from '../api/openf1';
 import { useLiveTiming } from '../hooks/useLiveTiming';
 import { usePoll } from '../hooks/usePoll';
 import { ingestFavourite } from '../lib/alerts';
@@ -29,9 +29,9 @@ export function LiveDriver({ session, code, alerts = true }: { session: Session;
   const history = usePoll<Position[]>(num ? `ph-${sk}-${num}` : null, (_p, signal) => openf1('position', { session_key: sk, driver_number: num ?? undefined }, signal), 20_000);
   const grid = useQuery({
     queryKey: ['grid', sk],
-    enabled: isRace,
+    enabled: isRace && !!session,
     staleTime: 60 * 60_000,
-    queryFn: () => openf1<GridSlot>('starting_grid', { session_key: sk }),
+    queryFn: ({ signal }) => getStartingGrid(session!, signal),
   });
 
   const idx = t.rows.findIndex((r) => r.driver.driver_number === num);

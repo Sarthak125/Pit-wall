@@ -209,3 +209,24 @@ export interface SessionResult {
   dns: boolean;
   dsq: boolean;
 }
+
+/**
+ * Starting grid for a race or sprint. OpenF1 files the grid under the qualifying session it came from
+ * (penalties included), so this finds the matching qualifying session of the same meeting. If the grid
+ * is not published yet, it falls back to that session's qualifying classification.
+ */
+export async function getStartingGrid(race: Pick<Session, 'meeting_key' | 'session_name'>, signal?: AbortSignal): Promise<GridSlot[]> {
+  const sprint = /sprint/i.test(race.session_name);
+  const sessions = await openf1<Session>('sessions', { meeting_key: race.meeting_key }, signal);
+  const quali = sessions
+    .filter((x) => /qualifying|shootout/i.test(x.session_name) && (sprint ? /sprint/i.test(x.session_name) : !/sprint/i.test(x.session_name)))
+    .pop();
+  if (!quali) return [];
+  const grid = await openf1<GridSlot>('starting_grid', { session_key: quali.session_key }, signal);
+  if (grid.length) return grid.sort((a, b) => a.position - b.position);
+  const res = await openf1<SessionResult>('session_result', { session_key: quali.session_key }, signal);
+  return res
+    .filter((r) => r.position != null)
+    .map((r) => ({ position: r.position!, driver_number: r.driver_number, lap_duration: null }))
+    .sort((a, b) => a.position - b.position);
+}

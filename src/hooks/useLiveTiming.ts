@@ -11,12 +11,14 @@ import {
   type Session,
   type Stint,
   type Weather,
+  getStartingGrid,
   type PitDetail,
   type SessionResult,
 } from '../api/openf1';
 import { classify, type ClassifiedMsg } from '../lib/raceControl';
 import { teamColour } from '../lib/teams';
 import { usePoll } from './usePoll';
+import { useQuery } from '@tanstack/react-query';
 
 /** Poll intervals while a session is live, tuned to stay near 30 requests/minute. */
 const LIVE_MS = { position: 10_000, intervals: 10_000, laps: 20_000, rc: 20_000, stints: 30_000, pit: 60_000, weather: 60_000, car: 10_000, drivers: 300_000 };
@@ -43,6 +45,10 @@ export interface TimingRow {
   driver: OF1Driver;
   colour: string;
   position: number | null;
+  /** Starting grid slot (races and sprints). */
+  grid: number | null;
+  /** Qualifying lap that set the grid slot. */
+  gridLap: number | null;
   gap: number | string | null;
   interval: number | string | null;
   lastLap: Lap | undefined;
@@ -139,6 +145,16 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
   );
 
   const stints = usePoll<Stint[]>(sk ? `st-${sk}-${live}` : null, (_p, signal) => openf1('stints', { session_key: sk }, signal), every(LIVE_MS.stints));
+  const isRaceSession = /race|sprint/i.test(session?.session_name ?? '') && !/qualifying|shootout/i.test(session?.session_name ?? '');
+  const grid = useQuery({
+    queryKey: ['grid', sk],
+    enabled: !!session && isRaceSession,
+    // Refreshed every few minutes before the start, in case the official grid (with penalties) is published late.
+    staleTime: 5 * 60_000,
+    refetchInterval: 5 * 60_000,
+    queryFn: ({ signal }) => getStartingGrid(session!, signal),
+  });
+
   // Official classification: marks retirements (DNF), non-starters and disqualifications.
   const results = usePoll<SessionResult[]>(sk ? `res-${sk}-${live}` : null, (_p, signal) => openf1('session_result', { session_key: sk }, signal), every(60_000));
   const pits = usePoll<Pit[]>(sk ? `pit-${sk}-${live}` : null, (_p, signal) => openf1('pit', { session_key: sk }, signal), every(LIVE_MS.pit));
@@ -187,6 +203,7 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
       const lapsDone = mine.length ? mine[mine.length - 1].lap_number : 0;
       const tyreAge = stint ? (stint.tyre_age_at_start ?? 0) + Math.max(0, lapsDone - (stint.lap_start ?? lapsDone)) : null;
       const iv = intervals.data?.byDriver.get(d.driver_number);
+      const gridSlot = grid.data?.find((g) => g.driver_number === d.driver_number);
       // Live: the lap in progress, so sectors fill in as the car goes round. Afterwards: the driver's best lap.
       const bestRow = completed.filter((l) => l.lap_duration === pbLap)[0];
       const currentLap = live ? mine[mine.length - 1] : (bestRow ?? mine[mine.length - 1]);
@@ -195,7 +212,10 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
       return {
         driver: d,
         colour: teamColour(d.team_name, d.team_colour),
-        position: positions.data?.byDriver.get(d.driver_number)?.position ?? null,
+        // Before the start there are no live positions, so the starting grid sets the order.
+        position: positions.data?.byDriver.get(d.driver_number)?.position ?? gridSlot?.position ?? null,
+        grid: gridSlot?.position ?? null,
+        gridLap: gridSlot?.lap_duration ?? null,
         gap: iv?.gap_to_leader ?? null,
         interval: iv?.interval ?? null,
         lastLap,
@@ -238,7 +258,7 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
       };
     });
     return out.sort((a, b) => (a.position ?? 99) - (b.position ?? 99));
-  }, [drivers.data, laps.data, stints.data, intervals.data, positions.data, pits.data, cars.data, results.data, live, session?.session_name]);
+  }, [drivers.data, laps.data, stints.data, intervals.data, positions.data, pits.data, cars.data, results.data, grid.data, live, session?.session_name]);
 
   const currentLap = rows.reduce((m, r) => Math.max(m, r.lapsDone), 0);
   const fastest = rows.reduce<number | null>((m, r) => (r.bestLap != null && (m == null || r.bestLap < m) ? r.bestLap : m), null);
