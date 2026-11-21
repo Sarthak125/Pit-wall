@@ -19,6 +19,7 @@ import { teamColour, tyre, TYRE } from '../lib/teams';
 import { StarIcon } from '../components/Icons';
 import { useFavourite, useFavouriteTeam, type FavouriteTeam } from '../hooks/useFavourite';
 import { RadioList, type DriverLabel } from '../components/RadioList';
+import { driverHref } from '../lib/router';
 import { usePoll } from '../hooks/usePoll';
 import { openf1, type TeamRadio } from '../api/openf1';
 import { FlagIcon } from '../components/Icons';
@@ -183,7 +184,7 @@ function TimingTable({ rows, isRace, fastest, selected, favNum, team, onSelect }
                 <td>
                   <div className="who">
                     <span className="team-bar" style={{ height: 20, background: r.colour }} />
-                    <span className="code">{r.driver.name_acronym}</span>
+                    <a className="code name-link" style={{ fontWeight: 700 }} href={driverHref(r.driver.name_acronym)} title={`${r.driver.name_acronym}: full stats`} onClick={(e) => e.stopPropagation()}>{r.driver.name_acronym}</a>
                     <span className="faint" style={{ fontSize: 11 }}>{r.driver.driver_number}</span>
                     {favNum === r.driver.driver_number && <span className="fav-star" aria-label="Favourite"><StarIcon filled size={14} /></span>}
                   </div>
@@ -275,7 +276,7 @@ function StrategyPanel({ rows, stints }: { rows: TimingRow[]; stints: Stint[] })
             const mine = stints.filter((s) => s.driver_number === r.driver.driver_number).sort((a, b) => a.stint_number - b.stint_number);
             return (
               <div className="stint-row" key={r.driver.driver_number}>
-                <span className="code">{r.driver.name_acronym}</span>
+                <a className="code name-link" style={{ fontWeight: 700 }} href={driverHref(r.driver.name_acronym)} title={`${r.driver.name_acronym}: full stats`} onClick={(e) => e.stopPropagation()}>{r.driver.name_acronym}</a>
                 <div className="stint-track">
                   {mine.map((s) => {
                     const startLap = s.lap_start ?? 1;
