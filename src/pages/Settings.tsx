@@ -38,7 +38,7 @@ export function Settings() {
           </label>
           <label>
             OpenF1 requests per minute
-            <span className="hint">Keep this at or below the limit of your OpenF1 plan. The app queues requests so it stays under this number.</span>
+            <span className="hint">OpenF1 allows 30 a minute for free use and 60 with a paid OpenF1 account (paste its access token above). Keep this at or below your limit; the app queues requests so it stays under this number.</span>
             <input className="input" type="number" min={5} max={600} inputMode="numeric" value={perMinute} onChange={(e) => { setPerMinute(e.target.value); setSaved(false); }} style={{ maxWidth: 160 }} />
           </label>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>

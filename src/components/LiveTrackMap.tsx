@@ -177,6 +177,8 @@ export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, t
     queryKey: ['sector-bounds', session.session_key],
     enabled: !!refLap,
     staleTime: Infinity,
+    // Live, OpenF1's position data can lag a little behind the lap times. Keep trying until the sector lines are found.
+    refetchInterval: (q: { state: { status: string } }) => (q.state.status === 'error' ? 30_000 : false),
     queryFn: async ({ signal }) => {
       const t1 = Date.parse(refLap!.date_start!) + refLap!.duration_sector_1! * 1000;
       const t2 = t1 + refLap!.duration_sector_2! * 1000;

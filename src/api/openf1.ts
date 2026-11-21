@@ -11,7 +11,15 @@ import { getSettings } from '../lib/settings';
 
 const BASE = (import.meta.env.VITE_OPENF1_BASE as string | undefined) ?? 'https://api.openf1.org/v1';
 
-export const openf1Limiter = new RateLimiter(3, getSettings().openf1PerMinute);
+/**
+ * Requests allowed per second for a per-minute budget. OpenF1 gives 3 a second with 30 a minute (free) and 6 a
+ * second with 60 a minute (signed in), so the per-second cap follows the per-minute setting, between 3 and 6.
+ */
+export function perSecondFor(perMinute: number): number {
+  return Math.max(3, Math.min(6, Math.floor(perMinute / 10)));
+}
+
+export const openf1Limiter = new RateLimiter(perSecondFor(getSettings().openf1PerMinute), getSettings().openf1PerMinute);
 
 /**
  * Live poll interval for a base value tuned to the default budget of 30 requests a minute. A bigger budget
@@ -39,7 +47,7 @@ function query(params: Params): string {
 
 export async function openf1<T>(endpoint: string, params: Params, signal?: AbortSignal): Promise<T[]> {
   const { openf1Token, openf1PerMinute } = getSettings();
-  openf1Limiter.setLimits(3, openf1PerMinute);
+  openf1Limiter.setLimits(perSecondFor(openf1PerMinute), openf1PerMinute);
   const headers: Record<string, string> = {};
   if (openf1Token.trim()) headers.Authorization = `Bearer ${openf1Token.trim()}`;
   try {
