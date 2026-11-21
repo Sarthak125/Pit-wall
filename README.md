@@ -134,7 +134,7 @@ The screen designs live on a design canvas: [Pit Wall design canvas](https://cla
 | Favourites: Team tab | Favourites: Team tab and where the team appears | Favourites: Team tab (Android tablet, portrait) |
 | Standings | Standings (laptop) | Standings (Android tablet, portrait) |
 | Calendar | Calendar (laptop) | Calendar (Android tablet, portrait) |
-| Race results (opened from Calendar) | Race results (laptop) | Race results (Android tablet, portrait) |
+| Race results (opened from Calendar), with the circuit overview, weekend weather and positions lap by lap | Race results (laptop) | Race results (Android tablet, portrait), and Race page: circuit, weather and positions (Android tablet, portrait) for the screen further down |
 | Drivers | Drivers (laptop) | Drivers (Android tablet, portrait) |
 | Driver page, any driver (opened from Drivers) | Driver page, any driver (laptop) | Driver page, any driver (Android tablet, portrait) |
 | Settings | Settings (laptop) | Settings (Android tablet, portrait) |
