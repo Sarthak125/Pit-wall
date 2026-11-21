@@ -62,9 +62,10 @@ export function Settings() {
       <section className="card">
         <h2 className="h2 sm" style={{ marginBottom: 8 }}>About</h2>
         <p className="muted" style={{ margin: 0, lineHeight: 1.6 }}>
-          Times are shown in your device time zone ({timeZoneLabel()}). Standings, results and the calendar come from Jolpica-F1. Live timing, race control
-          messages, weather and car data come from OpenF1. FIA message types (penalty, noted, under investigation) are worked out from the official message
-          wording, so an unusual message may land in "Other". This is an unofficial fan project and is not affiliated with Formula 1 or the FIA.
+          Times are shown in your device time zone ({timeZoneLabel()}). Standings, results, the calendar and circuit history come from Jolpica-F1. Live
+          timing, race control messages, track weather, car data and team radio come from OpenF1. Track layouts and pit stop time loss come from MultiViewer,
+          and weekend weather forecasts on race pages from Open-Meteo. FIA message types (penalty, noted, under investigation) are worked out from the official
+          message wording, so an unusual message may land in "Other". This is an unofficial fan project and is not affiliated with Formula 1 or the FIA.
         </p>
       </section>
       <Footer />
