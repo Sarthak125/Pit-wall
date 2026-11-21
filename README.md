@@ -25,7 +25,8 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 - Timing tower: position, gap, interval, last lap, best lap, sector times coloured purple (overall best), green (personal best) or yellow, current tyre and its age, and pit stops. In practice and qualifying the gap is to the fastest lap.
 - Car data for any driver: speed, gear, RPM, throttle and brake.
 - Tyre strategy bars for each driver's stints.
-- **FIA race control and stewards** feed: every official message, newest first, labelled as Penalty, Under Investigation, Noted, No Further Action, Track Limits, Flag, Safety Car or Other. Filter by type, by driver, by your favourite driver or by your favourite team.
+- **Track map**: the circuit with numbered turns and the start/finish line, and every car moving on it in team colours (your favourite driver ringed in gold, your team's cars in white). Marshal sectors light up yellow or orange under yellow and double yellow flags, the track turns red under a red flag and dashed amber behind the safety car. Live, it plays about 6 seconds behind so cars move smoothly; for finished sessions, a replay bar lets you scrub to any moment and play at 1×, 4× or 8×. Tap a car to open that driver's page.
+- **FIA race control and stewards** feed: every official message, newest first, in plain English with the reason underneath (for example "Turn 4 incident involving VER and NOR · Causing a collision"), and the exact official wording one tap away. Labelled as Penalty, Under Investigation, Noted, No Further Action, Track Limits, Flag, Safety Car, Session or Info. The All tab hides routine sector and blue flag messages unless you choose to show them. Filter by type, by driver, by your favourite driver or by your favourite team.
 - Penalties this session (with whether each is marked as served), track limits count per driver, and open investigations.
 - Team radio for the session, filterable by driver, your driver or your team.
 
@@ -82,7 +83,7 @@ Where names link to (driver page, team page or race results page):
 | Where | Driver page | Team page | Race results page |
 | --- | --- | --- | --- |
 | Dashboard | Names in the Drivers' Championship table, Last race podium | Constructors' bars, Team column of the drivers' table, Last race podium | Last race name, each round in the calendar strip |
-| Live Timing | Codes in the timing tower and tyre strategy rows, driver chips under FIA messages, team radio codes | | |
+| Live Timing | Codes in the timing tower and tyre strategy rows, cars on the track map, driver chips under FIA messages, team radio codes | | |
 | Driver and team pages | Team radio codes | | Race names in the race-by-race tables, seasons in the circuit history tables |
 | Standings | Driver names | Team names | |
 | Calendar | Winner of each finished race | Winner's team | Race names |
@@ -135,12 +136,13 @@ The tablet boards show one screen (800 × 1280) with the bottom menu (Dashboard,
 
 ## Data sources
 
-Formula 1 has no public official API. This app uses two free community APIs:
+Formula 1 has no public official API. This app uses free community APIs:
 
 | Source | Used for | Notes |
 | --- | --- | --- |
 | [OpenF1](https://openf1.org) | Live timing, positions, gaps, laps and sectors, tyres, pit stops, race control messages, weather, car data, car positions (track map), overtakes, starting grid, session results, team radio | Historical data is free. Check OpenF1's current terms for real-time access during sessions; if it needs an account, paste your access token in **Settings**. Default budget is 30 requests per minute, adjustable in Settings. |
 | [Jolpica-F1](https://github.com/jolpica/jolpica-f1) | Calendar, results, qualifying, sprints, driver and constructor standings, career totals, circuit history | Ergast-compatible. Responses are cached on the device, from 10 minutes for standings up to a week for past seasons. |
+| [MultiViewer](https://multiviewer.app) circuit API | Track outlines, turn numbers, marshal sectors and map rotation for the Live Timing track map | Unofficial and free, no key. Layouts are cached on the device for a week. If a layout is missing, the map says so and the rest of the page works as normal. |
 
 How some values are worked out:
 

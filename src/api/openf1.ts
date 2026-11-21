@@ -54,6 +54,7 @@ export interface Session {
   location: string;
   country_name: string;
   circuit_short_name: string;
+  circuit_key: number;
   year: number;
 }
 
@@ -64,6 +65,7 @@ export interface Meeting {
   location: string;
   country_name: string;
   circuit_short_name: string;
+  circuit_key: number;
   date_start: string;
   year: number;
 }

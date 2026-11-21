@@ -40,6 +40,12 @@ export default defineConfig({
             options: { cacheName: 'jolpica', networkTimeoutSeconds: 8, expiration: { maxEntries: 200, maxAgeSeconds: 7 * 24 * 3600 } },
           },
           {
+            // Circuit layouts for the track map rarely change.
+            urlPattern: ({ url }) => url.hostname === 'api.multiviewer.app',
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'circuits', expiration: { maxEntries: 40, maxAgeSeconds: 30 * 24 * 3600 } },
+          },
+          {
             // Live data must be fresh, so it is never served from cache.
             urlPattern: ({ url }) => url.hostname === 'api.openf1.org',
             handler: 'NetworkOnly',

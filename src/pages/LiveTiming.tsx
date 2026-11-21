@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { isSessionLive, type OF1Driver, type Session, type Stint } from '../api/openf1';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { FiaText, FiaWhen } from '../components/FiaText';
+import { LiveTrackMap } from '../components/LiveTrackMap';
 import { Footer } from '../components/Shell';
 import { useNow } from '../hooks/usePoll';
 import { useLatestSessions } from '../hooks/useSeason';
@@ -148,6 +149,22 @@ export function LiveTiming() {
           <StrategyPanel rows={t.rows} stints={t.stints} />
         </div>
       </div>
+
+      <section className="card tight" aria-labelledby="map">
+        <div className="card-head">
+          <div>
+            <h2 className="h2" id="map">Track map</h2>
+            <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>{live ? 'Every car on track, moving live' : 'Replay where every car was during the session'} · tap a car for full stats</div>
+          </div>
+          <div className="legend">
+            <span><i className="sw" style={{ background: '#f5c518' }} />Yellow flag</span>
+            <span><i className="sw" style={{ background: '#ff9f1a' }} />Double yellow</span>
+            <span><i className="sw" style={{ background: 'var(--amber)' }} />Safety car (dashed)</span>
+            <span><i className="sw" style={{ background: 'var(--accent)' }} />Red flag</span>
+          </div>
+        </div>
+        <LiveTrackMap session={session} live={live} drivers={[...t.driversByNumber.values()]} messages={t.messages} favNum={favNum} teamNums={teamNums} />
+      </section>
 
       <FiaSection messages={t.messages} drivers={t.driversByNumber} favNum={favNum} team={favTeam} teamNums={teamNums} />
       <RadioPanel session={session} live={live} drivers={t.driversByNumber} favNum={favNum} teamNums={teamNums} />

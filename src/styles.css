@@ -300,3 +300,23 @@ button, select, input { font: inherit; color: inherit; }
 /* Calendar strip rounds open the race results page */
 a.round { display: block; color: inherit; transition: border-color 0.15s, opacity 0.15s; }
 a.round:hover, a.round:focus-visible { border-color: #6b7380; opacity: 1; }
+
+/* Whole-field track map */
+.tmap { display: flex; flex-direction: column; gap: 10px; }
+.tmap-svg { width: 100%; height: auto; max-height: 72vh; display: block; background: var(--inset); border-radius: 10px; }
+.tmap-edge { fill: none; stroke: #3a3a40; stroke-linejoin: round; stroke-linecap: round; }
+.tmap-track { fill: none; stroke: #8b8b94; stroke-linejoin: round; stroke-linecap: round; }
+.tmap-track.sc { stroke: var(--amber); }
+.tmap-track.red { stroke: var(--accent); }
+.tmap-flag { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.tmap-flag.yellow { stroke: #f5c518; }
+.tmap-flag.double { stroke: #ff9f1a; }
+.tmap-corner circle { fill: #2a2a30; }
+.tmap-corner text { fill: #c9c9d1; font-family: var(--mono); font-weight: 600; text-anchor: middle; dominant-baseline: central; }
+.tmap-car text { font-family: var(--mono); font-weight: 700; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.tmap-car { cursor: pointer; }
+.tmap-car:hover circle:last-of-type { stroke: #fff; }
+.tmap-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 12px; }
+.tmap-bar .tab { min-height: 36px; }
+.tmap-scrub { flex: 1 1 200px; accent-color: var(--accent); min-height: 36px; }
+.tmap-clock { min-width: 80px; }
