@@ -65,7 +65,7 @@ While the app is open and a session is live, pop-up alerts tell you when your fa
 
 - **Standings:** full Drivers' and Constructors' tables, with your favourites highlighted and the flag button to pick a team. Driver and team names open their pages (see below).
 - **Calendar:** every round with all session times in your time zone and the winner of each finished race. Tap a race name for its results page.
-- **Race results** (`#/race/20`, by round, for the season in the season picker): podium, full race results (grid, places gained or lost, laps, time or status, fastest lap, points), sprint results on sprint weekends and qualifying (Q1, Q2, Q3), with links to the previous and next race. Upcoming races show the weekend schedule instead.
+- **Race results** (`#/race/20` for the season in the season picker, or `#/race/2023/21` for a specific season): podium, full race results (grid, places gained or lost, laps, time or status, fastest lap, points), sprint results on sprint weekends and qualifying (Q1, Q2, Q3), with links to the previous and next race. Upcoming races show the weekend schedule instead.
 - **Drivers:** the current grid with photos, numbers, teams and championship position, and the star to pick your favourite. Tap a driver to open their page (see below).
 
 ### Driver and team pages
@@ -77,21 +77,23 @@ Every driver and team has its own page, with the same layout as the Favourites t
 
 For a driver or team that isn't your favourite, the page has a back link instead of the Driver | Team tabs, highlights Drivers or Standings in the menu, and shows an empty ☆ or ⚑ to make it your favourite. Only your favourite driver triggers alerts. Each page has its own address, so you can bookmark or share it, and it follows the season picker (for example 2024 stats).
 
-Where names and codes link to these pages:
+Where names link to (driver page, team page or race results page):
 
-| Where | Opens the driver page | Opens the team page |
-| --- | --- | --- |
-| Dashboard | Names in the Drivers' Championship table | Constructors' bars and the Team column of the drivers' table |
-| Standings | Driver names | Team names |
-| Calendar | Winner of each finished race | |
-| Race results | Podium and every driver in the race, sprint and qualifying tables | Team names in those tables |
+| Where | Driver page | Team page | Race results page |
+| --- | --- | --- | --- |
+| Dashboard | Names in the Drivers' Championship table, Last race podium | Constructors' bars, Team column of the drivers' table, Last race podium | Last race name, each round in the calendar strip |
+| Live Timing | Codes in the timing tower and tyre strategy rows, driver chips under FIA messages, team radio codes | | |
+| Driver and team pages | Team radio codes | | Race names in the race-by-race tables, seasons in the circuit history tables |
+| Standings | Driver names | Team names | |
+| Calendar | Winner of each finished race | | Race names |
+| Race results | Podium and every driver in the race, sprint and qualifying tables | Team names in those tables | Previous and next race |
+| Drivers | Each driver card (the star stays separate) | | |
 
-The race name in the Dashboard's Last race card, each round in the Dashboard's calendar strip and race names on the Calendar open the race results page. The Last race podium names open driver and team pages. Race names in the race-by-race tables on driver and team pages open the race results page too. Seasons in the circuit history tables open that year's race (addresses like `#/race/2023/21` carry their own season instead of following the season picker).
-| Drivers | Each driver card (the star stays separate) | |
-| Live Timing | Codes in the timing tower and tyre strategy rows, driver chips under FIA messages, team radio codes | |
-| Favourites and team pages | Team radio codes | |
+Notes:
 
-On Live Timing, clicking elsewhere in a timing tower row still selects that driver for the Car data panel; only the code itself opens the driver page.
+- On Live Timing, clicking elsewhere in a timing tower row still selects that driver for the Car data panel; only the code itself opens the driver page.
+- Race results addresses come in two forms. `#/race/20` follows the season picker (used by the Dashboard and Calendar). `#/race/2023/21` carries its own season (used by the circuit history tables), and its previous and next links stay in that season.
+- Links show a subtle underline on hover, so tables look the same until you point at them.
 
 ### Settings
 
