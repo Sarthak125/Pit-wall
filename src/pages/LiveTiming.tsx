@@ -158,8 +158,8 @@ export function LiveTiming() {
         <LiveTrackMap session={session} live={live} drivers={[...t.driversByNumber.values()]} messages={t.messages} laps={t.laps} favNum={favNum} teamNums={teamNums} />
       </section>
 
-      <FiaSection messages={t.messages} drivers={t.driversByNumber} favNum={favNum} team={favTeam} teamNums={teamNums} />
       <RadioPanel session={session} live={live} drivers={t.driversByNumber} favNum={favNum} teamNums={teamNums} />
+      <FiaSection messages={t.messages} drivers={t.driversByNumber} favNum={favNum} team={favTeam} teamNums={teamNums} />
       <Footer />
     </>
   );
