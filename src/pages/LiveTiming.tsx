@@ -239,16 +239,19 @@ function TimingTable({ rows, isRace, live, fastest, favNum, team }: { rows: Timi
                 })}
                 <td>
                   <div className="tyre-hist">
-                    {r.stints.slice(0, -1).map((st) => {
+                    {r.stints.length === 0 && <span className="faint">-</span>}
+                    {r.stints.map((st, k) => {
                       const ty = tyre(st.compound);
-                      return <span key={st.stint_number} className="tyre small" style={{ borderColor: ty.colour }} title={`Earlier: ${ty.name}, laps ${st.lap_start ?? '?'} to ${st.lap_end ?? '?'}`}>{ty.letter}</span>;
+                      const now = k === r.stints.length - 1;
+                      // Tyre age when it came off (or now, for the current set), counting laps it had before this stint.
+                      const age = now ? r.tyreAge : (st.tyre_age_at_start ?? 0) + Math.max(0, (st.lap_end ?? 0) - (st.lap_start ?? 0) + 1);
+                      return (
+                        <span key={st.stint_number} className={`stint${now ? ' now' : ''}`} title={`${now ? 'Now' : 'Earlier'}: ${ty.name}, ${age ?? '?'} laps old${st.lap_start ? `, from lap ${st.lap_start}` : ''}`}>
+                          <span className="mono">{age ?? '-'}</span>
+                          <span className="tyre" style={{ borderColor: ty.colour }}>{ty.letter}</span>
+                        </span>
+                      );
                     })}
-                    {r.stint ? (
-                      <>
-                        <span className="tyre" style={{ borderColor: tyre(r.stint.compound).colour }} title={`Now: ${tyre(r.stint.compound).name}`}>{tyre(r.stint.compound).letter}</span>
-                        <span className="mono muted" style={{ fontSize: 12 }}>{r.tyreAge ?? '-'}</span>
-                      </>
-                    ) : <span className="faint">-</span>}
                   </div>
                 </td>
                 <td className="r mono">{speed}<span className="faint" style={{ fontSize: 11 }}> km/h</span></td>
