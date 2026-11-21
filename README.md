@@ -37,7 +37,13 @@ Pick any session of the current race weekend; live sessions update automatically
 - **Tyre history**: every set used, oldest first, as its age in laps followed by the tyre (for example "3 S  33 M"), with the current set in bold.
 - **DIFF** (races and sprints): places gained (green ↑) or lost (red ↓) against the starting grid.
 - **Speed** and **pedals** (throttle and brake bars) from live car data; without live data they show 0.
+- **PIT NOW** (live races and sprints): where each car would rejoin if it pitted this lap, as its position and the car it would be behind (for example "P7 · HAM +1.7"). Worked out from its gap to the leader plus the circuit's pit loss, using the smaller safety car or VSC figure while the race is neutralised. Rejoining within a second of another car shows in amber with a ⚠ (traffic). Cars in the pits, retired cars and lapped cars are left out.
+- POS and DRIVER stay pinned when the table scrolls sideways on narrower screens. With every column filled, the whole table fits from about 1366 px wide.
 - Before a race or sprint starts, the tower follows the official **starting grid** (penalties included, from the matching qualifying session; the qualifying order until the grid is published) and shows each driver's qualifying lap.
+
+**Championship if it ended now** (live races and sprints)
+
+- Drivers' and constructors' standings recalculated from the current order: points before this session plus what each current position would score (25 to 1, or 8 to 1 in a sprint), with places gained or lost in the championship and the gap to the leader. Retired cars score nothing. Shows the top 10 drivers and top 5 teams plus your favourites, and steps aside once the official standings include the session.
 
 **Track map**
 

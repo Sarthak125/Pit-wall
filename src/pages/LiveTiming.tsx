@@ -8,6 +8,7 @@ import { Empty, ErrorBox, Loading } from '../components/States';
 import { FiaText, FiaWhen } from '../components/FiaText';
 import { LiveTrackMap } from '../components/LiveTrackMap';
 import { RadioCards } from '../components/RadioCards';
+import { LiveStandings } from '../components/LiveStandings';
 import { Footer } from '../components/Shell';
 import { useNow } from '../hooks/usePoll';
 import { useLatestSessions } from '../hooks/useSeason';
@@ -215,10 +216,14 @@ export function LiveTiming() {
             </div>
           </div>
           {t.loading ? <Loading rows={12} /> : t.rows.length === 0 ? <Empty>No timing data for this session yet.</Empty> : (
-            <TimingTable rows={t.rows} isRace={isRace} live={live} upcoming={upcoming} fastest={t.fastest} favNum={favNum} team={favTeam} />
+            <TimingTable rows={t.rows} isRace={isRace} live={live} upcoming={upcoming} fastest={t.fastest} favNum={favNum} team={favTeam} pitLoss={pitLoss} neutral={status?.label === 'Safety car' ? 'sc' : status?.label === 'Virtual safety car' ? 'vsc' : null} />
           )}
         </section>
       </div>
+
+      {live && isRace && !upcoming && round && (
+        <LiveStandings season={String(session.year)} round={Number(round.round)} sprint={isSprint} rows={t.rows} favCode={fav?.code} favTeam={favTeam?.id} />
+      )}
 
       <section className="card tight" aria-labelledby="map">
         <div className="card-head">
@@ -265,12 +270,28 @@ function Segments({ segs }: { segs: (number | null)[] | null | undefined }) {
   );
 }
 
-function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team }: { rows: TimingRow[]; isRace: boolean; live: boolean; upcoming: boolean; fastest: number | null; favNum: number | null; team: FavouriteTeam | null }) {
+function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitLoss, neutral }: { rows: TimingRow[]; isRace: boolean; live: boolean; upcoming: boolean; fastest: number | null; favNum: number | null; team: FavouriteTeam | null; pitLoss?: { normal?: string; sc?: string; vsc?: string }; neutral: 'sc' | 'vsc' | null }) {
+  // Where each car would rejoin if it pitted now: its gap to the leader plus the pit loss, placed among the other
+  // cars' gaps. Under a safety car or VSC the field is slower, so the smaller neutralised loss applies.
+  const loss = Number((neutral === 'sc' ? pitLoss?.sc : neutral === 'vsc' ? pitLoss?.vsc : pitLoss?.normal) ?? NaN);
+  const showPit = live && isRace && !upcoming && Number.isFinite(loss);
+  const gaps = rows.map((r, i) => ({ n: r.driver.driver_number, code: r.driver.name_acronym, g: i === 0 ? 0 : typeof r.gap === 'number' ? r.gap : null }));
+  const rejoin = (i: number) => {
+    const me = gaps[i];
+    if (me.g == null || rows[i].status === 'IN PIT' || rows[i].status === 'RETIRED') return null;
+    const t = me.g + loss;
+    const others = gaps.filter((o, k) => k !== i && o.g != null) as { n: number; code: string; g: number }[];
+    const ahead = others.filter((o) => o.g < t).sort((a, b) => b.g - a.g)[0];
+    const behind = others.filter((o) => o.g >= t).sort((a, b) => a.g - b.g)[0];
+    const pos = 1 + others.filter((o) => o.g < t).length;
+    const traffic = (ahead && t - ahead.g < 1) || (behind && behind.g - t < 1);
+    return { pos, ahead, behind, t, traffic: !!traffic };
+  };
   // Before a race starts, the order is the starting grid and the gap column shows the qualifying lap.
   const onGrid = isRace && upcoming;
   return (
     <div className="scroll-x">
-      <table className="tbl timing" style={{ minWidth: isRace ? 1120 : 1040 }}>
+      <table className="tbl timing" style={{ minWidth: isRace ? 960 : 880 }}>
         <thead>
           <tr>
             <th>{onGrid ? 'GRID' : 'POS'}</th>
@@ -284,6 +305,7 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team }: { 
             <th className="r"><i className="sec-dot" style={{ background: 'var(--s3)' }} />SECTOR 3</th>
             <th>TYRES</th>
             {isRace && <th className="r" title="Places gained or lost against the starting grid">DIFF</th>}
+            {showPit && <th title={`Where the car would rejoin if it pitted now (pit loss ${loss.toFixed(1)} s${neutral ? ` under ${neutral === 'sc' ? 'safety car' : 'VSC'}` : ''}). Lapped cars are left out.`}>PIT NOW</th>}
             <th className="r" title="Current speed. Shows 0 when there is no live data.">SPEED</th>
             <th>PEDALS</th>
           </tr>
@@ -360,6 +382,24 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team }: { 
                         {r.grid - r.position > 0 ? `↑${r.grid - r.position}` : r.grid - r.position < 0 ? `↓${r.position - r.grid}` : '–0'}
                       </span>
                     )}
+                  </td>
+                )}
+                {showPit && (
+                  <td>
+                    {(() => {
+                      const p = rejoin(i);
+                      if (!p) return <span className="faint">-</span>;
+                      return (
+                        <span
+                          className={`pit-now${p.traffic ? ' traffic' : ''}`}
+                          title={`Would rejoin P${p.pos}${p.ahead ? `, ${(p.t - p.ahead.g).toFixed(1)} s behind ${p.ahead.code}` : ' in the lead'}${p.traffic ? ', within a second of another car (traffic)' : ''}`}
+                        >
+                          <b className="mono">P{p.pos}</b>
+                          <span className="muted">{p.ahead ? ` · ${p.ahead.code} +${(p.t - p.ahead.g).toFixed(1)}` : ' · lead'}</span>
+                          {p.traffic && <span className="pit-warn" aria-label="traffic"> ⚠</span>}
+                        </span>
+                      );
+                    })()}
                   </td>
                 )}
                 <td className="r mono">{speed}<span className="faint" style={{ fontSize: 11 }}> km/h</span></td>

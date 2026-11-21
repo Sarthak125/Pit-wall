@@ -383,7 +383,7 @@ a.round:hover, a.round:focus-visible { border-color: #6b7380; opacity: 1; }
 .rcard-bar { height: 3px; background: var(--line); border-radius: 2px; margin-top: 8px; overflow: hidden; }
 .rcard-bar i { display: block; height: 100%; transition: width 0.25s linear; }
 /* Timing tower extras */
-.sector-cell { min-width: 96px; width: 13%; }
+.sector-cell { min-width: 88px; width: 12%; }
 .segs { display: flex; justify-content: flex-end; gap: 2px; margin-top: 4px; height: 5px; }
 .segs i { flex: 1 1 0; max-width: 16px; min-width: 6px; height: 5px; border-radius: 1px; background: #2e3440; }
 .segs i.yellow { background: var(--amber); }
@@ -405,12 +405,17 @@ tr.in-pit td { background: rgba(225, 6, 0, 0.08); }
 .tyre-hist .stint { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
 .tyre-hist .stint.now { color: var(--text); font-weight: 600; }
 .tyre-hist .stint:not(.now) .tyre { opacity: 0.75; }
-.pedals { display: flex; flex-direction: column; gap: 3px; min-width: 72px; width: 100%; }
+.pedals { display: flex; flex-direction: column; gap: 3px; min-width: 52px; width: 100%; }
 .pedals i { display: block; height: 4px; border-radius: 2px; background: #1f242c; overflow: hidden; }
 .pedals b { display: block; height: 100%; transition: width 0.4s; }
 .pedals .thr b { background: var(--green); }
 .pedals .brk b { background: #f87171; }
-.timing th, .timing td { padding: 8px 6px; white-space: nowrap; }
+.timing th, .timing td { padding: 8px 5px; white-space: nowrap; }
+/* Keep position and driver in view when the table scrolls sideways. */
+.timing th:nth-child(1), .timing td:nth-child(1) { position: sticky; left: 0; z-index: 1; background: var(--card); min-width: 34px; }
+.timing th:nth-child(2), .timing td:nth-child(2) { position: sticky; left: 34px; z-index: 1; background: var(--card); box-shadow: 6px 0 8px -6px rgba(0,0,0,0.6); }
+.timing tr.fav td:nth-child(-n+2) { background: #1d1b12; }
+.timing tr.team td:nth-child(-n+2) { background: #1e1215; }
 .timing td:last-child, .timing th:last-child { width: 9%; }
 .rcard-when { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
 .rcard-lap { font-family: var(--mono); font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--inset); border: 1px solid var(--line-strong); color: var(--text); }
@@ -446,3 +451,7 @@ html { zoom: 1.1; }
 .tmap-flag.stripe { stroke: #0b0b0d; stroke-linecap: butt; opacity: 0.85; }
 .update-banner { position: fixed; left: 50%; transform: translateX(-50%); bottom: 24px; z-index: 40; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center; padding: 10px 14px; background: var(--bar); border: 1px solid var(--line-strong); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: calc(100vw - 32px); }
 @media (max-width: 959px) { .update-banner { bottom: 96px; } }
+.pit-now { white-space: nowrap; font-size: 12px; }
+.pit-now b { font-size: 14px; }
+.pit-now.traffic b { color: var(--amber); }
+.pit-warn { color: var(--amber); }
