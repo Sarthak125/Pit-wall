@@ -132,7 +132,7 @@ function Podium({ results }: { results: Result[] }) {
             ) : (
               <span style={{ fontWeight: 600 }}>{r.Driver.givenName} {r.Driver.familyName}</span>
             )}
-            <div className="muted" style={{ fontSize: 12 }}>{r.Constructor.name}</div>
+            <div className="muted" style={{ fontSize: 12 }}><a className="name-link" style={{ fontWeight: 400, padding: '2px 0' }} href={teamHref(r.Constructor.constructorId)}>{r.Constructor.name}</a></div>
           </div>
           <div className="mono" style={{ fontSize: 13 }}>{r.Time?.time ?? r.status}</div>
         </div>

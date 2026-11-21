@@ -86,7 +86,7 @@ Where names link to (driver page, team page or race results page):
 | Driver and team pages | Team radio codes | | Race names in the race-by-race tables, seasons in the circuit history tables |
 | Standings | Driver names | Team names | |
 | Calendar | Winner of each finished race | | Race names |
-| Race results | Podium and every driver in the race, sprint and qualifying tables | Team names in those tables | Previous and next race |
+| Race results | Podium and every driver in the race, sprint and qualifying tables | Podium teams and team names in those tables | Previous and next race |
 | Drivers | Each driver card (the star stays separate) | | |
 
 Notes:
