@@ -18,8 +18,10 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
   - **Before a race:** the starting grid with a countdown.
   - **Team radio:** cards with photo, lap, time and a playback timer.
   - **FIA feed:** messages in plain English.
+  - **Track limits panel:** session totals, the worst corner, bars that turn amber and red, and badges for black and white flags and penalties actually issued.
+  - **Under investigation panel:** each open incident in plain English with the drivers, lap, time and decision status.
 - **Race and circuit pages:** a circuit overview (map, facts, history and lap record), weekend weather, and a lap-by-lap position chart.
-- **Dashboard:** a LIVE banner during sessions, the next race's circuit map and key facts, the weekend forecast, and wind in km/h.
+- **Dashboard:** a LIVE banner during sessions, the next race's circuit map and key facts (the map grows to match the forecast and last race column beside it), the weekend forecast, the last race podium, and wind in km/h.
 - **Driver and team pages** use the same team radio cards.
 - **Reliability:**
   - Live Timing stays within OpenF1's request budget, and goes faster if you raise it.
@@ -33,7 +35,7 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 - A **LIVE** banner at the top while any session is running, with how long it has been going; tap it to open Live Timing.
 - Next race card with a live countdown to lights out and the weekend schedule (practice, sprint, qualifying, race) marked Done, Live, Next or Upcoming.
-- Next race circuit: track map with S1 / S2 / S3 colours and turn numbers, lap length, turns and race laps, with a link to the full circuit and race page.
+- Next race circuit: track map with S1 / S2 / S3 colours and turn numbers, lap length, turns and race laps, with a link to the full circuit and race page. On laptops the map grows to match the height of the column beside it; on tablets it is sized to the card's width.
 - Weekend forecast for the next race (once it is within about 16 days), and the last race podium and fastest lap beside it.
 - Track conditions from the latest session: air and track temperature, humidity, wind (km/h and direction), pressure, rain, and track status (green, yellow, safety car, red, chequered) while a session is live.
 - Drivers' and Constructors' Championship tables.
@@ -197,7 +199,7 @@ The screen designs live on a design canvas: [Pit Wall design canvas](https://cla
 | Page | Laptop board | Android tablet board (portrait) |
 | --- | --- | --- |
 | Dashboard (LIVE banner, next race, circuit map and facts, weekend forecast, last race, favourites, standings) | Dashboard (laptop) | Dashboard (Android tablet, portrait) |
-| Live Timing (timing tower with mini-sectors, tyre history, DIFF, PIT NOW, speed and pedals; championship if it ended now; track map with sector top 3; team radio cards; FIA feed) | Live Timing (laptop), and Live Timing before the race starts (laptop) for the starting-grid view | Live Timing (Android tablet, portrait), and Live Timing: track map and team radio (Android tablet, portrait) for the screen further down |
+| Live Timing (timing tower with mini-sectors, tyre history, DIFF, PIT NOW, speed and pedals; championship if it ended now; track map with sector top 3; team radio cards; FIA feed; track limits and investigations panels) | Live Timing (laptop), and Live Timing before the race starts (laptop) for the starting-grid view | Live Timing (Android tablet, portrait), and Live Timing: track map and team radio (Android tablet, portrait) for the screen further down |
 | Favourites: Driver tab | Favourites: Driver tab (laptop) | Favourites: Driver tab (Android tablet, portrait) |
 | Favourites: Team tab | Favourites: Team tab and where the team appears | Favourites: Team tab (Android tablet, portrait) |
 | Standings | Standings (laptop) | Standings (Android tablet, portrait) |
