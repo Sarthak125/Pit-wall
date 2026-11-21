@@ -455,3 +455,6 @@ html { zoom: 1.1; }
 .pit-now b { font-size: 14px; }
 .pit-now.traffic b { color: var(--amber); }
 .pit-warn { color: var(--amber); }
+.live-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 18px; border-radius: 12px; background: linear-gradient(90deg, rgba(225, 6, 0, 0.18), var(--card) 60%); border: 1px solid rgba(225, 6, 0, 0.45); color: var(--text); }
+.live-banner:hover { border-color: var(--accent); }
+.live-banner-cta { margin-left: auto; font-weight: 600; }

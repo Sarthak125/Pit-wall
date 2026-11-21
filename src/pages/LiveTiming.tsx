@@ -9,6 +9,7 @@ import { FiaText, FiaWhen } from '../components/FiaText';
 import { LiveTrackMap } from '../components/LiveTrackMap';
 import { RadioCards } from '../components/RadioCards';
 import { LiveStandings } from '../components/LiveStandings';
+import { GapChart } from '../components/GapChart';
 import { Footer } from '../components/Shell';
 import { useNow } from '../hooks/usePoll';
 import { useLatestSessions } from '../hooks/useSeason';
@@ -223,6 +224,15 @@ export function LiveTiming() {
 
       {live && isRace && !upcoming && round && (
         <LiveStandings season={String(session.year)} round={Number(round.round)} sprint={isSprint} rows={t.rows} favCode={fav?.code} favTeam={favTeam?.id} />
+      )}
+
+      {isRace && !upcoming && (
+        <section className="card tight" aria-labelledby="gaps">
+          <div className="card-head">
+            <h2 className="h2" id="gaps">Gap to leader</h2>
+          </div>
+          <GapChart laps={t.laps} drivers={t.driversByNumber} order={t.rows.map((r) => r.driver.driver_number)} favNum={favNum} />
+        </section>
       )}
 
       <section className="card tight" aria-labelledby="map">

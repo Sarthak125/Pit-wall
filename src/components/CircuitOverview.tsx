@@ -21,27 +21,7 @@ const TYPE: Record<string, string> = { Permanent: 'Permanent circuit', 'Temporar
 /** Track overview for a race page: map, layout facts and the circuit's history. */
 export function CircuitOverview({ race }: { race: Race }) {
   const circuitId = race.Circuit.circuitId;
-  // OpenF1 starts in 2023: for older seasons, this year's race at the same circuit gives the circuit key.
-  const current = useSchedule('current');
-  const sameNow = (current.data ?? []).find((r) => r.Circuit.circuitId === circuitId);
-  const meeting = useQuery({
-    queryKey: ['meeting-for', race.season, race.round, sameNow?.date],
-    enabled: !current.isLoading,
-    staleTime: Infinity,
-    queryFn: ({ signal }) => findMeeting([race.date, ...(sameNow ? [sameNow.date] : [])], signal),
-  });
-  const layout = useQuery({
-    queryKey: ['circuit', meeting.data?.circuit_key, meeting.data?.year],
-    enabled: !!meeting.data,
-    staleTime: Infinity,
-    queryFn: ({ signal }) => getCircuit(meeting.data!.circuit_key, meeting.data!.year, signal),
-  });
-  const sectorLines = useQuery({
-    queryKey: ['sector-lines', meeting.data?.meeting_key],
-    enabled: !!meeting.data,
-    staleTime: Infinity,
-    queryFn: ({ signal }) => getSectorLines(meeting.data!.meeting_key, signal),
-  });
+  const { meeting, layout, sectorLines, current } = useCircuitLayout(race);
   const records = useQuery({ queryKey: ['circuit-records', circuitId], staleTime: 60 * 60_000, queryFn: () => getCircuitRecords(circuitId) });
 
   const c = layout.data;
@@ -151,6 +131,33 @@ export function CircuitOverview({ race }: { race: Race }) {
       <div className="faint" style={{ fontSize: 12, marginTop: 10 }}>History from Jolpica-F1 (all Grands Prix held here); circuit type from OpenF1.</div>
     </section>
   );
+}
+
+/** Track layout, sector lines and OpenF1 meeting (circuit type) for a race, shared by race pages and the Dashboard. */
+export function useCircuitLayout(race: Race) {
+  const circuitId = race.Circuit.circuitId;
+  // OpenF1 starts in 2023: for older seasons, this year's race at the same circuit gives the circuit key.
+  const current = useSchedule('current');
+  const sameNow = (current.data ?? []).find((r) => r.Circuit.circuitId === circuitId);
+  const meeting = useQuery({
+    queryKey: ['meeting-for', race.season, race.round, sameNow?.date],
+    enabled: !current.isLoading,
+    staleTime: Infinity,
+    queryFn: ({ signal }) => findMeeting([race.date, ...(sameNow ? [sameNow.date] : [])], signal),
+  });
+  const layout = useQuery({
+    queryKey: ['circuit', meeting.data?.circuit_key, meeting.data?.year],
+    enabled: !!meeting.data,
+    staleTime: Infinity,
+    queryFn: ({ signal }) => getCircuit(meeting.data!.circuit_key, meeting.data!.year, signal),
+  });
+  const sectorLines = useQuery({
+    queryKey: ['sector-lines', meeting.data?.meeting_key],
+    enabled: !!meeting.data,
+    staleTime: Infinity,
+    queryFn: ({ signal }) => getSectorLines(meeting.data!.meeting_key, signal),
+  });
+  return { meeting, layout, sectorLines, current };
 }
 
 function Fact({ l, v, note, sub }: { l: string; v: string; note?: string; sub?: string }) {

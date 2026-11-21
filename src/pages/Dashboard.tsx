@@ -1,5 +1,7 @@
 import type React from 'react';
 import { useMemo } from 'react';
+import { LiveNowBanner, NextRaceCircuit } from '../components/DashboardExtras';
+import { WeekendWeather } from '../components/WeekendWeather';
 import { useQuery } from '@tanstack/react-query';
 import { SESSION_FIELDS, type Race } from '../api/jolpica';
 import { isSessionLive, openf1, type RaceControlMsg, type Session, type Weather } from '../api/openf1';
@@ -87,8 +89,52 @@ export function Dashboard() {
   const leaderPts = Number(drivers.data?.standings[0]?.points ?? 0);
   const topTeamPts = Number(teams.data?.standings[0]?.points ?? 0) || 1;
 
+  // Last race podium: under the weekend forecast when there is a next race, otherwise beside the title fight chart.
+  const lastRaceCard = (
+    <section className={nextRace ? 'card' : 'card w2'} aria-labelledby="last-race" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {results.isLoading ? <Loading rows={4} /> : lastRace ? (
+        <>
+          <div>
+            <p className="kicker">Last race · Round {lastRace.round}</p>
+            <h2 className="h2" id="last-race" style={{ marginTop: 4 }}>
+              <a className="name-link" style={{ fontWeight: 'inherit' }} href={raceHref(lastRace.round)}>{lastRace.raceName}</a>
+            </h2>
+          </div>
+          {(lastRace.Results ?? []).slice(0, 3).map((r) => (
+            <div className="podium inset" key={r.Driver.driverId}>
+              <div className="p">P{r.position}</div>
+              <span className="team-bar" style={{ height: 32, background: teamColour(r.Constructor.constructorId) }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div>
+                  {r.Driver.code ? (
+                    <a className="name-link" style={{ padding: '2px 0' }} href={driverHref(r.Driver.code)}>{r.Driver.givenName} {r.Driver.familyName}</a>
+                  ) : (
+                    <span style={{ fontWeight: 600 }}>{r.Driver.givenName} {r.Driver.familyName}</span>
+                  )}
+                </div>
+                <div className="muted" style={{ fontSize: 12 }}>
+                  <a className="name-link" style={{ fontWeight: 400, padding: '2px 0' }} href={teamHref(r.Constructor.constructorId)}>{r.Constructor.name}</a>
+                </div>
+              </div>
+              <div className="mono" style={{ fontSize: 13 }}>
+                {r.Time?.time ?? r.status}
+              </div>
+            </div>
+          ))}
+          <FastestLap results={lastRace.Results ?? []} />
+        </>
+      ) : (
+        <>
+          <h2 className="h2" id="last-race">Last race</h2>
+          <Empty>No race results yet this season.</Empty>
+        </>
+      )}
+    </section>
+  );
+
   return (
     <>
+      <LiveNowBanner />
       <div className="row">
         <section className="card w2l" aria-labelledby="next-race">
           {schedule.error ? <ErrorBox error={schedule.error} what="the race calendar" /> : schedule.isLoading ? <Loading rows={6} /> : nextRace ? (
@@ -101,6 +147,16 @@ export function Dashboard() {
           <Conditions />
         </section>
       </div>
+
+      {nextRace && (
+        <div className="row top">
+          <div className="w2" style={{ minWidth: 0 }}><NextRaceCircuit race={nextRace} /></div>
+          <div className="w3 col" style={{ minWidth: 0 }}>
+            <WeekendWeather race={nextRace} now={nowMinute * 60_000} />
+            {lastRaceCard}
+          </div>
+        </div>
+      )}
 
       <FavouriteStrip standings={drivers.data?.standings ?? []} races={results.data?.races ?? []} season={season} />
       <TeamStrip teams={teams.data?.standings ?? []} drivers={drivers.data?.standings ?? []} races={results.data?.races ?? []} />
@@ -217,45 +273,7 @@ export function Dashboard() {
           )}
         </section>
 
-        <section className="card w2" aria-labelledby="last-race" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {results.isLoading ? <Loading rows={4} /> : lastRace ? (
-            <>
-              <div>
-                <p className="kicker">Last race · Round {lastRace.round}</p>
-                <h2 className="h2" id="last-race" style={{ marginTop: 4 }}>
-                  <a className="name-link" style={{ fontWeight: 'inherit' }} href={raceHref(lastRace.round)}>{lastRace.raceName}</a>
-                </h2>
-              </div>
-              {(lastRace.Results ?? []).slice(0, 3).map((r) => (
-                <div className="podium inset" key={r.Driver.driverId}>
-                  <div className="p">P{r.position}</div>
-                  <span className="team-bar" style={{ height: 32, background: teamColour(r.Constructor.constructorId) }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div>
-                      {r.Driver.code ? (
-                        <a className="name-link" style={{ padding: '2px 0' }} href={driverHref(r.Driver.code)}>{r.Driver.givenName} {r.Driver.familyName}</a>
-                      ) : (
-                        <span style={{ fontWeight: 600 }}>{r.Driver.givenName} {r.Driver.familyName}</span>
-                      )}
-                    </div>
-                    <div className="muted" style={{ fontSize: 12 }}>
-                      <a className="name-link" style={{ fontWeight: 400, padding: '2px 0' }} href={teamHref(r.Constructor.constructorId)}>{r.Constructor.name}</a>
-                    </div>
-                  </div>
-                  <div className="mono" style={{ fontSize: 13 }}>
-                    {r.Time?.time ?? r.status}
-                  </div>
-                </div>
-              ))}
-              <FastestLap results={lastRace.Results ?? []} />
-            </>
-          ) : (
-            <>
-              <h2 className="h2" id="last-race">Last race</h2>
-              <Empty>No race results yet this season.</Empty>
-            </>
-          )}
-        </section>
+        {!nextRace && lastRaceCard}
       </div>
 
       <section className="card" aria-labelledby="cal">
@@ -447,7 +465,7 @@ function Conditions() {
             ['Air', `${w.air_temperature.toFixed(1)}°C`],
             ['Track', `${w.track_temperature.toFixed(1)}°C`],
             ['Humidity', `${Math.round(w.humidity)}%`],
-            ['Wind', `${w.wind_speed.toFixed(1)} m/s`],
+            ['Wind', `${(w.wind_speed * 3.6).toFixed(1)} km/h ${['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round((((w.wind_direction % 360) + 360) % 360) / 45) % 8]}`],
             ['Pressure', `${Math.round(w.pressure)} hPa`],
             ['Rain', w.rainfall ? 'Yes' : 'None'],
           ].map(([l, v]) => (

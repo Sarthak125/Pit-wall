@@ -12,12 +12,14 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
   - **Timing tower:** mini-sector bars, IN PIT / PIT OUT / STOP / RETIRED tags, tyre history, places gained or lost (DIFF), live speed and pedals, a purple fastest lap, and pinned POS and DRIVER columns.
   - **PIT NOW predictor:** where each car would rejoin if it pitted this lap.
   - **Championship if it ended now:** drivers and constructors re-ranked from the current order.
+  - **Gap to leader chart:** every driver's gap, lap by lap.
   - **Track map:** every car moving, with S1 / S2 / S3 sector colours, a top 3 per sector, flag highlights, and a replay bar for finished sessions.
   - **Session bar:** lap X/Y, pit stop time loss and fuller weather.
   - **Before a race:** the starting grid with a countdown.
   - **Team radio:** cards with photo, lap, time and a playback timer.
   - **FIA feed:** messages in plain English.
 - **Race and circuit pages:** a circuit overview (map, facts, history and lap record), weekend weather, and a lap-by-lap position chart.
+- **Dashboard:** a LIVE banner during sessions, the next race's circuit map and key facts, the weekend forecast, and wind in km/h.
 - **Driver and team pages** use the same team radio cards.
 - **Reliability:**
   - Live Timing stays within OpenF1's request budget, and goes faster if you raise it.
@@ -29,11 +31,13 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 ### Dashboard
 
+- A **LIVE** banner at the top while any session is running, with how long it has been going; tap it to open Live Timing.
 - Next race card with a live countdown to lights out and the weekend schedule (practice, sprint, qualifying, race) marked Done, Live, Next or Upcoming.
-- Track conditions from the latest session: air and track temperature, humidity, wind, pressure, rain, and track status (green, yellow, safety car, red, chequered) while a session is live.
+- Next race circuit: track map with S1 / S2 / S3 colours and turn numbers, lap length, turns and race laps, with a link to the full circuit and race page.
+- Weekend forecast for the next race (once it is within about 16 days), and the last race podium and fastest lap beside it.
+- Track conditions from the latest session: air and track temperature, humidity, wind (km/h and direction), pressure, rain, and track status (green, yellow, safety car, red, chequered) while a session is live.
 - Drivers' and Constructors' Championship tables.
 - Title fight chart: cumulative points after each round for the top four, plus your favourite driver.
-- Last race podium and fastest lap.
 - Season calendar strip.
 - "Your driver" and "Your team" strips when favourites are set.
 
@@ -63,6 +67,10 @@ Pick any session of the current race weekend; live sessions update automatically
 **Championship if it ended now** (live races and sprints)
 
 - Drivers' and constructors' standings recalculated from the current order: points before this session plus what each current position would score (25 to 1, or 8 to 1 in a sprint), with places gained or lost in the championship and the gap to the leader. Retired cars score nothing. Shows the top 10 drivers and top 5 teams plus your favourites, and steps aside once the official standings include the session.
+
+**Gap to leader** (races and sprints)
+
+- Each driver's gap to the leader at the end of every lap, in team colours (the second car of a team dashed), top 10 by default with a button for everyone, and a hover tooltip with every gap on that lap. Pit stops show as jumps and safety cars squeeze the lines together. It uses the lap data Live Timing already loads, so it costs no extra requests.
 
 **Track map**
 
@@ -267,7 +275,7 @@ src/hooks/       Polling, live timing, season data and favourites hooks
 src/lib/         FIA message classifier and plain-English wording, driver stats, alerts, formatting, team colours,
                  settings, routing, track geometry, sector lines, lap-by-lap positions, app updates
 src/pages/       Dashboard, Live Timing, Favourites (My Driver, My Team), Standings, Calendar, Race results, Drivers, Settings
-src/components/  App shell, charts, live track map, live championship, circuit overview and outline, weekend weather,
+src/components/  App shell, charts, live track map, live championship, gap chart, dashboard extras, circuit overview and outline, weekend weather,
                  position chart, live driver and team views, team radio cards, FIA messages, strips, alerts, update
                  banner, loading and error states
 ```
