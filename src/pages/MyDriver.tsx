@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getCareer, getCircuitHistory, getQualifying, type DriverStanding } from '../api/jolpica';
+import { getCareerCounts, getCareerTitles, getCircuitHistory, getQualifying, type DriverStanding } from '../api/jolpica';
 import { openf1, type OF1Driver, type Session, type SessionResult, type TeamRadio } from '../api/openf1';
 import { StarIcon } from '../components/Icons';
 import { FavTabs } from '../components/FavTabs';
@@ -13,16 +13,20 @@ import { useNow } from '../hooks/usePoll';
 import { useDriverStandings, useLatestSessions, useResults, useSchedule } from '../hooks/useSeason';
 import { headToHead, pointsAvailable, roundRows, seasonStats, type RoundRow } from '../lib/driverStats';
 import { fmtLap, raceStart } from '../lib/format';
-import { href } from '../lib/router';
+import { href, useRouteParam } from '../lib/router';
+import { niceName } from '../lib/format';
 import { setFavorite, useSettings } from '../lib/settings';
 import { teamColour } from '../lib/teams';
 
 export function MyDriver() {
   const fav = useFavourite();
+  const param = useRouteParam();
   const { season } = useSettings();
   const standings = useDriverStandings(season);
+  // #/driver/CODE shows any driver; #/driver alone shows the favourite.
+  if (param) return <Profile key={param} code={param} name={fav?.code === param ? fav.name : ''} season={season} isFav={fav?.code === param} />;
   if (!fav) return <PickFavourite standings={standings.data?.standings ?? []} loading={standings.isLoading} />;
-  return <Profile code={fav.code} name={fav.name} season={season} />;
+  return <Profile code={fav.code} name={fav.name} season={season} isFav />;
 }
 
 function PickFavourite({ standings, loading }: { standings: DriverStanding[]; loading: boolean }) {
@@ -59,7 +63,7 @@ function PickFavourite({ standings, loading }: { standings: DriverStanding[]; lo
   );
 }
 
-function Profile({ code, name, season }: { code: string; name: string; season: string }) {
+function Profile({ code, name: givenName, season, isFav }: { code: string; name: string; season: string; isFav: boolean }) {
   const standings = useDriverStandings(season);
   const results = useResults(season);
   const schedule = useSchedule(season);
@@ -79,6 +83,7 @@ function Profile({ code, name, season }: { code: string; name: string; season: s
   const me = list[idx];
   const of1 = latestDrivers.data?.find((d) => d.name_acronym === code);
   const team = me?.Constructors[me.Constructors.length - 1];
+  const name = givenName || (me ? `${me.Driver.givenName} ${me.Driver.familyName}` : of1 ? niceName(of1.full_name) : code);
   const colour = teamColour(team?.constructorId ?? team?.name ?? of1?.team_name, of1?.team_colour);
   const races = useMemo(() => results.data?.races ?? [], [results.data]);
   const sprints = useMemo(() => results.data?.sprints ?? [], [results.data]);
@@ -95,7 +100,11 @@ function Profile({ code, name, season }: { code: string; name: string; season: s
 
   return (
     <>
-      <FavTabs active="driver" />
+      {isFav ? (
+        <FavTabs active="driver" />
+      ) : (
+        <a className="link" href={href('drivers')} style={{ alignSelf: 'flex-start' }}>← All drivers</a>
+      )}
       <section className="card profile-head" style={{ borderLeftColor: colour }}>
         {of1?.headshot_url ? <img src={of1.headshot_url} alt="" /> : <div className="ph" aria-hidden="true" />}
         <div style={{ flex: '1 1 260px', minWidth: 0 }}>
@@ -123,12 +132,18 @@ function Profile({ code, name, season }: { code: string; name: string; season: s
             </div>
           </div>
         )}
-        <button className="star-btn" aria-pressed="true" aria-label={`Remove ${name} as favourite`} onClick={() => setFavorite(code, name)}>
-          <StarIcon filled />
+        <button
+          className="star-btn"
+          aria-pressed={isFav}
+          aria-label={isFav ? `Remove ${name} as favourite` : `Make ${name} your favourite`}
+          title={isFav ? 'Your favourite driver' : 'Make favourite'}
+          onClick={() => setFavorite(code, name)}
+        >
+          <StarIcon filled={isFav} />
         </button>
       </section>
 
-      {inLive && liveSession && <LiveDriver session={liveSession} code={code} />}
+      {inLive && liveSession && <LiveDriver session={liveSession} code={code} alerts={isFav} />}
 
       {!me ? (
         <section className="card"><Empty>{name} has no results in the {seasonLabel} season.</Empty></section>
@@ -333,30 +348,45 @@ function TitleMaths({ me, list, schedule, doneRound, sprintsDone }: { me: Driver
 
 function Career({ driverId }: { driverId: string }) {
   const year = new Date().getFullYear();
-  const career = useQuery({ queryKey: ['career', driverId], queryFn: () => getCareer(driverId, year), staleTime: 60 * 60_000 });
-  const c = career.data;
+  const counts = useQuery({ queryKey: ['career-counts', driverId], queryFn: () => getCareerCounts(driverId), staleTime: 60 * 60_000 });
+  // Titles and points need one request per season, so they load after the counts.
+  const titles = useQuery({ queryKey: ['career-titles', driverId], enabled: !!counts.data, queryFn: () => getCareerTitles(driverId, year), staleTime: 60 * 60_000 });
+  const c = counts.data;
+  const t = titles.data;
+  const pending = titles.isLoading || (!t && !titles.error);
+  const tiles: [string, string | number][] = c
+    ? [
+        ['Starts', c.starts],
+        ['Wins', c.wins],
+        ['Podiums', c.podiums],
+        ['Poles', c.poles],
+        ['Fastest laps', c.fastestLaps],
+        ['Titles', t ? t.titles : pending ? '…' : '-'],
+        ['Career points', t ? Math.round(t.points) : pending ? '…' : '-'],
+      ]
+    : [];
   return (
     <section className="card w2" aria-labelledby="career">
       <h2 className="h2" id="career" style={{ marginBottom: 4 }}>Career</h2>
-      <div className="muted" style={{ fontSize: 12, marginBottom: 14 }}>{c ? `${c.seasons} season${c.seasons === 1 ? '' : 's'}, all results` : 'All seasons, all results'}</div>
-      {career.error ? <ErrorBox error={career.error} what="career stats" /> : !c ? <Loading rows={3} /> : (
+      <div className="muted" style={{ fontSize: 12, marginBottom: 14 }}>
+        {t ? `${t.seasons} season${t.seasons === 1 ? '' : 's'}, all results` : pending && c ? 'Adding up titles and points season by season…' : 'All seasons, all results'}
+      </div>
+      {counts.error ? <ErrorBox error={counts.error} what="career stats" /> : !c ? <Loading rows={3} /> : (
         <div className="stat-grid three">
-          {[
-            ['Starts', c.starts],
-            ['Wins', c.wins],
-            ['Podiums', c.podiums],
-            ['Poles', c.poles],
-            ['Fastest laps', c.fastestLaps],
-            ['Titles', c.titles],
-            ['Career points', Math.round(c.points)],
-          ].map(([l, v]) => (
-            <div className="inset stat" key={String(l)}>
+          {tiles.map(([l, v]) => (
+            <div className="inset stat" key={l}>
               <div className="l">{l}</div>
               <div className="v" style={{ fontSize: 20 }}>{v}</div>
             </div>
           ))}
         </div>
       )}
+      {t && t.missing.length > 0 && (
+        <div className="faint" style={{ fontSize: 12, marginTop: 10 }}>
+          Titles and points leave out {t.missing.join(', ')}: those seasons could not be loaded. Refresh to try again.
+        </div>
+      )}
+      {titles.error ? <div className="faint" style={{ fontSize: 12, marginTop: 10 }}>Titles and career points could not be loaded. Refresh to try again.</div> : null}
     </section>
   );
 }

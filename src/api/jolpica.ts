@@ -7,7 +7,9 @@ import { fetchJson, RateLimiter } from './http';
 const BASE = (import.meta.env.VITE_JOLPICA_BASE as string | undefined) ?? 'https://api.jolpi.ca/ergast/f1';
 
 // Jolpica allows a small burst per second and a few hundred calls per hour.
-const limiter = new RateLimiter(3, 120);
+// Its rate-limit replies carry no CORS header (the browser sees "Failed to fetch"),
+// so the app stays well under the burst limit.
+const limiter = new RateLimiter(2, 90);
 
 const MIN = 60_000;
 
@@ -199,22 +201,16 @@ async function countOf(path: string): Promise<number> {
   return Number(data.MRData.total) || 0;
 }
 
-export interface CareerStats {
+export interface CareerCounts {
   starts: number;
   wins: number;
   podiums: number;
   poles: number;
   fastestLaps: number;
-  titles: number;
-  points: number;
-  seasons: number;
 }
 
-/**
- * Career totals. Titles count completed seasons only (the current season is
- * not over). Points add up each season's final championship points.
- */
-export async function getCareer(driverId: string, currentYear: number): Promise<CareerStats> {
+/** Career counts, each read from the API's total with a 1-row request (5 to 6 requests). */
+export async function getCareerCounts(driverId: string): Promise<CareerCounts> {
   const d = `drivers/${driverId}`;
   const [starts, wins, p2, p3, poles, fastestLaps] = await Promise.all([
     countOf(`${d}/results`),
@@ -224,6 +220,23 @@ export async function getCareer(driverId: string, currentYear: number): Promise<
     countOf(`${d}/qualifying/1`),
     countOf(`${d}/fastest/1/results`),
   ]);
+  return { starts, wins, podiums: wins + p2 + p3, poles, fastestLaps };
+}
+
+export interface CareerTitles {
+  titles: number;
+  points: number;
+  seasons: number;
+  /** Seasons whose standings could not be loaded; their titles and points are left out. */
+  missing: string[];
+}
+
+/**
+ * Titles (completed seasons only) and career points, from each season's final
+ * standings: one request per season, cached for a week for past seasons.
+ */
+export async function getCareerTitles(driverId: string, currentYear: number): Promise<CareerTitles> {
+  const d = `drivers/${driverId}`;
   const seasonData = await fetchJson<MR<{ SeasonTable: { Seasons: { season: string }[] } }>>(`${BASE}/${d}/seasons/?limit=100`, {
     limiter,
     cacheTtlMs: DAY,
@@ -231,17 +244,22 @@ export async function getCareer(driverId: string, currentYear: number): Promise<
   const seasons = seasonData.MRData.SeasonTable.Seasons.map((s) => s.season);
   let titles = 0;
   let points = 0;
+  const missing: string[] = [];
   for (const season of seasons) {
-    const st = await fetchJson<MR<{ StandingsTable: { StandingsLists: { DriverStandings: DriverStanding[] }[] } }>>(
-      `${BASE}/${season}/${d}/driverstandings/`,
-      { limiter, cacheTtlMs: Number(season) < currentYear ? 7 * DAY : 30 * MIN },
-    );
-    const row = st.MRData.StandingsTable.StandingsLists[0]?.DriverStandings[0];
-    if (!row) continue;
-    points += Number(row.points) || 0;
-    if (row.position === '1' && Number(season) < currentYear) titles++;
+    try {
+      const st = await fetchJson<MR<{ StandingsTable: { StandingsLists: { DriverStandings: DriverStanding[] }[] } }>>(
+        `${BASE}/${season}/${d}/driverstandings/`,
+        { limiter, cacheTtlMs: Number(season) < currentYear ? 7 * DAY : 30 * MIN, retries: 3 },
+      );
+      const row = st.MRData.StandingsTable.StandingsLists[0]?.DriverStandings[0];
+      if (!row) continue;
+      points += Number(row.points) || 0;
+      if (row.position === '1' && Number(season) < currentYear) titles++;
+    } catch {
+      missing.push(season);
+    }
   }
-  return { starts, wins, podiums: wins + p2 + p3, poles, fastestLaps, titles, points, seasons: seasons.length };
+  return { titles, points, seasons: seasons.length, missing };
 }
 
 /** A driver's Grand Prix results at one circuit, all seasons. */

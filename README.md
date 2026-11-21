@@ -65,7 +65,7 @@ While the app is open and a session is live, pop-up alerts tell you when your fa
 
 - **Standings:** full Drivers' and Constructors' tables, with your favourites highlighted and the flag button to pick a team.
 - **Calendar:** every round with all session times in your time zone and the winner of each finished race.
-- **Drivers:** the current grid with photos, numbers, teams and championship position, and the star to pick your favourite.
+- **Drivers:** the current grid with photos, numbers, teams and championship position, and the star to pick your favourite. Tap any driver to open their full stats page (the same page as the favourite driver: season stats, grid vs finish, compare, title maths, career, track history, race by race and the live section during sessions).
 
 ### Settings
 

@@ -82,7 +82,8 @@ export async function fetchJson<T>(url: string, opts: FetchOptions): Promise<T> 
         if (stale !== undefined) return stale;
         throw err;
       }
-      await sleep(1_000 * (attempt + 1));
+      // A network error is often a rate-limit reply the browser could not read; wait it out.
+      await sleep(3_000 * 2 ** attempt);
       continue;
     }
 

@@ -13,12 +13,13 @@ import { MyDriver } from './pages/MyDriver';
 import { MyTeam } from './pages/MyTeam';
 import { Toasts } from './components/Toasts';
 import { useAlertWatcher } from './hooks/useFavourite';
-import { useRoute } from './lib/router';
+import { useRoute, useRouteParam } from './lib/router';
 
 const TITLES = { dashboard: 'Dashboard', live: 'Live Timing', driver: 'My Driver', team: 'My Team', standings: 'Standings', calendar: 'Calendar', drivers: 'Drivers', settings: 'Settings' };
 
 export default function App() {
   const route = useRoute();
+  const param = useRouteParam();
   const sessions = useLatestSessions();
   const now = useNow(30_000);
   const live = (sessions.data ?? []).some((s) => isSessionLive(s, now));
@@ -28,7 +29,7 @@ export default function App() {
   useEffect(() => {
     document.title = `${TITLES[route]} · Pit Wall`;
     window.scrollTo(0, 0);
-  }, [route]);
+  }, [route, param]);
 
   return (
     <Shell route={route} live={live}>

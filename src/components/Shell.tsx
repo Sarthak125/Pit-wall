@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useIsFetching, useQueryClient } from '@tanstack/react-query';
-import { href, type Route } from '../lib/router';
+import { href, useRouteParam, type Route } from '../lib/router';
 import { updateSettings, useSettings } from '../lib/settings';
 import { CalendarIcon, DashIcon, GearIcon, HelmetIcon, RefreshIcon, StarIcon, TimerIcon, TrophyIcon } from './Icons';
 
@@ -14,7 +14,10 @@ const NAV: { route: Route; label: string; icon: () => ReactNode }[] = [
 ];
 
 export function Shell({ route, live, children }: { route: Route; live: boolean; children: ReactNode }) {
-  const { season } = useSettings();
+  const { season, favoriteDriver } = useSettings();
+  const param = useRouteParam();
+  // A driver page for someone other than the favourite belongs under Drivers.
+  const active: Route = route === 'driver' && param && param !== favoriteDriver ? 'drivers' : route === 'team' ? 'driver' : route;
   const qc = useQueryClient();
   const fetching = useIsFetching();
   const year = new Date().getFullYear();
@@ -29,7 +32,7 @@ export function Shell({ route, live, children }: { route: Route; live: boolean; 
         </a>
         <nav className="topnav" aria-label="Main">
           {NAV.map((n) => (
-            <a key={n.route} href={href(n.route)} aria-current={route === n.route || (n.route === 'driver' && route === 'team') ? 'page' : undefined}>
+            <a key={n.route} href={href(n.route)} aria-current={active === n.route ? 'page' : undefined}>
               {n.route === 'driver' && <span className="fav-star"><StarIcon filled size={14} /></span>}
               {n.label}
               {n.route === 'live' && live && <span className={`live-dot on`} aria-label="Session live" />}
@@ -65,7 +68,7 @@ export function Shell({ route, live, children }: { route: Route; live: boolean; 
 
       <nav className="bottomnav" aria-label="Main">
         {NAV.map((n) => (
-          <a key={n.route} href={href(n.route)} aria-current={route === n.route || (n.route === 'driver' && route === 'team') ? 'page' : undefined}>
+          <a key={n.route} href={href(n.route)} aria-current={active === n.route ? 'page' : undefined}>
             <n.icon />
             <span>
               {n.label}

@@ -14,7 +14,7 @@ import { TrackMap } from './TrackMap';
 import { RadioList } from './RadioList';
 
 /** Live section of the My Driver page, shown while a session is running. */
-export function LiveDriver({ session, code }: { session: Session; code: string }) {
+export function LiveDriver({ session, code, alerts = true }: { session: Session; code: string; alerts?: boolean }) {
   const sk = session.session_key;
   const { trackMap } = useSettings();
   const drivers = useQuery({ queryKey: ['drv', sk], queryFn: () => openf1<OF1Driver>('drivers', { session_key: sk }), staleTime: 10 * 60_000 });
@@ -63,9 +63,9 @@ export function LiveDriver({ session, code }: { session: Session; code: string }
   const colour = teamColour(me?.team_name, me?.team_colour);
 
   useEffect(() => {
-    if (!num || t.loading || !row) return;
+    if (!alerts || !num || t.loading || !row) return;
     ingestFavourite({ sessionKey: sk, code, position: row.position, pits: row.pits, messages: myMsgs });
-  }, [sk, code, num, t.loading, row, myMsgs]);
+  }, [alerts, sk, code, num, t.loading, row, myMsgs]);
 
   if (drivers.isLoading || t.loading) return <section className="card live-card"><Loading rows={4} /></section>;
   if (drivers.error) return <ErrorBox error={drivers.error} what="live data" />;
