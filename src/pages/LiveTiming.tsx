@@ -371,7 +371,11 @@ function FiaSection({ messages, drivers, favNum, team, teamNums }: { messages: C
                   {m.cars.length > 0 && (
                     <div className="chips">
                       {m.cars.map((c) => (
-                        <span className="chip" key={c}><i style={{ background: colour(c) }} />{code(c)}</span>
+                        drivers.get(c) ? (
+                          <a className="chip chip-link" key={c} href={driverHref(code(c))} title={`${code(c)}: full stats`}><i style={{ background: colour(c) }} />{code(c)}</a>
+                        ) : (
+                          <span className="chip" key={c}><i style={{ background: colour(c) }} />{code(c)}</span>
+                        )
                       ))}
                     </div>
                   )}

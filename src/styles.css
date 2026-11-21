@@ -278,3 +278,7 @@ button, select, input { font: inherit; color: inherit; }
 /* Driver names in tables open the driver's stats page */
 .name-link { font-weight: 600; color: inherit; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: text-decoration-color 0.15s; padding: 6px 0; }
 .name-link:hover, .name-link:focus-visible { text-decoration-color: currentColor; }
+
+/* Driver chips in the FIA feed open the driver's stats page */
+.chip-link { color: inherit; min-height: 28px; }
+.chip-link:hover, .chip-link:focus-visible { border-color: #6b7380; background: #1c2027; }

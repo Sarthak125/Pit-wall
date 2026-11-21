@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { TeamRadio } from '../api/openf1';
 import { fmtClock } from '../lib/format';
+import { driverHref } from '../lib/router';
 
 export interface DriverLabel {
   code: string;
@@ -24,7 +25,7 @@ export function RadioList({ clips, labels, limit = 8 }: { clips: TeamRadio[]; la
               {who && (
                 <div className="who" style={{ gap: 6, marginTop: 4 }}>
                   <span className="team-bar" style={{ width: 3, height: 14, background: who.colour }} />
-                  <span className="code" style={{ fontSize: 15 }}>{who.code}</span>
+                  <a className="code name-link" style={{ fontSize: 15, fontWeight: 700 }} href={driverHref(who.code)} title={`${who.code}: full stats`}>{who.code}</a>
                 </div>
               )}
             </div>
