@@ -263,6 +263,7 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team }: { 
             <th className="r">SECTOR 2</th>
             <th className="r">SECTOR 3</th>
             <th>TYRES</th>
+            {isRace && <th className="r" title="Places gained or lost against the starting grid">DIFF</th>}
             <th className="r" title="Current speed. Shows 0 when there is no live data.">SPEED</th>
             <th>PEDALS</th>
           </tr>
@@ -278,16 +279,7 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team }: { 
             const speed = tel?.speed ?? 0;
             return (
               <tr key={r.driver.driver_number} className={[favNum === r.driver.driver_number ? 'fav' : '', isTeam ? 'team' : '', r.status === 'IN PIT' ? 'in-pit' : '', r.status === 'RETIRED' || r.status === 'DNS' || r.status === 'DSQ' ? 'out' : ''].join(' ').trim() || undefined} style={isTeam ? ({ '--team': team!.colour } as React.CSSProperties) : undefined}>
-                <td className="mono muted">
-                  <div className="pos-cell">
-                    {r.position ?? '-'}
-                    {isRace && !onGrid && r.grid != null && r.position != null && (
-                      <span className={`gain ${r.grid - r.position > 0 ? 'up' : r.grid - r.position < 0 ? 'down' : ''}`} title={`Started P${r.grid}`}>
-                        {r.grid - r.position > 0 ? `▲${r.grid - r.position}` : r.grid - r.position < 0 ? `▼${r.position - r.grid}` : '–'}
-                      </span>
-                    )}
-                  </div>
-                </td>
+                <td className="mono muted">{r.position ?? '-'}</td>
                 <td>
                   <div className="who">
                     <span className="team-bar" style={{ height: 20, background: r.colour }} />
@@ -339,6 +331,17 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team }: { 
                     })}
                   </div>
                 </td>
+                {isRace && (
+                  <td className="r">
+                    {onGrid || r.grid == null || r.position == null ? (
+                      <span className="faint">-</span>
+                    ) : (
+                      <span className={`diff ${r.grid - r.position > 0 ? 'up' : r.grid - r.position < 0 ? 'down' : ''}`} title={`Started P${r.grid}, now P${r.position}`}>
+                        {r.grid - r.position > 0 ? `↑${r.grid - r.position}` : r.grid - r.position < 0 ? `↓${r.position - r.grid}` : '–0'}
+                      </span>
+                    )}
+                  </td>
+                )}
                 <td className="r mono">{speed}<span className="faint" style={{ fontSize: 11 }}> km/h</span></td>
                 <td>
                   <div className="pedals" title={tel ? `Throttle ${tel.throttle}%, brake ${tel.brake ? 'on' : 'off'}` : 'No live car data'}>

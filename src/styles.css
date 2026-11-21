@@ -417,7 +417,6 @@ tr.in-pit td { background: rgba(225, 6, 0, 0.08); }
 /* Larger text everywhere: scales the whole interface, like browser zoom. */
 html { zoom: 1.1; }
 @media (max-width: 1100px) { html { zoom: 1.05; } }
-.pos-cell { display: flex; align-items: baseline; gap: 6px; }
-.gain { font-size: 10px; color: var(--faint); }
-.gain.up { color: var(--green); }
-.gain.down { color: #f87171; }
+.diff { font-family: var(--mono); font-weight: 600; color: var(--faint); }
+.diff.up { color: var(--green); }
+.diff.down { color: #f87171; }
