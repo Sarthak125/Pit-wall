@@ -231,11 +231,15 @@ export function Dashboard() {
                   <div className="p">P{r.position}</div>
                   <span className="team-bar" style={{ height: 32, background: teamColour(r.Constructor.constructorId) }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600 }}>
-                      {r.Driver.givenName} {r.Driver.familyName}
+                    <div>
+                      {r.Driver.code ? (
+                        <a className="name-link" style={{ padding: '2px 0' }} href={driverHref(r.Driver.code)}>{r.Driver.givenName} {r.Driver.familyName}</a>
+                      ) : (
+                        <span style={{ fontWeight: 600 }}>{r.Driver.givenName} {r.Driver.familyName}</span>
+                      )}
                     </div>
                     <div className="muted" style={{ fontSize: 12 }}>
-                      {r.Constructor.name}
+                      <a className="name-link" style={{ fontWeight: 400, padding: '2px 0' }} href={teamHref(r.Constructor.constructorId)}>{r.Constructor.name}</a>
                     </div>
                   </div>
                   <div className="mono" style={{ fontSize: 13 }}>
@@ -272,7 +276,12 @@ export function Dashboard() {
               const isNext = i === nextIdx;
               const d = raceStart(r);
               return (
-                <div key={r.round} className={`round ${isNext ? 'next' : done ? 'done' : ''}`}>
+                <a
+                  key={r.round}
+                  href={raceHref(r.round)}
+                  className={`round ${isNext ? 'next' : done ? 'done' : ''}`}
+                  aria-label={`Round ${r.round}, ${r.raceName}: ${isNext ? 'next race' : done ? 'results' : 'schedule'}`}
+                >
                   <div className="mono faint" style={{ fontSize: 11 }}>
                     R{r.round} {d ? `· ${fmtDayMonth(d)}` : ''}
                   </div>
@@ -280,7 +289,7 @@ export function Dashboard() {
                   <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>
                     {isNext ? 'Next' : done ? 'Completed' : 'Upcoming'}
                   </div>
-                </div>
+                </a>
               );
             })}
           </div>

@@ -282,3 +282,7 @@ button, select, input { font: inherit; color: inherit; }
 /* Driver chips in the FIA feed open the driver's stats page */
 .chip-link { color: inherit; min-height: 28px; }
 .chip-link:hover, .chip-link:focus-visible { border-color: #6b7380; background: #1c2027; }
+
+/* Calendar strip rounds open the race results page */
+a.round { display: block; color: inherit; transition: border-color 0.15s, opacity 0.15s; }
+a.round:hover, a.round:focus-visible { border-color: #6b7380; opacity: 1; }
