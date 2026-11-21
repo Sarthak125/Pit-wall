@@ -6,6 +6,7 @@ import { fmtDayMonth, fmtDayTime, raceStart, timeZoneLabel, toDate } from '../li
 import { useSettings } from '../lib/settings';
 import { useNow } from '../hooks/usePoll';
 import { teamColour } from '../lib/teams';
+import { driverHref } from '../lib/router';
 
 export function Calendar() {
   const { season } = useSettings();
@@ -53,7 +54,13 @@ export function Calendar() {
                         {w ? (
                           <div className="who">
                             <span className="team-bar" style={{ background: teamColour(w.Constructor.constructorId) }} />
-                            {w.Driver.givenName} {w.Driver.familyName}
+                            {w.Driver.code ? (
+                              <a className="name-link" style={{ fontWeight: 400 }} href={driverHref(w.Driver.code)}>
+                                {w.Driver.givenName} {w.Driver.familyName}
+                              </a>
+                            ) : (
+                              <span>{w.Driver.givenName} {w.Driver.familyName}</span>
+                            )}
                           </div>
                         ) : i === nextIdx ? (
                           <span className="pill tone-red">Next</span>

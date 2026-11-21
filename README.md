@@ -82,6 +82,7 @@ Where names and codes link to these pages:
 | --- | --- | --- |
 | Dashboard | Names in the Drivers' Championship table | Constructors' bars and the Team column of the drivers' table |
 | Standings | Driver names | Team names |
+| Calendar | Winner of each finished race | |
 | Drivers | Each driver card (the star stays separate) | |
 | Live Timing | Codes in the timing tower and tyre strategy rows, driver chips under FIA messages, team radio codes | |
 | Favourites and team pages | Team radio codes | |
