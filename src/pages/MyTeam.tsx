@@ -14,7 +14,7 @@ import { useNow } from '../hooks/usePoll';
 import { useConstructorStandings, useDriverStandings, useLatestSessions, useResults, useSchedule } from '../hooks/useSeason';
 import { isClassified } from '../lib/driverStats';
 import { raceStart } from '../lib/format';
-import { href, useRouteParam } from '../lib/router';
+import { href, raceHref, useRouteParam } from '../lib/router';
 import { setFavoriteTeam, useSettings } from '../lib/settings';
 import { teamColour } from '../lib/teams';
 import { Compare } from './MyDriver';
@@ -357,7 +357,7 @@ function TeamRaceByRace({ rounds, pair }: { rounds: RoundTeam[]; pair: string[] 
               {shown.map((r) => (
                 <tr key={r.round}>
                   <td className="mono muted">{r.round}</td>
-                  <td style={{ fontWeight: 600 }}>{r.name}</td>
+                  <td><a className="name-link" href={raceHref(r.round)}>{r.name}</a></td>
                   {pair.map((c) => {
                     const v = cell(r, c);
                     return (

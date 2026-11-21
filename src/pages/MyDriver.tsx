@@ -13,7 +13,7 @@ import { useNow } from '../hooks/usePoll';
 import { useDriverStandings, useLatestSessions, useResults, useSchedule } from '../hooks/useSeason';
 import { headToHead, pointsAvailable, roundRows, seasonStats, type RoundRow } from '../lib/driverStats';
 import { fmtLap, raceStart } from '../lib/format';
-import { href, useRouteParam } from '../lib/router';
+import { href, raceHref, useRouteParam } from '../lib/router';
 import { niceName } from '../lib/format';
 import { setFavorite, useSettings } from '../lib/settings';
 import { teamColour } from '../lib/teams';
@@ -456,7 +456,7 @@ function RaceByRace({ gp, sprint, quali, code }: { gp: RoundRow[]; sprint: Round
                 {qRows.slice(0, limit).map((r) => (
                   <tr key={r.round}>
                     <td className="mono muted">{r.round}</td>
-                    <td style={{ fontWeight: 600 }}>{r.name}</td>
+                    <td><a className="name-link" href={raceHref(r.round)}>{r.name}</a></td>
                     <td className="r mono" style={{ fontWeight: 600 }}>P{r.q!.position}</td>
                     <td className="r mono">{r.q!.Q1 || '-'}</td>
                     <td className="r mono">{r.q!.Q2 || '-'}</td>
@@ -480,7 +480,7 @@ function RaceByRace({ gp, sprint, quali, code }: { gp: RoundRow[]; sprint: Round
                 {rows.slice(0, limit).map((r) => (
                   <tr key={r.round}>
                     <td className="mono muted">{r.round}</td>
-                    <td style={{ fontWeight: 600 }}>{r.name}</td>
+                    <td><a className="name-link" href={raceHref(r.round)}>{r.name}</a></td>
                     {tab === 'gp' && <td className="r mono">{r.qualified ? `P${r.qualified}` : '-'}</td>}
                     <td className="r mono">{r.grid ? `P${r.grid}` : 'Pit lane'}</td>
                     <td className="r mono" style={{ fontWeight: 600 }}>{r.finishText}</td>
