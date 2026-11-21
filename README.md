@@ -84,6 +84,25 @@ All settings are saved on each device separately.
 - Season picker for standings, results and calendar from previous years.
 - All times in the device's local time zone.
 
+## Design
+
+The screen designs live on a design canvas: [Pit Wall design canvas](https://claude.ai/artifact/UgpQJAyUaffXnHjuGgJke8). The canvas is private to its owner; others can open it only after it is shared from its Share menu. All boards use sample data with Max Verstappen as the favourite driver and Ferrari as the favourite team, and the boards link to each other through their menus.
+
+| Page | Laptop board | Android tablet board (portrait) |
+| --- | --- | --- |
+| Dashboard | Dashboard (laptop) | Dashboard (Android tablet, portrait) |
+| Live Timing | Live Timing (laptop) | Live Timing (Android tablet, portrait) |
+| Favourites: Driver tab | Favourites: Driver tab (laptop) | Favourites: Driver tab (Android tablet, portrait) |
+| Favourites: Team tab | Favourites: Team tab and where the team appears | Favourites: Team tab (Android tablet, portrait) |
+| Standings | Standings (laptop) | Standings (Android tablet, portrait) |
+| Calendar | Calendar (laptop) | Calendar (Android tablet, portrait) |
+| Drivers | Drivers (laptop) | Drivers (Android tablet, portrait) |
+| Settings | Settings (laptop) | Settings (Android tablet, portrait) |
+
+There is also a "Favourite driver: where it appears" board that maps every place the favourite driver shows up in the app.
+
+The tablet boards show one screen (800 × 1280) with the bottom menu (Dashboard, Live Timing, Favourites, Standings, Calendar, Drivers). The app's tablet layout is a single scrolling column with the same sections, so some boards note what sits further down the page.
+
 ## Data sources
 
 Formula 1 has no public official API. This app uses two free community APIs:
