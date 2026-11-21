@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getCircuitLaps } from '../api/jolpica';
+import { useSchedule } from '../hooks/useSeason';
 import { isSessionLive, type Lap, type OF1Driver, type Session } from '../api/openf1';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { FiaText, FiaWhen } from '../components/FiaText';
@@ -8,7 +11,7 @@ import { Footer } from '../components/Shell';
 import { useNow } from '../hooks/usePoll';
 import { useLatestSessions } from '../hooks/useSeason';
 import { useLiveTiming, type TimingRow } from '../hooks/useLiveTiming';
-import { fmtClock, fmtDuration, fmtGap, fmtLap, fmtSector, fmtShortClock } from '../lib/format';
+import { fmtClock, fmtDuration, fmtGap, fmtLap, fmtSector, fmtShortClock, raceStart } from '../lib/format';
 import {
   isMinor,
   openInvestigations,
@@ -54,6 +57,22 @@ export function LiveTiming() {
 
   const status = useMemo(() => trackStatus([...t.messages].reverse()), [t.messages]);
   const isRace = /race|sprint/i.test(session?.session_name ?? '') && !/qualifying|shootout/i.test(session?.session_name ?? '');
+  const isSprint = /sprint/i.test(session?.session_name ?? '');
+
+  // Planned race distance: laps run by the winner of the latest race (or sprint) at this circuit.
+  const schedule = useSchedule(session ? String(session.year) : 'current');
+  const round = session
+    ? (schedule.data ?? []).find((r) => {
+        const d = raceStart(r)?.getTime() ?? Date.parse(r.date);
+        return Math.abs(d - Date.parse(session.date_start)) < 4 * 86_400_000;
+      })
+    : undefined;
+  const planned = useQuery({
+    queryKey: ['planned-laps', round?.Circuit.circuitId, isSprint],
+    enabled: isRace && !!round,
+    staleTime: Infinity,
+    queryFn: () => getCircuitLaps(round!.Circuit.circuitId, isSprint),
+  });
 
   if (sessions.error) return <ErrorBox error={sessions.error} what="the session list" />;
   if (sessions.isLoading) return <Loading rows={10} />;
@@ -61,6 +80,10 @@ export function LiveTiming() {
 
   const start = Date.parse(session.date_start);
   const elapsed = live ? now - start : Date.parse(session.date_end) - start;
+  const remaining = Math.max(0, Date.parse(session.date_end) - now);
+  const total = planned.data?.laps;
+  const wx = t.weather;
+  const compass = (deg: number) => ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(((deg % 360) + 360) % 360 / 45) % 8];
 
   return (
     <>
@@ -92,17 +115,47 @@ export function LiveTiming() {
           </label>
         </div>
         <div className="metrics">
-          <div className="metric">
+          <div className="metric" title={total ? `Planned distance: ${total} laps, as run in the ${planned.data!.season} ${isSprint ? 'sprint' : 'race'} here` : undefined}>
             <div className="l">LAP</div>
-            <div className="v">{t.currentLap || '-'}</div>
+            <div className="v">
+              {t.currentLap || '-'}
+              {isRace && total ? <span className="faint">/{total}</span> : null}
+            </div>
+            {isRace && total && t.currentLap ? <div className="s">{Math.max(0, total - t.currentLap)} left</div> : null}
           </div>
           <div className="metric">
-            <div className="l">{live ? 'ELAPSED' : 'DURATION'}</div>
-            <div className="v">{fmtDuration(elapsed)}</div>
+            <div className="l">{live ? (isRace ? 'ELAPSED' : 'TIME LEFT') : 'DURATION'}</div>
+            <div className="v">{fmtDuration(live && !isRace ? remaining : elapsed)}</div>
           </div>
           <div className="metric">
             <div className="l">TRACK</div>
-            <div className="v">{t.weather ? `${t.weather.track_temperature.toFixed(0)}°C` : '-'}</div>
+            <div className="v">{wx ? `${wx.track_temperature.toFixed(1)}°C` : '-'}</div>
+          </div>
+          <div className="metric">
+            <div className="l">AIR</div>
+            <div className="v">{wx ? `${wx.air_temperature.toFixed(1)}°C` : '-'}</div>
+          </div>
+          <div className="metric">
+            <div className="l">HUMIDITY</div>
+            <div className="v">{wx ? `${Math.round(wx.humidity)}%` : '-'}</div>
+          </div>
+          <div className="metric">
+            <div className="l">WIND</div>
+            <div className="v">
+              {wx ? (
+                <>
+                  {(wx.wind_speed * 3.6).toFixed(1)}
+                  <span className="u"> km/h </span>
+                  <span className="wind-dir" title={`From ${wx.wind_direction}°`}>
+                    <span style={{ display: 'inline-block', transform: `rotate(${wx.wind_direction + 180}deg)` }}>↑</span> {compass(wx.wind_direction)}
+                  </span>
+                </>
+              ) : '-'}
+            </div>
+          </div>
+          <div className="metric">
+            <div className="l">RAIN</div>
+            <div className="v" style={{ color: wx?.rainfall ? '#4f9dff' : undefined }}>{wx ? (wx.rainfall ? 'Yes' : 'No') : '-'}</div>
           </div>
           <div className="metric">
             <div className="l">STATUS</div>
@@ -236,7 +289,13 @@ function TimingTable({ rows, isRace, live, fastest, favNum, team }: { rows: Timi
                     <span className={`lap-pill tone-${r.lastLapTone === 'slower' ? 'none' : r.lastLapTone}`}>{fmtLap(l?.lap_duration)}</span>
                   )}
                 </td>
-                <td className="r mono">{fmtLap(r.bestLap)}</td>
+                <td className="r">
+                  {r.bestLap != null && fastest != null && r.bestLap === fastest ? (
+                    <span className="lap-pill best" title="Fastest lap of the session">{fmtLap(r.bestLap)}</span>
+                  ) : (
+                    <span className="mono">{fmtLap(r.bestLap)}</span>
+                  )}
+                </td>
                 {[1, 2, 3].map((k) => {
                   const dur = c ? [c.duration_sector_1, c.duration_sector_2, c.duration_sector_3][k - 1] : null;
                   const segs = c ? [c.segments_sector_1, c.segments_sector_2, c.segments_sector_3][k - 1] : null;

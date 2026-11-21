@@ -410,3 +410,10 @@ tr.in-pit td { background: rgba(225, 6, 0, 0.08); }
 .rcard-when { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
 .rcard-lap { font-family: var(--mono); font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--inset); border: 1px solid var(--line-strong); color: var(--text); }
 .rcard-time { margin-left: auto; font-size: 11px; color: var(--text); }
+.lap-pill.best { background: var(--purple); color: #1a0b2e; font-weight: 700; }
+.metric .s { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.metric .v .u { font-size: 13px; color: var(--muted); }
+.wind-dir { font-size: 14px; color: var(--muted); }
+/* Larger text everywhere: scales the whole interface, like browser zoom. */
+html { zoom: 1.1; }
+@media (max-width: 1100px) { html { zoom: 1.05; } }

@@ -271,6 +271,21 @@ export async function getCircuitHistory(circuitId: string, driverId: string): Pr
   return data.MRData.RaceTable.Races;
 }
 
+/**
+ * Laps run by the winner of the most recent race (or sprint) at a circuit. Used as the planned race distance,
+ * since no free source publishes the scheduled lap count; it can differ if that race was shortened.
+ */
+export async function getCircuitLaps(circuitId: string, sprint: boolean): Promise<{ season: string; laps: number } | null> {
+  const data = await fetchJson<MR<{ RaceTable: { Races: (RaceWithResults & { SprintResults?: Result[] })[] } }>>(
+    `${BASE}/circuits/${circuitId}/${sprint ? 'sprint' : 'results'}/1/?limit=100`,
+    { limiter, cacheTtlMs: DAY },
+  );
+  const races = data.MRData.RaceTable.Races;
+  const last = races[races.length - 1];
+  const laps = Number((sprint ? last?.SprintResults : last?.Results)?.[0]?.laps);
+  return last && laps > 0 ? { season: last.season, laps } : null;
+}
+
 /** A team's Grand Prix results at one circuit, all seasons (both cars). */
 export async function getTeamCircuitHistory(circuitId: string, constructorId: string): Promise<RaceWithResults[]> {
   const data = await fetchJson<MR<{ RaceTable: { Races: RaceWithResults[] } }>>(
