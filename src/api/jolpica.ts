@@ -279,3 +279,21 @@ export async function getTeamCircuitHistory(circuitId: string, constructorId: st
   );
   return data.MRData.RaceTable.Races;
 }
+
+export interface RoundData {
+  race: RaceWithResults | undefined;
+  sprint: RaceWithResults | undefined;
+  quali: RaceWithQualifying | undefined;
+}
+
+/** Results, sprint results and qualifying for one round (3 requests). */
+export async function getRound(season: string, round: string): Promise<RoundData> {
+  type T = MR<{ RaceTable: { Races: (RaceWithResults & RaceWithQualifying)[] } }>;
+  const opts = { limiter, cacheTtlMs: 10 * MIN };
+  const [r, s, q] = await Promise.all([
+    fetchJson<T>(`${BASE}/${season}/${round}/results/?limit=100`, opts),
+    fetchJson<T>(`${BASE}/${season}/${round}/sprint/?limit=100`, opts),
+    fetchJson<T>(`${BASE}/${season}/${round}/qualifying/?limit=100`, opts),
+  ]);
+  return { race: r.MRData.RaceTable.Races[0], sprint: s.MRData.RaceTable.Races[0], quali: q.MRData.RaceTable.Races[0] };
+}

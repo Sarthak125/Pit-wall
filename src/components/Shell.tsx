@@ -25,7 +25,9 @@ export function Shell({ route, live, children }: { route: Route; live: boolean; 
         ? 'standings'
         : route === 'team'
           ? 'driver'
-          : route;
+          : route === 'race'
+            ? 'calendar'
+            : route;
   const qc = useQueryClient();
   const fetching = useIsFetching();
   const year = new Date().getFullYear();

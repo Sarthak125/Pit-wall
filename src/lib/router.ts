@@ -1,9 +1,9 @@
 import { useSyncExternalStore } from 'react';
 
 /** Hash routes, so the app works on any static host without server rewrites. */
-export type Route = 'dashboard' | 'live' | 'driver' | 'team' | 'standings' | 'calendar' | 'drivers' | 'settings';
+export type Route = 'dashboard' | 'live' | 'driver' | 'team' | 'race' | 'standings' | 'calendar' | 'drivers' | 'settings';
 
-const ROUTES: Route[] = ['dashboard', 'live', 'driver', 'team', 'standings', 'calendar', 'drivers', 'settings'];
+const ROUTES: Route[] = ['dashboard', 'live', 'driver', 'team', 'race', 'standings', 'calendar', 'drivers', 'settings'];
 
 const parts = () => window.location.hash.replace(/^#\/?/, '').split('?')[0].split('/');
 
@@ -20,6 +20,7 @@ function readParam(): string {
   const [route, p = ''] = parts();
   if (route === 'driver') return /^[A-Za-z]{3}$/.test(p) ? p.toUpperCase() : '';
   if (route === 'team') return /^[a-z0-9_]{2,40}$/.test(p) ? p : '';
+  if (route === 'race') return /^[1-9][0-9]?$/.test(p) ? p : '';
   return '';
 }
 
@@ -43,3 +44,6 @@ export const driverHref = (code: string) => `#/driver/${code}`;
 export const teamHref = (id: string) => `#/team/${id}`;
 
 export const href = (r: Route) => (r === 'dashboard' ? '#/' : `#/${r}`);
+
+/** Link to a race results page by round number, for the season in the season picker. */
+export const raceHref = (round: string | number) => `#/race/${round}`;

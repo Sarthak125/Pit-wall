@@ -6,7 +6,7 @@ import { fmtDayMonth, fmtDayTime, raceStart, timeZoneLabel, toDate } from '../li
 import { useSettings } from '../lib/settings';
 import { useNow } from '../hooks/usePoll';
 import { teamColour } from '../lib/teams';
-import { driverHref } from '../lib/router';
+import { driverHref, raceHref } from '../lib/router';
 
 export function Calendar() {
   const { season } = useSettings();
@@ -43,7 +43,7 @@ export function Calendar() {
                     <tr key={r.round} className={i === nextIdx ? 'me' : undefined}>
                       <td className="mono muted">{r.round}</td>
                       <td>
-                        <div style={{ fontWeight: 600 }}>{r.raceName}</div>
+                        <a className="name-link" href={raceHref(r.round)}>{r.raceName}</a>
                         <div className="muted" style={{ fontSize: 12 }}>{r.Circuit.circuitName} · {r.Circuit.Location.locality}, {r.Circuit.Location.country}</div>
                       </td>
                       <td className="mono">{start ? fmtDayMonth(start) : r.date}</td>
