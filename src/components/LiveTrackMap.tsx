@@ -41,7 +41,15 @@ export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, t
   });
 
   const start = Date.parse(session.date_start);
-  const end = Date.parse(session.date_end);
+  // A finished session's replay ends shortly after the last completed lap, not at the scheduled end: a race that
+  // finishes early would otherwise open on an empty track with every car parked.
+  const lastLapEnd = useMemo(() => {
+    let m = 0;
+    for (const l of laps) if (l.date_start && l.lap_duration) m = Math.max(m, Date.parse(l.date_start) + l.lap_duration * 1000);
+    return m;
+  }, [laps]);
+  const scheduledEnd = Date.parse(session.date_end);
+  const end = !live && lastLapEnd > start ? Math.min(scheduledEnd, lastLapEnd + 30_000) : scheduledEnd;
 
   // Playback clock. Live it follows the newest data; for finished sessions it is a replay the viewer controls.
   const [playing, setPlaying] = useState(live);

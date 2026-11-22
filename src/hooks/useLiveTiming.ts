@@ -296,7 +296,21 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
         trapSpeed: traps.length ? Math.max(...traps) : null,
       };
     });
-    return out.sort((a, b) => (a.position ?? 99) - (b.position ?? 99));
+    out.sort((a, b) => (a.position ?? 99) - (b.position ?? 99));
+    // Finished races: the official classification has the final gap for every car. The gaps polled near the
+    // scheduled end can be missing when a race finishes early, so fill them in and work out the intervals.
+    if (!live && isRace && results.data?.length) {
+      const res = new Map(results.data.map((r) => [r.driver_number, r]));
+      for (const r of out) {
+        const g = res.get(r.driver.driver_number)?.gap_to_leader;
+        if (r.gap == null && g != null && !Array.isArray(g)) r.gap = typeof g === 'number' ? g : String(g);
+      }
+      out.forEach((r, i) => {
+        const prev = out[i - 1];
+        if (r.interval == null && i > 0 && typeof r.gap === 'number' && typeof prev?.gap === 'number') r.interval = Math.max(0, r.gap - prev.gap);
+      });
+    }
+    return out;
   }, [drivers.data, laps.data, stints.data, intervals.data, positions.data, pits.data, cars.data, results.data, grid.data, live, session?.session_name]);
 
   const isQualiSession = /qualifying|shootout/i.test(session?.session_name ?? '');
