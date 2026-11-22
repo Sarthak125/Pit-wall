@@ -37,6 +37,7 @@ for (const [route, text] of [
   ['#/driver/VER', 'Verstappen'],
   ['#/team/ferrari', 'Ferrari'],
   ['#/settings', 'Settings'],
+  ['#/help', 'How to use Pit Wall'],
 ] as const) {
   test(`page ${route} loads without errors or sideways scrolling`, async ({ page }) => {
     const errors = await setUp(page);

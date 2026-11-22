@@ -1,9 +1,9 @@
 import { useSyncExternalStore } from 'react';
 
 /** Hash routes, so the app works on any static host without server rewrites. */
-export type Route = 'dashboard' | 'live' | 'driver' | 'team' | 'race' | 'standings' | 'calendar' | 'drivers' | 'settings';
+export type Route = 'dashboard' | 'live' | 'driver' | 'team' | 'race' | 'standings' | 'calendar' | 'drivers' | 'settings' | 'help';
 
-const ROUTES: Route[] = ['dashboard', 'live', 'driver', 'team', 'race', 'standings', 'calendar', 'drivers', 'settings'];
+const ROUTES: Route[] = ['dashboard', 'live', 'driver', 'team', 'race', 'standings', 'calendar', 'drivers', 'settings', 'help'];
 
 const parts = () => window.location.hash.replace(/^#\/?/, '').split('?')[0].split('/');
 

@@ -10,6 +10,7 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 ## Recently added
 
+- **How to use page:** a guide inside the app (the **?** button next to Settings, or `#/help`): getting started, race day and the feed status pill, reading Live Timing (colours, tags, qualifying, long runs, charts), watching later, planning ahead and common questions.
 - **Qualifying knockout view:** Q1, Q2 and Q3 columns in the timing tower, the drop zone shaded with a line at the cut, the current part and cut-off time in the session bar, and OUT Q1 / OUT Q2 tags. See [Qualifying](#live-timing).
 - **TV delay:** hold live timing back by up to 2 minutes so overtakes and flags appear when you see them on TV or a stream.
 - **Spoiler-free mode:** hides the latest race weekend's results, standings and live timing until you press Reveal.
@@ -248,6 +249,10 @@ Notes:
 - Buttons on the Dashboard's next race card, upcoming race pages and the Calendar download a standard calendar file (.ics) that Google Calendar, Apple Calendar and Outlook can import. Each session is its own event, with the circuit as the location and a link back to Pit Wall.
 - Times are exact start times in UTC, so your calendar shows them in your own time zone. End times are estimates (the usual session length), and the file is a one-off download: if F1 moves a session later, download it again.
 
+### How to use
+
+The **?** button in the header (next to Settings) opens a guide to the app, also linked from the footer of every page. It covers getting started (favourites, installing, alerts), race day (where live data comes from, the feed status pill, what needs F1 TV), reading Live Timing (mini-sector, sector, tyre and fastest-lap colours, the tags and columns, qualifying, long runs and the race charts), watching later (TV delay and spoiler-free mode), planning ahead and common questions. The examples on it use the same styles as the app.
+
 ### Settings
 
 - Favourite driver and favourite team.
@@ -390,7 +395,7 @@ src/lib/         FIA message classifier and plain-English wording, driver stats,
                  calendar files (ics), long runs,
                  settings, routing, track geometry, sector lines, lap-by-lap positions, app updates, OpenF1 live
                  windows (openf1Window), F1 feed to app data adapter (f1adapter)
-src/pages/       Dashboard, Live Timing, Favourites (My Driver, My Team), Standings, Calendar, Race results, Drivers, Settings
+src/pages/       Dashboard, Live Timing, Favourites (My Driver, My Team), Standings, Calendar, Race results, Drivers, Settings, How to use (Help)
 src/components/  App shell, charts, live track map, live championship, gap chart, dashboard extras, circuit overview and outline, weekend weather,
                  position chart, live driver and team views, team radio cards, FIA messages, strips, alerts, update
                  banner, feed status, tyre strategy, long-run pace, rain watch, add to calendar, spoiler cover,

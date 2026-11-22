@@ -7,7 +7,7 @@ import { openf1 } from '../api/openf1';
 import { useIsFetching, useQueryClient } from '@tanstack/react-query';
 import { href, useRouteParam, type Route } from '../lib/router';
 import { getSettings, updateSettings, useSettings } from '../lib/settings';
-import { CalendarIcon, DashIcon, GearIcon, HelmetIcon, RefreshIcon, StarIcon, TimerIcon, TrophyIcon } from './Icons';
+import { CalendarIcon, DashIcon, GearIcon, HelmetIcon, HelpIcon, RefreshIcon, StarIcon, TimerIcon, TrophyIcon } from './Icons';
 
 const NAV: { route: Route; label: string; short?: string; icon: () => ReactNode }[] = [
   { route: 'dashboard', label: 'Dashboard', short: 'Home', icon: DashIcon },
@@ -84,6 +84,9 @@ export function Shell({ route, live, children }: { route: Route; live: boolean; 
           >
             <RefreshIcon />
           </button>
+          <a className="icon-btn help-btn" href={href('help')} aria-label="How to use Pit Wall" title="How to use Pit Wall" aria-current={route === 'help' ? 'page' : undefined}>
+            <HelpIcon />
+          </a>
           <a className="icon-btn" href={href('settings')} aria-label="Settings" aria-current={route === 'settings' ? 'page' : undefined}>
             <GearIcon />
           </a>
@@ -113,7 +116,7 @@ export function Footer() {
     <footer className="footer">
       Data: <a href="https://openf1.org" target="_blank" rel="noreferrer">OpenF1</a> (live timing) and{' '}
       <a href="https://github.com/jolpica/jolpica-f1" target="_blank" rel="noreferrer">Jolpica-F1</a> (results and standings). Times
-      are in your local time zone. Unofficial fan project, not affiliated with Formula 1.
+      are in your local time zone. Unofficial fan project, not affiliated with Formula 1. <a href={href('help')}>How to use Pit Wall</a>
     </footer>
   );
 }

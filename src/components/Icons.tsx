@@ -69,3 +69,11 @@ export const FlagIcon = ({ filled = false, size = 18 }: { filled?: boolean; size
     <path d="M5 4h12l-2.5 4L17 12H5" fill={filled ? 'currentColor' : 'none'} />
   </svg>
 );
+
+export const HelpIcon = () => (
+  <Svg size={18}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M9.5 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-.9.8-.9 1.4v.3" />
+    <path d="M12 17h.01" />
+  </Svg>
+);
