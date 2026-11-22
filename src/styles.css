@@ -545,3 +545,14 @@ html { zoom: 1.1; }
 .pc-tip-row { display: grid; grid-template-columns: 10px 34px 36px auto; align-items: center; gap: 6px; font-size: 12px; }
 .pc-tip-row i { width: 10px; height: 3px; border-radius: 2px; display: block; }
 .pc-tip-row .muted { text-align: right; }
+
+/* Qualifying knockout */
+.pit-pill.knocked { background: transparent; color: var(--muted); border: 1px solid var(--line-strong); }
+.tbl.timing tr.q-drop td { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.tbl.timing tr.q-cut td { border-top: 2px dashed color-mix(in srgb, var(--accent) 70%, transparent); }
+.tbl.timing tr.q-line td { border-bottom: 2px solid #3a404b; }
+.tbl.timing th.q-now { color: var(--text); }
+.q-part { display: inline-flex; gap: 4px; }
+.q-part span { padding: 2px 8px; border-radius: 6px; border: 1px solid var(--line-strong); color: var(--faint); font-family: var(--mono); font-size: 14px; }
+.q-part span.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+.q-part span.done { color: var(--muted); }

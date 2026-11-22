@@ -14,7 +14,7 @@ import { GapChart } from '../components/GapChart';
 import { Footer } from '../components/Shell';
 import { useNow } from '../hooks/usePoll';
 import { useLatestSessions } from '../hooks/useSeason';
-import { useLiveTiming, type TimingRow } from '../hooks/useLiveTiming';
+import { useLiveTiming, type QualiState, type TimingRow } from '../hooks/useLiveTiming';
 import { fmtClock, fmtDuration, fmtGap, fmtLap, fmtSector, fmtShortClock, raceStart } from '../lib/format';
 import {
   isMinor,
@@ -105,6 +105,7 @@ export function LiveTiming() {
   if (sessions.isLoading && !feedSess) return <Loading rows={10} />;
   if (!session) return <Empty>No sessions found on OpenF1 yet.</Empty>;
 
+  const qBar = !isRace ? qualiLayout(t.rows, t.quali) : null;
   const start = Date.parse(session.date_start);
   const elapsed = live ? now - start : Date.parse(session.date_end) - start;
   const remaining = Math.max(0, Date.parse(session.date_end) - now);
@@ -152,14 +153,32 @@ export function LiveTiming() {
           </label>
         </div>
         <div className="metrics">
-          <div className="metric" title={total ? (t.totalLaps ? `Race distance: ${total} laps (from F1's live timing)` : `Planned distance: ${total} laps, as run in the ${planned.data?.season ?? 'last'} ${isSprint ? 'sprint' : 'race'} here`) : undefined}>
+          {qBar && (
+            <div className="metric" title="Qualifying part: Q1 and Q2 knock out the slowest cars, Q3 decides the top 10">
+              <div className="l">PART</div>
+              <div className="v q-part">
+                {[1, 2, 3].map((k) => (
+                  <span key={k} className={qBar.part === k ? 'on' : qBar.part == null || k < qBar.part ? 'done' : undefined}>Q{k}</span>
+                ))}
+              </div>
+              <div className="s">{qBar.part == null ? 'Final classification' : qBar.through ? `Top ${qBar.through} go through` : 'Top 10 shoot-out'}</div>
+            </div>
+          )}
+          {qBar?.part != null && qBar.through != null && (
+            <div className="metric" title="Time of the last car currently through to the next part. Slower times are in the drop zone.">
+              <div className="l">CUT-OFF</div>
+              <div className="v">{qBar.cutoff != null ? fmtLap(qBar.cutoff) : '-'}</div>
+              <div className="s">P{qBar.through} in Q{qBar.part}</div>
+            </div>
+          )}
+          {!qBar && <div className="metric" title={total ? (t.totalLaps ? `Race distance: ${total} laps (from F1's live timing)` : `Planned distance: ${total} laps, as run in the ${planned.data?.season ?? 'last'} ${isSprint ? 'sprint' : 'race'} here`) : undefined}>
             <div className="l">LAP</div>
             <div className="v">
               {t.currentLap || '-'}
               {isRace && total ? <span className="faint">/{total}</span> : null}
             </div>
             {isRace && total && t.currentLap ? <div className="s">{Math.max(0, total - t.currentLap)} left</div> : null}
-          </div>
+          </div>}
           <div className="metric">
             <div className="l">{upcoming ? 'STARTS IN' : live ? (isRace ? 'ELAPSED' : 'TIME LEFT') : 'DURATION'}</div>
             <div className="v">{fmtDuration(upcoming ? start - now : live && !isRace ? remaining : elapsed)}</div>
@@ -238,7 +257,7 @@ export function LiveTiming() {
             </div>
           </div>
           {t.loading ? <Loading rows={12} /> : t.rows.length === 0 ? <Empty>No timing data for this session yet.</Empty> : (
-            <TimingTable rows={t.rows} isRace={isRace} live={live} upcoming={upcoming} fastest={t.fastest} favNum={favNum} team={favTeam} pitLoss={pitLoss} noCarData={t.source === 'f1'} year={session.year} neutral={status?.label === 'Safety car' ? 'sc' : status?.label === 'Virtual safety car' ? 'vsc' : null} />
+            <TimingTable rows={t.rows} isRace={isRace} live={live} upcoming={upcoming} fastest={t.fastest} favNum={favNum} team={favTeam} pitLoss={pitLoss} noCarData={t.source === 'f1'} year={session.year} quali={!isRace ? t.quali : null} neutral={status?.label === 'Safety car' ? 'sc' : status?.label === 'Virtual safety car' ? 'vsc' : null} />
           )}
         </section>
       </div>
@@ -311,7 +330,7 @@ function Segments({ segs }: { segs: (number | null)[] | null | undefined }) {
   );
 }
 
-function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitLoss, neutral, noCarData = false, year }: { rows: TimingRow[]; year: number; isRace: boolean; live: boolean; upcoming: boolean; fastest: number | null; favNum: number | null; team: FavouriteTeam | null; pitLoss?: { normal?: string; sc?: string; vsc?: string }; neutral: 'sc' | 'vsc' | null; noCarData?: boolean }) {
+function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitLoss, neutral, noCarData = false, year, quali = null }: { rows: TimingRow[]; year: number; quali?: QualiState | null; isRace: boolean; live: boolean; upcoming: boolean; fastest: number | null; favNum: number | null; team: FavouriteTeam | null; pitLoss?: { normal?: string; sc?: string; vsc?: string }; neutral: 'sc' | 'vsc' | null; noCarData?: boolean }) {
   // Where each car would rejoin if it pitted now: its gap to the leader plus the pit loss, placed among the other
   // cars' gaps. Under a safety car or VSC the field is slower, so the smaller neutralised loss applies.
   const loss = Number((neutral === 'sc' ? pitLoss?.sc : neutral === 'vsc' ? pitLoss?.vsc : pitLoss?.normal) ?? NaN);
@@ -330,6 +349,8 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitL
   };
   // Before a race starts, the order is the starting grid and the gap column shows the qualifying lap.
   const onGrid = isRace && upcoming;
+  // Qualifying knockout: Q1/Q2/Q3 columns, the drop zone while a part is running, and the cut lines.
+  const q = qualiLayout(rows, quali);
   return (
     <div className="scroll-x">
       <table className="tbl timing" style={{ minWidth: isRace ? 960 : 880 }}>
@@ -340,7 +361,7 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitL
             <th className="r">{onGrid ? 'QUALI LAP' : isRace ? 'GAP' : 'GAP (BEST)'}</th>
             {isRace && <th className="r">INT</th>}
             <th>LAST LAP</th>
-            <th className="r">BEST</th>
+            {q ? [1, 2, 3].map((k) => <th key={k} className={`r${q.part === k ? ' q-now' : ''}`} title={`Best time in Q${k}`}>Q{k}</th>) : <th className="r">BEST</th>}
             <th className="r" title={live ? 'Lap in progress' : 'Latest lap'}><i className="sec-dot" style={{ background: 'var(--s1)' }} />SECTOR 1</th>
             <th className="r"><i className="sec-dot" style={{ background: 'var(--s2)' }} />SECTOR 2</th>
             <th className="r"><i className="sec-dot" style={{ background: 'var(--s3)' }} />SECTOR 3</th>
@@ -353,7 +374,7 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitL
         </thead>
         <tbody>
           {rows.map((r, i) => {
-            const gap = onGrid ? fmtLap(r.gridLap) : isRace ? (i === 0 ? 'Leader' : fmtGap(r.gap)) : r.bestLap != null && fastest != null ? (i === 0 ? 'Fastest' : `+${(r.bestLap - fastest).toFixed(3)}`) : '-';
+            const gap = q ? q.gap(r) : onGrid ? fmtLap(r.gridLap) : isRace ? (i === 0 ? 'Leader' : fmtGap(r.gap)) : r.bestLap != null && fastest != null ? (i === 0 ? 'Fastest' : `+${(r.bestLap - fastest).toFixed(3)}`) : '-';
             const l = r.lastLap;
             const c = r.currentLap;
             const isTeam = team?.codes.has(r.driver.name_acronym);
@@ -361,7 +382,7 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitL
             const tel = live ? r.car : undefined;
             const speed = tel?.speed ?? 0;
             return (
-              <tr key={r.driver.driver_number} className={[favNum === r.driver.driver_number ? 'fav' : '', isTeam ? 'team' : '', r.status === 'IN PIT' ? 'in-pit' : '', r.status === 'RETIRED' || r.status === 'DNS' || r.status === 'DSQ' ? 'out' : ''].join(' ').trim() || undefined} style={isTeam ? ({ '--team': team!.colour } as React.CSSProperties) : undefined}>
+              <tr key={r.driver.driver_number} className={[favNum === r.driver.driver_number ? 'fav' : '', isTeam ? 'team' : '', r.status === 'IN PIT' ? 'in-pit' : '', r.status === 'RETIRED' || r.status === 'DNS' || r.status === 'DSQ' || r.quali?.out ? 'out' : '', q ? q.rowClass(r) : ''].join(' ').trim() || undefined} style={isTeam ? ({ '--team': team!.colour } as React.CSSProperties) : undefined}>
                 <td className="mono muted">{r.position ?? '-'}</td>
                 <td>
                   <div className="who">
@@ -374,19 +395,33 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitL
                 <td className="r mono">{gap}</td>
                 {isRace && <td className="r mono muted">{i > 0 && !onGrid ? fmtGap(r.interval) : '-'}</td>}
                 <td>
-                  {r.status ? (
+                  {r.quali?.out && r.status !== 'DSQ' ? (
+                    // Knocked out cars sit in the garage, so this beats IN PIT.
+                    <span className="pit-pill knocked" title={`Knocked out in Q${r.quali.out}`}>OUT Q{r.quali.out}</span>
+                  ) : r.status ? (
                     <span className={`pit-pill ${PILL[r.status]}`} title={PILL_TITLE[r.status]}>{r.status}</span>
                   ) : (
                     <span className={`lap-pill tone-${r.lastLapTone === 'slower' ? 'none' : r.lastLapTone}`}>{fmtLap(l?.lap_duration)}</span>
                   )}
                 </td>
-                <td className="r">
-                  {r.bestLap != null && fastest != null && r.bestLap === fastest ? (
-                    <span className="lap-pill best" title="Fastest lap of the session">{fmtLap(r.bestLap)}</span>
-                  ) : (
-                    <span className="mono">{fmtLap(r.bestLap)}</span>
-                  )}
-                </td>
+                {q ? (
+                  [0, 1, 2].map((k) => {
+                    const v = r.quali?.times[k] ?? null;
+                    return (
+                      <td key={k} className="r">
+                        {v != null && v === q.fastest[k] ? <span className="lap-pill best" title={`Fastest in Q${k + 1}`}>{fmtLap(v)}</span> : <span className={`mono${v == null ? ' faint' : ''}`}>{v != null ? fmtLap(v) : '-'}</span>}
+                      </td>
+                    );
+                  })
+                ) : (
+                  <td className="r">
+                    {r.bestLap != null && fastest != null && r.bestLap === fastest ? (
+                      <span className="lap-pill best" title="Fastest lap of the session">{fmtLap(r.bestLap)}</span>
+                    ) : (
+                      <span className="mono">{fmtLap(r.bestLap)}</span>
+                    )}
+                  </td>
+                )}
                 {[1, 2, 3].map((k) => {
                   const dur = c ? [c.duration_sector_1, c.duration_sector_2, c.duration_sector_3][k - 1] : null;
                   const segs = c ? [c.segments_sector_1, c.segments_sector_2, c.segments_sector_3][k - 1] : null;
@@ -755,4 +790,47 @@ function PitStops({ pits, drivers, live, fromFeed, favNum, teamNums }: { pits: P
       )}
     </section>
   );
+}
+
+/**
+ * Qualifying knockout layout. While a part runs, the cars outside the places that go through to the next part are in
+ * the drop zone, and the cut-off is the time of the last car through. Once finished, lines mark where Q1 and Q2 cut.
+ */
+function qualiLayout(rows: TimingRow[], quali: QualiState | null) {
+  if (!quali || !rows.some((r) => r.quali)) return null;
+  const fastest = [0, 1, 2].map((k) => {
+    const v = rows.map((r) => r.quali?.times[k]).filter((x): x is number => x != null);
+    return v.length ? Math.min(...v) : null;
+  });
+  const part = quali.part;
+  // Places that go through from the running part: the number of cars in the next part (none after Q3).
+  const through = part != null && part < 3 ? quali.entries[part] ?? null : null;
+  const inPart = (r: TimingRow) => !r.quali?.out;
+  const dangerFrom = through != null ? through + 1 : null;
+  // Cut-off: the time of the last car currently through, in the running part.
+  const ranked = part != null ? rows.filter(inPart).map((r) => r.quali?.times[part - 1]).filter((x): x is number => x != null).sort((a, b) => a - b) : [];
+  const cutoff = through != null && ranked.length >= through ? ranked[through - 1] : null;
+  const gap = (r: TimingRow): string => {
+    const t = r.quali?.times;
+    if (!t) return '-';
+    // Live: against the fastest in the running part. Finished (or knocked out): in the last part the driver ran.
+    const k = part != null && !r.quali?.out ? part - 1 : (r.quali?.out ?? (t[2] != null ? 3 : t[1] != null ? 2 : 1)) - 1;
+    const v = t[k];
+    const best = fastest[k];
+    if (v == null || best == null) return '-';
+    return v === best ? `Fastest Q${k + 1}` : `+${(v - best).toFixed(3)}`;
+  };
+  const rowClass = (r: TimingRow): string => {
+    const pos = r.position ?? 99;
+    if (part != null && dangerFrom != null && inPart(r)) {
+      if (pos >= dangerFrom) return pos === dangerFrom ? 'q-drop q-cut' : 'q-drop';
+      return '';
+    }
+    if (part == null) {
+      // Finished: a line under the last car into Q2 and the last car into Q3.
+      if (pos === quali.entries[1] || pos === quali.entries[2]) return 'q-line';
+    }
+    return '';
+  };
+  return { part, fastest, cutoff, through, gap, rowClass };
 }

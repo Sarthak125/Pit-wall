@@ -6,7 +6,7 @@
 import type { FeedSnapshot, RecordedLap } from '../api/f1live';
 import { parseLapTime } from '../api/f1live';
 import type { Lap, OF1Driver, RaceControlMsg, Session, Stint, TeamRadio, Weather } from '../api/openf1';
-import type { TimingRow } from '../hooks/useLiveTiming';
+import type { QualiState, TimingRow } from '../hooks/useLiveTiming';
 import { teamColour } from './teams';
 
 type Tone = 'overall' | 'personal' | 'slower' | 'none';
@@ -209,6 +209,7 @@ export function feedRows(s: FeedSnapshot, isRace: boolean): TimingRow[] {
       status,
       car: undefined,
       trapSpeed: num(stats[n]?.BestSpeeds?.ST?.Value),
+      quali: isRace ? undefined : feedQualiRow(l, s),
     };
   });
   return rows.sort((a, b) => (a.position ?? 99) - (b.position ?? 99));
@@ -237,4 +238,25 @@ export function feedPositionTraces(s: FeedSnapshot): { laps: number; traces: { d
     .filter((t) => t.positions.length > 0);
   if (!traces.length) return null;
   return { laps: Math.max(...traces.map((t) => t.positions.length - 1)), traces };
+}
+
+/** Qualifying state from the feed: current part (SessionPart) and cars per part (NoEntries). */
+export function feedQuali(s: FeedSnapshot): QualiState | null {
+  const td = s.state.TimingData;
+  const part = num(td?.SessionPart);
+  const entries = list(td?.NoEntries).map((v) => num(v) ?? 0).filter((v) => v > 0);
+  if (!part && !entries.length) return null;
+  const finished = /finished|finalised|ends/i.test(String(s.state.SessionInfo?.SessionStatus ?? ''));
+  return { part: finished ? null : part, entries: entries.length ? entries : [Object.keys(td?.Lines ?? {}).length] };
+}
+
+/** A driver's best time in each qualifying part, and the part they were knocked out in. */
+function feedQualiRow(l: any, s: FeedSnapshot): TimingRow['quali'] {
+  const times = [0, 1, 2].map((i) => parseLapTime(list(l?.BestLapTimes)[i]?.Value));
+  if (times.every((t) => t == null) && !l?.KnockedOut) return undefined;
+  const part = num(s.state.TimingData?.SessionPart) ?? 1;
+  const lastWithTime = times.reduce((m, t, i) => (t != null ? i + 1 : m), 0);
+  // Knocked out drivers stay in the part they last ran in.
+  const out = l?.KnockedOut ? Math.max(1, Math.min(lastWithTime || part - 1, part - 1) || lastWithTime || 1) : null;
+  return { times, out };
 }

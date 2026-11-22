@@ -21,7 +21,7 @@ import { classify, type ClassifiedMsg } from '../lib/raceControl';
 import { teamColour } from '../lib/teams';
 import { usePoll } from './usePoll';
 import { useF1Feed } from '../api/f1live';
-import { feedDrivers, feedLaps, feedMessages, feedPositionTraces, feedProgress, feedRadio, feedRows, feedWeather } from '../lib/f1adapter';
+import { feedDrivers, feedLaps, feedMessages, feedPositionTraces, feedProgress, feedQuali, feedRadio, feedRows, feedWeather } from '../lib/f1adapter';
 import { getSettings } from '../lib/settings';
 import { useQuery } from '@tanstack/react-query';
 
@@ -51,6 +51,31 @@ function mergeLatest<T extends { driver_number: number; date: string }>(prev: La
 
 const iso = (ms: number) => new Date(ms).toISOString();
 
+/** Qualifying: the part running (1 to 3, null once finished) and how many cars take part in each part. */
+export interface QualiState {
+  part: number | null;
+  /** Cars in Q1, Q2 and Q3, e.g. [22, 16, 10]. */
+  entries: number[];
+}
+
+/** Best time in each qualifying part, mapped from OpenF1's classification (duration = [Q1, Q2, Q3]). */
+export function qualiFromResults(results: SessionResult[]): { state: QualiState; byDriver: Map<number, { times: (number | null)[]; out: number | null }> } | null {
+  const rows = results.filter((r) => Array.isArray(r.duration));
+  if (!rows.length) return null;
+  const times = new Map(rows.map((r) => [r.driver_number, (r.duration as (number | null)[]).slice(0, 3).map((v) => (typeof v === 'number' && v > 0 ? v : null))]));
+  // Cars in each part: everyone in Q1; in Q2 and Q3, those who set a time there or rank inside the cut.
+  const entries = [0, 1, 2].map((k) => (k === 0 ? rows.length : [...times.values()].filter((t) => t[k] != null).length));
+  const byDriver = new Map<number, { times: (number | null)[]; out: number | null }>();
+  for (const r of rows) {
+    const t = times.get(r.driver_number)!;
+    const pos = r.position ?? 99;
+    // Knocked out in Q1 or Q2 by classification position (penalties aside, the order of the cut).
+    const out = entries[1] && pos > entries[1] ? 1 : entries[2] && pos > entries[2] ? 2 : null;
+    byDriver.set(r.driver_number, { times: t, out });
+  }
+  return { state: { part: null, entries }, byDriver };
+}
+
 export interface TimingRow {
   driver: OF1Driver;
   colour: string;
@@ -79,6 +104,8 @@ export interface TimingRow {
   car: CarData | undefined;
   /** Fastest speed-trap reading this session. */
   trapSpeed: number | null;
+  /** Qualifying: best time in Q1, Q2 and Q3, and the part the driver was knocked out in. */
+  quali?: { times: (number | null)[]; out: number | null };
 }
 
 /** Last mini-sector code recorded on a lap. */
@@ -272,6 +299,13 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
     return out.sort((a, b) => (a.position ?? 99) - (b.position ?? 99));
   }, [drivers.data, laps.data, stints.data, intervals.data, positions.data, pits.data, cars.data, results.data, grid.data, live, session?.session_name]);
 
+  const isQualiSession = /qualifying|shootout/i.test(session?.session_name ?? '');
+  const qualiData = useMemo(() => (isQualiSession ? qualiFromResults(results.data ?? []) : null), [isQualiSession, results.data]);
+  const qualiRows = useMemo(
+    () => (qualiData ? rows.map((r) => ({ ...r, quali: qualiData.byDriver.get(r.driver.driver_number) })) : rows),
+    [rows, qualiData],
+  );
+
   const currentLap = rows.reduce((m, r) => Math.max(m, r.lapsDone), 0);
   const fastest = rows.reduce<number | null>((m, r) => (r.bestLap != null && (m == null || r.bestLap < m) ? r.bestLap : m), null);
   const latestWeather = weather.data?.length ? weather.data[weather.data.length - 1] : undefined;
@@ -302,20 +336,22 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
       pits: [] as PitDetail[],
       source: 'f1' as const,
       radio: feedRadio(feed),
+      quali: isQualiSession ? feedQuali(feed) : null,
       positionTraces: feedPositionTraces(feed),
       totalLaps: progress.total,
       remaining: progress.remaining,
     };
-  }, [fromFeed, feed, isRaceSession]);
+  }, [fromFeed, feed, isRaceSession, isQualiSession]);
   if (fromF1) return fromF1;
 
   return {
     source: 'openf1' as const,
+    quali: (qualiData?.state ?? null) as QualiState | null,
     radio: null as TeamRadio[] | null,
     positionTraces: null as ReturnType<typeof feedPositionTraces>,
     totalLaps: null as number | null,
     remaining: null as string | null,
-    rows,
+    rows: qualiRows,
     messages,
     stints: stints.data ?? [],
     weather: latestWeather,
