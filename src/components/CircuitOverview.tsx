@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getCircuit } from '../api/circuit';
 import { getCircuitRecords, type Race, type RaceWithResults } from '../api/jolpica';
 import { findMeeting } from '../api/openf1';
-import { getSectorLines } from '../lib/sectorLines';
+import { getSectorLinesFor } from '../lib/sectorLines';
 import { useSchedule } from '../hooks/useSeason';
 import { driverHref, raceHref, teamHref } from '../lib/router';
 import { teamColour } from '../lib/teams';
@@ -65,7 +65,7 @@ export function CircuitOverview({ race }: { race: Race }) {
                   <span><i className="sw" style={{ background: 'var(--s3)' }} />S3</span>
                 </span>
               )}
-              Numbers are turns; the red arrow shows the direction of travel.{sectorLines.data ? ' Sector lines placed from the fastest lap of that weekend.' : ''} Layout: MultiViewer.
+              Numbers are turns; the red arrow shows the direction of travel.{sectorLines.data ? (sectorLines.year != null && sectorLines.year !== meeting.data?.year ? ` Sector lines placed from the fastest lap of the ${sectorLines.year} weekend here, until this weekend's first session.` : ' Sector lines placed from the fastest lap of that weekend.') : ''} Layout: MultiViewer.
             </div>
           )}
         </div>
@@ -153,12 +153,14 @@ export function useCircuitLayout(race: Race) {
     staleTime: Infinity,
     queryFn: ({ signal }) => getCircuit(meeting.data!.circuit_key, meeting.data!.year, signal),
   });
-  const sectorLines = useQuery({
+  const lines = useQuery<Awaited<ReturnType<typeof getSectorLinesFor>>>({
     queryKey: ['sector-lines', meeting.data?.meeting_key],
     enabled: !!meeting.data,
-    staleTime: Infinity,
-    queryFn: ({ signal }) => getSectorLines(meeting.data!.meeting_key, signal),
+    // Lines borrowed from an earlier year are checked again later, so the weekend's own laps replace them once it starts.
+    staleTime: (q) => (q.state.data && q.state.data.year !== meeting.data?.year ? 30 * 60_000 : Infinity),
+    queryFn: ({ signal }) => getSectorLinesFor(meeting.data!, signal),
   });
+  const sectorLines = { data: lines.data?.lines ?? null, year: lines.data?.year ?? null };
   return { meeting, layout, sectorLines, current };
 }
 

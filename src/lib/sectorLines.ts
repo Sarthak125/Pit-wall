@@ -1,4 +1,4 @@
-import { meetingSessions, openf1, type CarLocation, type Lap } from '../api/openf1';
+import { meetingSessions, openf1, type CarLocation, type Lap, type Meeting } from '../api/openf1';
 
 /**
  * Where the two timing sector lines are on track, in layout coordinates. OpenF1 does not publish them, so this
@@ -30,6 +30,23 @@ export async function getSectorLines(meetingKey: number, signal?: AbortSignal): 
   const p1 = samples.length ? at(t1) : null;
   const p2 = samples.length ? at(t2) : null;
   return p1 && p2 ? [p1, p2] : null;
+}
+
+/**
+ * Sector lines for a weekend's circuit. Before the weekend has any laps (an upcoming race), they come from the most
+ * recent earlier weekend at the same circuit, and `year` says which.
+ */
+export async function getSectorLinesFor(meeting: Pick<Meeting, 'meeting_key' | 'circuit_key' | 'date_start' | 'year'>, signal?: AbortSignal): Promise<{ lines: { x: number; y: number }[]; year: number } | null> {
+  const own = await getSectorLines(meeting.meeting_key, signal);
+  if (own) return { lines: own, year: meeting.year };
+  const earlier = (await openf1<Meeting>('meetings', { circuit_key: meeting.circuit_key, 'date_start<': meeting.date_start }, signal))
+    .sort((a, b) => b.date_start.localeCompare(a.date_start))
+    .slice(0, 2);
+  for (const m of earlier) {
+    const lines = await getSectorLines(m.meeting_key, signal);
+    if (lines) return { lines, year: m.year };
+  }
+  return null;
 }
 
 export interface PositionTrace {
