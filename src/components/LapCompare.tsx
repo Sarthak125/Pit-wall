@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState, type PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import type { Race } from '../api/jolpica';
 import { findMeeting, meetingSessions, openf1, type Lap, type OF1Driver, type Pit, type Stint } from '../api/openf1';
 import { useFavourite } from '../hooks/useFavourite';
@@ -7,7 +7,7 @@ import { fmtLap } from '../lib/format';
 import { driverLaps, paceGap, representative, timeRange, type LapPoint } from '../lib/lapCompare';
 import { teamColour, tyre } from '../lib/teams';
 
-const W = 1000, H = 350, L = 64, R = 16, T = 14, B = 50;
+const H = 350, L = 64, R = 16, T = 14, B = 50;
 const SESSION_ORDER = ['Practice 1', 'Practice 2', 'Practice 3', 'Sprint Qualifying', 'Sprint Shootout', 'Sprint', 'Qualifying', 'Race'];
 const short = (n: string) => n.replace('Practice ', 'FP').replace('Sprint Qualifying', 'Sprint quali').replace('Sprint Shootout', 'Sprint quali');
 
@@ -116,6 +116,16 @@ function DriverSelect({ label, value, drivers, onChange }: { label: string; valu
 function LapChart({ data, a, b, race }: { data: { laps: Lap[]; stints: Stint[]; pits: Pit[] }; a: OF1Driver; b: OF1Driver; race: boolean }) {
   const [hover, setHover] = useState<number | null>(null);
   const [table, setTable] = useState(false);
+  // Drawn at the width it is shown at, so the axis text stays readable on a phone.
+  const box = useRef<HTMLDivElement>(null);
+  const [W, setW] = useState(1000);
+  useEffect(() => {
+    const el = box.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(([e]) => setW(Math.max(320, Math.round(e.contentRect.width))));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const series = useMemo(() => [a, b].map((d) => driverLaps(data.laps, data.stints, data.pits, d.driver_number)), [data, a, b]);
   const colours = [teamColour(a.team_name, a.team_colour), teamColour(b.team_name, b.team_colour)];
   const range = timeRange(series, race);
@@ -141,7 +151,8 @@ function LapChart({ data, a, b, race }: { data: { laps: Lap[]; stints: Stint[]; 
   // Grid lines on round lap times (0.5, 1, 2 or 5 seconds apart).
   const step = [0.5, 1, 2, 5, 10].find((s) => (hi - lo) / s <= 6) ?? 10;
   const ticks = Array.from({ length: Math.floor(hi / step) - Math.ceil(lo / step) + 1 }, (_, i) => (Math.ceil(lo / step) + i) * step);
-  const lapTicks = Array.from(new Set([1, ...Array.from({ length: 6 }, (_, i) => Math.round(1 + ((lastLap - 1) * (i + 1)) / 6))]));
+  const nTicks = W < 600 ? 3 : 6;
+  const lapTicks = Array.from(new Set([1, ...Array.from({ length: nTicks }, (_, i) => Math.round(1 + ((lastLap - 1) * (i + 1)) / nTicks))]));
   const gap = race ? paceGap(series[0], series[1], hi) : null;
   const who = [a, b];
   const onMove = (e: PointerEvent<SVGSVGElement>) => {
@@ -176,7 +187,7 @@ function LapChart({ data, a, b, race }: { data: { laps: Lap[]; stints: Stint[]; 
           <b className="mono">{Math.abs(gap.gap).toFixed(3)} s</b> a lap quicker on average ({fmtLap(gap.avgA)} vs {fmtLap(gap.avgB)}).
         </p>
       )}
-      <div className="lapcmp-chart">
+      <div className="lapcmp-chart" ref={box}>
         <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Lap times of ${a.name_acronym} and ${b.name_acronym}`} onPointerMove={onMove} onPointerLeave={() => setHover(null)} style={{ width: '100%', height: 'auto', display: 'block', touchAction: 'pan-y' }}>
           {ticks.map((t) => (
             <g key={t}>
