@@ -48,6 +48,18 @@ export function mergeF1(target: any, delta: any): any {
   return out;
 }
 
+const LAPS_KEY = 'pitwall:feed-laps';
+
+/** Laps recorded earlier on this device for a session (only the latest session is kept). */
+function loadLaps(sk: number): RecordedLap[] {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LAPS_KEY) ?? 'null') as { sk: number; laps: RecordedLap[] } | null;
+    return saved && saved.sk === sk && Array.isArray(saved.laps) ? saved.laps : [];
+  } catch {
+    return [];
+  }
+}
+
 /** A lap completed while we were connected, recorded from the timing data at the moment it finished. */
 export interface RecordedLap {
   driver: number;
@@ -169,14 +181,25 @@ class F1LiveFeed {
             const state: F1State = {};
             for (const k of Object.keys(result)) state[k] = result[k];
             this.track(state);
-            this.set({ status: 'live', state, laps: [], updatedAt: Date.now() });
+            // The snapshot has no lap history: keep the laps recorded so far for this session, from before a dropped
+            // connection or, after a reload, from this device.
+            const sk = Number(state.SessionInfo?.Key) || 0;
+            const kept = Number(this.snap.state.SessionInfo?.Key) === sk && this.snap.laps.length ? this.snap.laps : loadLaps(sk);
+            this.set({ status: 'live', state, laps: kept, updatedAt: Date.now() });
           });
         } else if (m.type === 1 && m.target === 'feed' && Array.isArray(m.arguments)) {
           const [topic, data] = m.arguments as [string, any];
           this.later(() => {
             const state = { ...this.snap.state, [topic]: mergeF1(this.snap.state[topic], data) };
             const laps = topic === 'TimingData' ? this.track(state) : null;
-            this.set({ state, updatedAt: Date.now(), ...(laps ? { laps: [...this.snap.laps, ...laps] } : {}) });
+            if (laps?.length) {
+              const have = new Set(this.snap.laps.map((l) => `${l.driver}-${l.lap}`));
+              const fresh = laps.filter((l) => !have.has(`${l.driver}-${l.lap}`));
+              this.set({ state, updatedAt: Date.now(), laps: [...this.snap.laps, ...fresh] });
+              this.saveLaps();
+            } else {
+              this.set({ state, updatedAt: Date.now() });
+            }
           });
         } else if (m.type === 7) {
           ws.close();
@@ -190,6 +213,26 @@ class F1LiveFeed {
       if (this.users > 0) this.fail();
       else this.set({ status: 'idle' });
     };
+  }
+
+  private saveTimer: ReturnType<typeof setTimeout> | undefined;
+
+  /**
+   * Keeps this session's recorded laps on the device, for reloads. At most every 5 seconds: some car finishes a lap
+   * every few seconds, so waiting for a quiet moment could mean never saving.
+   */
+  private saveLaps() {
+    if (this.saveTimer) return;
+    this.saveTimer = setTimeout(() => {
+      this.saveTimer = undefined;
+      const sk = Number(this.snap.state.SessionInfo?.Key) || 0;
+      if (!sk) return;
+      try {
+        localStorage.setItem(LAPS_KEY, JSON.stringify({ sk, laps: this.snap.laps }));
+      } catch {
+        // Storage full or blocked: history then lasts until the page is closed.
+      }
+    }, 5_000);
   }
 
   /** Applies a message now, or once it is as old as the TV delay set in Settings. */
