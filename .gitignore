@@ -25,3 +25,4 @@ dist-ssr
 *.zip
 test-results/
 playwright-report/
+!tests/fixtures/*.har.zip
