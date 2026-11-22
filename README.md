@@ -4,6 +4,8 @@ An installable web app (PWA) for Formula 1: live timing with a moving track map,
 
 Live site: https://sarthak125.github.io/Pit-wall/
 
+Code: https://github.com/Sarthak125/Pit-wall
+
 Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 ## Recently added
@@ -294,7 +296,7 @@ The build is a static site in `dist/`:
 npm run build
 ```
 
-- **GitHub Pages:** in the repository go to Settings, Pages, and set Source to **GitHub Actions**. The workflow in `.github/workflows/deploy.yml` builds and publishes on every push to `main`. The site is served at `https://<user>.github.io/<repo>/`.
+- **GitHub Pages:** in the repository go to Settings, Pages, and set Source to **GitHub Actions**. The workflow in `.github/workflows/deploy.yml` builds and publishes on every push to `main`. The site is served at `https://<user>.github.io/<repo>/` (for this repository, https://sarthak125.github.io/Pit-wall/). The workflow builds with the repository's name as the path, so renaming the repository moves the site to the new address on the next deploy and the old address stops working.
 - **Netlify, Vercel or Cloudflare Pages:** build command `npm run build`, output folder `dist`.
 
 ## Project layout
