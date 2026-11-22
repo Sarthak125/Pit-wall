@@ -595,3 +595,6 @@ html { zoom: 1.1; }
 .rain-bar i { width: 100%; background: #3b82f6; border-radius: 2px 2px 0 0; display: block; }
 .rain-bar span { font-family: var(--mono); font-size: 9px; color: var(--faint); }
 .rain-hours { display: flex; gap: 16px; font-size: 12px; }
+.lr-gap { display: flex; align-items: center; gap: 8px; }
+.lr-gap i { height: 6px; border-radius: 3px; display: block; max-width: 110px; opacity: 0.8; }
+.tbl.longruns td { padding-top: 7px; padding-bottom: 7px; }

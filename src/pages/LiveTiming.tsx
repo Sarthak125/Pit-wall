@@ -39,6 +39,7 @@ import { ingestFavourite } from '../lib/alerts';
 import { useOpenF1Blocked } from '../lib/openf1Window';
 import { OpenF1BlockedNotice } from '../components/OpenF1Blocked';
 import { DelayPicker } from '../components/DelayPicker';
+import { LongRunPace } from '../components/LongRunPace';
 import { RainWatch } from '../components/RainWatch';
 import { TyreStrategy } from '../components/TyreStrategy';
 import { SpoilerCover } from '../components/SpoilerCover';
@@ -295,6 +296,15 @@ export function LiveTiming() {
 
       {live && isRace && !upcoming && round && (
         <LiveStandings season={String(session.year)} round={Number(round.round)} sprint={isSprint} rows={t.rows} favCode={fav?.code} favTeam={favTeam?.id} />
+      )}
+
+      {/practice/i.test(session.session_name) && !upcoming && (
+        <section className="card tight" aria-labelledby="longruns">
+          <div className="card-head">
+            <h2 className="h2" id="longruns">Long-run pace</h2>
+          </div>
+          <LongRunPace laps={t.laps} stints={t.stints} drivers={t.driversByNumber} favNum={favNum} live={live} />
+        </section>
       )}
 
       {isRace && !upcoming && (
