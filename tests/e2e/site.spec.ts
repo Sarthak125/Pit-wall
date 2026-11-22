@@ -167,3 +167,16 @@ test('the Android app download serves the APK', async ({ page, request }) => {
   expect(body.length).toBeGreaterThan(500_000);
   expect(errors).toEqual([]);
 });
+
+test('a decided championship shows the champions on the Dashboard and in the standings', async ({ page }) => {
+  const errors = await setUp(page);
+  await page.goto('#/');
+  const banner = page.locator('.champions');
+  await expect(banner).toContainText('World Champion', { timeout: 30_000 });
+  await expect(banner).toContainText('Antonelli');
+  await expect(banner).toContainText('decided at the Mexico City Grand Prix (round 19)');
+  await expect(banner).toContainText("Constructors' Champions");
+  await page.goto('#/standings');
+  await expect(page.locator('.champion-tag')).toHaveCount(2, { timeout: 30_000 });
+  expect(errors).toEqual([]);
+});

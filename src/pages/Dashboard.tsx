@@ -1,3 +1,4 @@
+import { ChampionsBanner } from '../components/Champions';
 import { ProvisionalNote } from '../components/ProvisionalNote';
 import { RainWatch } from '../components/RainWatch';
 import { AddToCalendar } from '../components/AddToCalendar';
@@ -157,6 +158,14 @@ export function Dashboard() {
   return (
     <>
       <LiveNowBanner />
+      {schedule.data && results.data && !spoilers.standingsHidden && (
+        <ChampionsBanner
+          schedule={schedule.data}
+          races={results.data.races}
+          sprints={results.data.sprints}
+          driverCode={(id) => drivers.data?.standings.find((s) => s.Driver.driverId === id)?.Driver.code}
+        />
+      )}
       <div className="row">
         <section className="card w2l" aria-labelledby="next-race">
           {schedule.error ? <ErrorBox error={schedule.error} what="the race calendar" /> : schedule.isLoading ? <Loading rows={6} /> : nextRace ? (

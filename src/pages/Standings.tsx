@@ -1,10 +1,12 @@
+import { ChampionTag } from '../components/Champions';
+import { titleDecisions } from '../lib/titles';
 import { ProvisionalNote } from '../components/ProvisionalNote';
 import { SpoilerCover } from '../components/SpoilerCover';
 import { useSpoilers } from '../hooks/useSpoilers';
 import type React from 'react';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { Footer } from '../components/Shell';
-import { useConstructorStandings, useDriverStandings, useResults } from '../hooks/useSeason';
+import { useConstructorStandings, useDriverStandings, useResults, useSchedule } from '../hooks/useSeason';
 import { useSettings } from '../lib/settings';
 import { teamColour } from '../lib/teams';
 import { StarIcon } from '../components/Icons';
@@ -23,6 +25,8 @@ export function Standings() {
   const fav = useFavourite();
   const favTeam = useFavouriteTeam();
   const results = useResults(season);
+  const schedule = useSchedule(season);
+  const titles = schedule.data && results.data ? titleDecisions(schedule.data, results.data.races, results.data.sprints) : null;
   const doneRound = (results.data?.races ?? []).reduce((m, r) => (r.Results?.length ? Math.max(m, Number(r.round)) : m), 0);
   const leader = Number(drivers.data?.standings[0]?.points ?? 0);
   const teamLeader = Number(teams.data?.standings[0]?.points ?? 0);
@@ -64,6 +68,7 @@ export function Standings() {
                               <span style={{ fontWeight: 600 }}>{d.Driver.givenName} {d.Driver.familyName}</span>
                             )}
                             {fav?.code === d.Driver.code && <span className="fav-star" aria-label="Favourite"><StarIcon filled size={14} /></span>}
+                            {titles?.driver?.id === d.Driver.driverId && <ChampionTag decision={titles.driver} />}
                             <span className="faint mono hide-sm" style={{ fontSize: 12 }}>{d.Driver.permanentNumber}</span>
                           </div>
                         </td>
@@ -107,6 +112,7 @@ export function Standings() {
                       <div className="who">
                         <span className="team-bar" style={{ background: teamColour(t.Constructor.constructorId) }} />
                         <a className="name-link" href={teamHref(t.Constructor.constructorId)}>{t.Constructor.name}</a>
+                        {titles?.team?.id === t.Constructor.constructorId && <ChampionTag decision={titles.team} />}
                       </div>
                     </td>
                     <td className="r mono">{t.wins}</td>
