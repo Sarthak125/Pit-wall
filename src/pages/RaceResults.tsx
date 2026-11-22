@@ -1,10 +1,12 @@
+import { ProvisionalNote } from '../components/ProvisionalNote';
+import { provisionalSoon, type ProvisionalTag } from '../hooks/useSeason';
 import { AddToCalendar } from '../components/AddToCalendar';
 import { RaceTyreStrategy } from '../components/TyreStrategy';
 import { SpoilerCover } from '../components/SpoilerCover';
 import { useSpoilers } from '../hooks/useSpoilers';
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getRound, SESSION_FIELDS, type Race, type Result } from '../api/jolpica';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getRound, SESSION_FIELDS, type Race, type Result, type RoundData } from '../api/jolpica';
 import { CircuitOverview } from '../components/CircuitOverview';
 import { PositionChart } from '../components/PositionChart';
 import { WeekendWeather } from '../components/WeekendWeather';
@@ -30,7 +32,23 @@ export function RaceResults() {
   const [fixedSeason, round] = param.includes('/') ? param.split('/') : ['', param];
   const season = fixedSeason || picked;
   const schedule = useSchedule(season);
-  const data = useQuery({ queryKey: ['round', season, round], enabled: !!round, queryFn: () => getRound(season, round), staleTime: 10 * 60_000 });
+  const qc = useQueryClient();
+  const data = useQuery({
+    queryKey: ['round', season, round],
+    enabled: !!round,
+    staleTime: 10 * 60_000,
+    queryFn: async () => {
+      const [d, p] = await Promise.all([getRound(season, round), provisionalSoon(season, () => qc.invalidateQueries({ queryKey: ['round', season, round] }))]);
+      // The latest weekend, before Jolpica has it: the official classification from OpenF1, marked provisional.
+      if (!p || String(p.round) !== round) return d as RoundData & ProvisionalTag;
+      return {
+        ...d,
+        race: d.race?.Results?.length ? d.race : (p.race ?? d.race),
+        sprint: d.sprint?.SprintResults?.length ? d.sprint : (p.sprint ?? d.sprint),
+        provisional: { raceName: p.raceName, sessions: p.sessions },
+      } as RoundData & ProvisionalTag;
+    },
+  });
   const now = useNow(60_000);
   const spoilers = useSpoilers();
   // Spoiler-free mode: this weekend's results stay covered (current season only).
@@ -116,6 +134,7 @@ export function RaceResults() {
         <section className="card" aria-labelledby="res">
           <div className="card-head">
             <h2 className="h2" id="res">Results</h2>
+            <ProvisionalNote data={data.data} />
             <div className="tabs" role="tablist" aria-label="Session" style={{ marginBottom: 0 }}>
               {tabs.filter(([k, , n]) => k !== 'sprint' || n > 0).map(([k, label]) => (
                 <button key={k} role="tab" className="tab" aria-selected={shownTab === k} onClick={() => setTab(k)}>{label}</button>

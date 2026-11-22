@@ -117,6 +117,26 @@ export async function getConstructorStandings(season: string) {
   return { round: list ? Number(list.round) : 0, standings: list?.ConstructorStandings ?? [] };
 }
 
+/** Driver standings after a given round (round 0: before the season, empty). */
+export async function getDriverStandingsAt(season: string, round: number) {
+  if (round < 1) return { round: 0, standings: [] as DriverStanding[] };
+  const data = await fetchJson<
+    MR<{ StandingsTable: { StandingsLists: { round: string; DriverStandings: DriverStanding[] }[] } }>
+  >(`${BASE}/${season}/${round}/driverstandings/?limit=100`, { limiter, cacheTtlMs: 60 * MIN });
+  const list = data.MRData.StandingsTable.StandingsLists[0];
+  return { round, standings: list?.DriverStandings ?? [] };
+}
+
+/** Constructor standings after a given round. */
+export async function getConstructorStandingsAt(season: string, round: number) {
+  if (round < 1) return { round: 0, standings: [] as ConstructorStanding[] };
+  const data = await fetchJson<
+    MR<{ StandingsTable: { StandingsLists: { round: string; ConstructorStandings: ConstructorStanding[] }[] } }>
+  >(`${BASE}/${season}/${round}/constructorstandings/?limit=100`, { limiter, cacheTtlMs: 60 * MIN });
+  const list = data.MRData.StandingsTable.StandingsLists[0];
+  return { round, standings: list?.ConstructorStandings ?? [] };
+}
+
 /**
  * All race (or sprint) results of a season. The API pages results per
  * driver row (max 100), so this follows the pages and merges races.

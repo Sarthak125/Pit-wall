@@ -1,3 +1,4 @@
+import { ProvisionalNote } from '../components/ProvisionalNote';
 import { SpoilerCover } from '../components/SpoilerCover';
 import { useSpoilers } from '../hooks/useSpoilers';
 import type React from 'react';
@@ -32,6 +33,7 @@ export function Standings() {
         <section className="card w3" aria-labelledby="d">
           <div className="card-head">
             <h1 className="h2" id="d">Drivers' Championship</h1>
+            {!hidden && <ProvisionalNote data={drivers.data} />}
             {results.data && <span className="muted">After round {doneRound}</span>}
           </div>
           {hidden ? <SpoilerCover what="The standings" /> : drivers.error ? <ErrorBox error={drivers.error} what="driver standings" /> : drivers.isLoading ? <Loading rows={12} /> : !drivers.data?.standings.length ? <Empty>No standings yet.</Empty> : (
@@ -81,6 +83,7 @@ export function Standings() {
         <section className="card w2" aria-labelledby="c">
           <div className="card-head">
             <h2 className="h2" id="c">Constructors' Championship</h2>
+            {!hidden && <ProvisionalNote data={teams.data} />}
             <span className="muted" style={{ fontSize: 12 }}>Tap the flag to pick your team</span>
           </div>
           {hidden ? <SpoilerCover what="The standings" compact /> : teams.error ? <ErrorBox error={teams.error} what="constructor standings" /> : teams.isLoading ? <Loading rows={10} /> : !teams.data?.standings.length ? <Empty>No standings yet.</Empty> : (

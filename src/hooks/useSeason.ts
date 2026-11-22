@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getConstructorStandings,
   getDriverStandings,
@@ -8,6 +8,7 @@ import {
   type RaceWithResults,
 } from '../api/jolpica';
 import { openf1, type Session } from '../api/openf1';
+import { getProvisional, type Provisional } from '../api/provisional';
 
 const MIN = 60_000;
 
@@ -15,20 +16,73 @@ export function useSchedule(season: string) {
   return useQuery({ queryKey: ['schedule', season], queryFn: () => getSchedule(season), staleTime: 30 * MIN });
 }
 
+/** Which race weekend the data includes provisionally (from OpenF1's classification), if any. */
+export interface ProvisionalTag {
+  provisional?: { raceName: string; sessions: Provisional['sessions'] };
+}
+const tag = (p: Provisional): ProvisionalTag => ({ provisional: { raceName: p.raceName, sessions: p.sessions } });
+
+/**
+ * The provisional lookup, but never holding up Jolpica's data for more than a few seconds (OpenF1 can be slow, down,
+ * paused or busy with the page's other requests). If it finishes later, `late` refreshes the query that gave up on it.
+ */
+export function provisionalSoon(season: string, late: () => void): Promise<Provisional | null> {
+  const lookup = getProvisional(season);
+  let gaveUp = false;
+  lookup.then((p) => {
+    if (p && gaveUp) late();
+  });
+  return Promise.race([
+    lookup,
+    new Promise<null>((done) =>
+      setTimeout(() => {
+        gaveUp = true;
+        done(null);
+      }, 4000),
+    ),
+  ]);
+}
+
 export function useDriverStandings(season: string) {
-  return useQuery({ queryKey: ['dstand', season], queryFn: () => getDriverStandings(season), staleTime: 10 * MIN, refetchInterval: 10 * MIN });
+  const qc = useQueryClient();
+  return useQuery({
+    queryKey: ['dstand', season],
+    queryFn: async () => {
+      const late = () => qc.invalidateQueries({ queryKey: ['dstand', season] });
+      const [jolpica, p] = await Promise.all([getDriverStandings(season), provisionalSoon(season, late)]);
+      return p ? { ...p.drivers, ...tag(p) } : (jolpica as typeof jolpica & ProvisionalTag);
+    },
+    staleTime: 10 * MIN,
+    refetchInterval: 10 * MIN,
+  });
 }
 
 export function useConstructorStandings(season: string) {
-  return useQuery({ queryKey: ['cstand', season], queryFn: () => getConstructorStandings(season), staleTime: 10 * MIN, refetchInterval: 10 * MIN });
+  const qc = useQueryClient();
+  return useQuery({
+    queryKey: ['cstand', season],
+    queryFn: async () => {
+      const late = () => qc.invalidateQueries({ queryKey: ['cstand', season] });
+      const [jolpica, p] = await Promise.all([getConstructorStandings(season), provisionalSoon(season, late)]);
+      return p ? { ...p.constructors, ...tag(p) } : (jolpica as typeof jolpica & ProvisionalTag);
+    },
+    staleTime: 10 * MIN,
+    refetchInterval: 10 * MIN,
+  });
 }
 
 export function useResults(season: string) {
+  const qc = useQueryClient();
   return useQuery({
     queryKey: ['results', season],
     queryFn: async () => {
-      const [races, sprints] = await Promise.all([getRaceResults(season), getSprintResults(season)]);
-      return { races, sprints };
+      const late = () => qc.invalidateQueries({ queryKey: ['results', season] });
+      const [races, sprints, p] = await Promise.all([getRaceResults(season), getSprintResults(season), provisionalSoon(season, late)]);
+      if (!p) return { races, sprints } as { races: RaceWithResults[]; sprints: RaceWithResults[] } & ProvisionalTag;
+      // The provisional sessions replace any empty entry Jolpica has for the round.
+      const merge = (list: RaceWithResults[], add: RaceWithResults | null) =>
+        add ? [...list.filter((r) => r.round !== add.round), add].sort((a, b) => Number(a.round) - Number(b.round)) : list;
+      return { races: merge(races, p.race), sprints: merge(sprints, p.sprint), ...tag(p) };
     },
     staleTime: 15 * MIN,
   });

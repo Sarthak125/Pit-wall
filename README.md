@@ -10,6 +10,7 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 ## Recently added
 
+- **Provisional results right after a race:** until Jolpica publishes a race (which can take hours), standings, the title chart, the last race card, the Calendar winner and the race page use the official classification from OpenF1, marked **Provisional**. Jolpica's confirmed results replace it automatically.
 - **Android app:** a free 1 MB app (Android 7 or newer) that opens Pit Wall full screen, downloadable from the How to use page. See [Use it on your Android tablet or phone](#use-it-on-your-android-tablet-or-phone).
 - **How to use page:** a guide inside the app (the **?** button next to Settings, or `#/help`): getting started, race day and the feed status pill, reading Live Timing (colours, tags, qualifying, long runs, charts), watching later, planning ahead and common questions.
 - **Qualifying knockout view:** Q1, Q2 and Q3 columns in the timing tower, the drop zone shaded with a line at the cut, the current part and cut-off time in the session bar, and OUT Q1 / OUT Q2 tags. See [Qualifying](#live-timing).
@@ -317,6 +318,7 @@ Formula 1 has no public official API. This app uses free community APIs:
 How some values are worked out:
 
 - **FIA message types** come from the stewards' standard wording in each message. A message with unusual wording lands in "Other".
+- **Provisional results:** when the latest race or sprint should be over but Jolpica has no results for it yet, Pit Wall reads OpenF1's official classification (positions, status and points) and adds those points to Jolpica's standings after the previous round, adding a win for the race winner. Ties are ordered by wins and then the previous order, a simplified countback. Post-race penalties published later are not reflected until Jolpica's results arrive. If OpenF1 does not answer within 4 seconds, Jolpica's data is shown as it is and the provisional data appears at the next refresh.
 - **Finished rounds** are counted from the race results, because Jolpica's standings round can run ahead of the results.
 - **Title maths** assumes 25 points for a Grand Prix win and 8 for a sprint win (a one-two of 43 and 15 for a team), with no fastest-lap point. Ties decided by countback are not modelled.
 - **Overtakes** are as recorded by OpenF1 and only shown for races and sprints.

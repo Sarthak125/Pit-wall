@@ -1,3 +1,4 @@
+import { ProvisionalNote } from '../components/ProvisionalNote';
 import { RainWatch } from '../components/RainWatch';
 import { AddToCalendar } from '../components/AddToCalendar';
 import { SpoilerCover } from '../components/SpoilerCover';
@@ -116,7 +117,7 @@ export function Dashboard() {
       ) : results.isLoading ? <Loading rows={4} /> : lastRace ? (
         <>
           <div>
-            <p className="kicker">Last race · Round {lastRace.round}</p>
+            <p className="kicker">Last race · Round {lastRace.round} {results.data?.provisional?.raceName === lastRace.raceName && <ProvisionalNote data={results.data} />}</p>
             <h2 className="h2" id="last-race" style={{ marginTop: 4 }}>
               <a className="name-link" style={{ fontWeight: 'inherit' }} href={raceHref(lastRace.round)}>{lastRace.raceName}</a>
             </h2>
@@ -186,6 +187,7 @@ export function Dashboard() {
         <section className="card w3" aria-labelledby="wdc">
           <div className="card-head">
             <h2 className="h2" id="wdc">Drivers' Championship</h2>
+            {!spoilers.standingsHidden && <ProvisionalNote data={drivers.data} />}
             <a className="link" href={href('standings')}>View all →</a>
           </div>
           {spoilers.standingsHidden ? <SpoilerCover what="The standings" compact /> : drivers.error ? <ErrorBox error={drivers.error} what="driver standings" /> : drivers.isLoading ? <Loading rows={10} /> : !drivers.data?.standings.length ? (
@@ -240,9 +242,10 @@ export function Dashboard() {
         </section>
 
         <section className="card w2" aria-labelledby="wcc">
-          <h2 className="h2" id="wcc" style={{ marginBottom: 16 }}>
-            Constructors' Championship
-          </h2>
+          <div className="card-head" style={{ marginBottom: 16 }}>
+            <h2 className="h2" id="wcc">Constructors' Championship</h2>
+            {!spoilers.standingsHidden && <ProvisionalNote data={teams.data} />}
+          </div>
           {spoilers.standingsHidden ? <SpoilerCover what="The standings" compact /> : teams.error ? <ErrorBox error={teams.error} what="constructor standings" /> : teams.isLoading ? <Loading rows={8} /> : !teams.data?.standings.length ? (
             <Empty>No standings yet for this season.</Empty>
           ) : (
@@ -278,6 +281,7 @@ export function Dashboard() {
         <section className="card w3" aria-labelledby="fight">
           <div className="card-head">
             <h2 className="h2" id="fight">Title fight: points after each round</h2>
+            {!spoilers.standingsHidden && <ProvisionalNote data={results.data} />}
             <div className="legend" hidden={spoilers.standingsHidden}>
               {series.map((s) => (
                 <span key={s.driverId}>

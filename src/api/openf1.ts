@@ -269,6 +269,8 @@ export interface SessionResult {
   dnf: boolean;
   dns: boolean;
   dsq: boolean;
+  /** Championship points scored in the session (races and sprints). */
+  points?: number;
 }
 
 const meetingSessionsMemo = new Map<number, { at: number; p: Promise<Session[]> }>();
