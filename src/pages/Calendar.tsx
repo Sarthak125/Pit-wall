@@ -33,7 +33,7 @@ export function Calendar() {
             })()}
           </span>
         </div>
-        {schedule.error ? <ErrorBox error={schedule.error} what="the calendar" /> : schedule.isLoading ? <Loading rows={12} /> : !schedule.data?.length ? <Empty>No races published for this season.</Empty> : (
+        {schedule.error ? <ErrorBox error={schedule.error} what="the calendar" /> : schedule.isLoading ? <Loading rows={12} /> : !schedule.data?.length ? <Empty>{season === 'current' ? 'The new season\'s calendar has not been published yet. Pick an earlier season above to see past calendars.' : 'No races published for this season.'}</Empty> : (
           <div className="scroll-x">
             <table className="tbl cal-tbl">
               <thead>

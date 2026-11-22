@@ -103,18 +103,18 @@ export async function getSchedule(season: string): Promise<Race[]> {
 
 export async function getDriverStandings(season: string) {
   const data = await fetchJson<
-    MR<{ StandingsTable: { StandingsLists: { round: string; DriverStandings: DriverStanding[] }[] } }>
+    MR<{ StandingsTable: { season?: string; StandingsLists: { round: string; season?: string; DriverStandings: DriverStanding[] }[] } }>
   >(`${BASE}/${season}/driverstandings/?limit=100`, { limiter, cacheTtlMs: 10 * MIN });
   const list = data.MRData.StandingsTable.StandingsLists[0];
-  return { round: list ? Number(list.round) : 0, standings: list?.DriverStandings ?? [] };
+  return { round: list ? Number(list.round) : 0, standings: list?.DriverStandings ?? [], season: list?.season ?? data.MRData.StandingsTable.season ?? '' };
 }
 
 export async function getConstructorStandings(season: string) {
   const data = await fetchJson<
-    MR<{ StandingsTable: { StandingsLists: { round: string; ConstructorStandings: ConstructorStanding[] }[] } }>
+    MR<{ StandingsTable: { season?: string; StandingsLists: { round: string; season?: string; ConstructorStandings: ConstructorStanding[] }[] } }>
   >(`${BASE}/${season}/constructorstandings/?limit=100`, { limiter, cacheTtlMs: 10 * MIN });
   const list = data.MRData.StandingsTable.StandingsLists[0];
-  return { round: list ? Number(list.round) : 0, standings: list?.ConstructorStandings ?? [] };
+  return { round: list ? Number(list.round) : 0, standings: list?.ConstructorStandings ?? [], season: list?.season ?? data.MRData.StandingsTable.season ?? '' };
 }
 
 /** Driver standings after a given round (round 0: before the season, empty). */

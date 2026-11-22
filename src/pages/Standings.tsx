@@ -1,3 +1,4 @@
+import { OffseasonNote } from '../components/OffseasonNote';
 import { ChampionTag } from '../components/Champions';
 import { titleDecisions } from '../lib/titles';
 import { ProvisionalNote } from '../components/ProvisionalNote';
@@ -14,7 +15,7 @@ import { useFavourite, useFavouriteTeam } from '../hooks/useFavourite';
 import { FlagIcon } from '../components/Icons';
 import { rowProps } from '../lib/rowStyle';
 import { setFavoriteTeam } from '../lib/settings';
-import { driverHref, teamHref } from '../lib/router';
+import { driverHref, href, teamHref } from '../lib/router';
 
 export function Standings() {
   const { season } = useSettings();
@@ -25,7 +26,8 @@ export function Standings() {
   const fav = useFavourite();
   const favTeam = useFavouriteTeam();
   const results = useResults(season);
-  const schedule = useSchedule(season);
+  // The calendar of the season the results are from (last season's before a new season's first race).
+  const schedule = useSchedule(results.data?.offseason?.shown ?? season);
   const titles = schedule.data && results.data ? titleDecisions(schedule.data, results.data.races, results.data.sprints) : null;
   const doneRound = (results.data?.races ?? []).reduce((m, r) => (r.Results?.length ? Math.max(m, Number(r.round)) : m), 0);
   const leader = Number(drivers.data?.standings[0]?.points ?? 0);
@@ -38,7 +40,9 @@ export function Standings() {
           <div className="card-head">
             <h1 className="h2" id="d">Drivers' Championship</h1>
             {!hidden && <ProvisionalNote data={drivers.data} />}
+            <OffseasonNote data={drivers.data} />
             {results.data && <span className="muted">After round {doneRound}</span>}
+            <a className="link" href={href('review')}>Season review →</a>
           </div>
           {hidden ? <SpoilerCover what="The standings" /> : drivers.error ? <ErrorBox error={drivers.error} what="driver standings" /> : drivers.isLoading ? <Loading rows={12} /> : !drivers.data?.standings.length ? <Empty>No standings yet.</Empty> : (
             <div className="scroll-x">
@@ -89,6 +93,7 @@ export function Standings() {
           <div className="card-head">
             <h2 className="h2" id="c">Constructors' Championship</h2>
             {!hidden && <ProvisionalNote data={teams.data} />}
+            <OffseasonNote data={teams.data} />
             <span className="muted" style={{ fontSize: 12 }}>Tap the flag to pick your team</span>
           </div>
           {hidden ? <SpoilerCover what="The standings" compact /> : teams.error ? <ErrorBox error={teams.error} what="constructor standings" /> : teams.isLoading ? <Loading rows={10} /> : !teams.data?.standings.length ? <Empty>No standings yet.</Empty> : (

@@ -46,7 +46,8 @@ export function Shell({ route, live, children }: { route: Route; live: boolean; 
   }, [calendar.data]);
   const qc = useQueryClient();
   const fetching = useIsFetching();
-  const year = new Date().getFullYear();
+  // The year "current" stands for comes from the calendar itself: around New Year it can differ from today's year.
+  const year = Number(calendar.data?.[0]?.season) || new Date().getFullYear();
   const seasons = ['current', ...Array.from({ length: 4 }, (_, i) => String(year - 1 - i))];
 
   return (

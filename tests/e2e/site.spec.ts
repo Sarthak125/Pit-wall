@@ -38,6 +38,7 @@ for (const [route, text] of [
   ['#/team/ferrari', 'Ferrari'],
   ['#/settings', 'Settings'],
   ['#/help', 'How to use Pit Wall'],
+  ['#/review', 'season review'],
 ] as const) {
   test(`page ${route} loads without errors or sideways scrolling`, async ({ page }) => {
     const errors = await setUp(page);
@@ -178,5 +179,15 @@ test('a decided championship shows the champions on the Dashboard and in the sta
   await expect(banner).toContainText("Constructors' Champions");
   await page.goto('#/standings');
   await expect(page.locator('.champion-tag')).toHaveCount(2, { timeout: 30_000 });
+  expect(errors).toEqual([]);
+});
+
+test('the season review shows highlights, drivers, team-mate battles and teams', async ({ page }) => {
+  const errors = await setUp(page);
+  await page.goto('#/review');
+  await expect(page.locator('.review-tile').first()).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('.review-tiles')).toContainText('Different winners');
+  await expect(page.locator('.review-tbl').first().locator('tbody tr')).toHaveCount(25, { timeout: 30_000 });
+  await expect(page.locator('.review-battle')).toHaveCount(11);
   expect(errors).toEqual([]);
 });

@@ -224,6 +224,10 @@ export function Help() {
           </li>
           <li><b>Race pages</b> (tap any race name): circuit map and history, weekend weather forecast, results, and charts for finished races.</li>
           <li><b>Rain watch</b>: during a live session, whether rain is expected at the circuit in the next 2 hours.</li>
+          <li>
+            <b>Season review</b>: <a className="help-link" href={href('review')}>the season in numbers</a> (also linked from Standings): champions,
+            highlights, every driver's and team's record, and the team-mate battles. It follows the season picker.
+          </li>
           <li><b>Other seasons</b>: the Season picker at the top switches standings, results and the calendar to earlier years.</li>
         </ul>
       </Section>

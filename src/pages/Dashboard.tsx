@@ -1,3 +1,4 @@
+import { OffseasonNote } from '../components/OffseasonNote';
 import { ChampionsBanner } from '../components/Champions';
 import { ProvisionalNote } from '../components/ProvisionalNote';
 import { RainWatch } from '../components/RainWatch';
@@ -75,7 +76,14 @@ export function Dashboard() {
     () => races.findIndex((r) => (raceStart(r)?.getTime() ?? 0) + 3 * 3_600_000 > nowMinute * 60_000),
     [races, nowMinute],
   );
-  const nextRace = nextIdx >= 0 ? races[nextIdx] : undefined;
+  // After the season's last race, the next season's opener once its calendar is published.
+  const seasonYear = races[0]?.season ?? '';
+  const following = useSchedule(String(Number(seasonYear) + 1), season === 'current' && !!seasonYear && nextIdx < 0);
+  const nextRace = nextIdx >= 0 ? races[nextIdx] : following.data?.[0];
+  const nextTotal = nextIdx >= 0 ? races.length : (following.data?.length ?? 0);
+  // Before a new season's first race, standings and results are last season's (see useSeason).
+  const shownSeason = results.data?.offseason?.shown;
+  const champSchedule = useSchedule(shownSeason ?? season);
   const doneRounds = new Set((results.data?.races ?? []).filter((r) => r.Results?.length).map((r) => r.round));
   const lastRace = [...(results.data?.races ?? [])].reverse().find((r) => r.Results?.length);
 
@@ -118,9 +126,9 @@ export function Dashboard() {
       ) : results.isLoading ? <Loading rows={4} /> : lastRace ? (
         <>
           <div>
-            <p className="kicker">Last race · Round {lastRace.round} {results.data?.provisional?.raceName === lastRace.raceName && <ProvisionalNote data={results.data} />}</p>
+            <p className="kicker">Last race · {shownSeason ? `${shownSeason} · ` : ''}Round {lastRace.round} {results.data?.provisional?.raceName === lastRace.raceName && <ProvisionalNote data={results.data} />}</p>
             <h2 className="h2" id="last-race" style={{ marginTop: 4 }}>
-              <a className="name-link" style={{ fontWeight: 'inherit' }} href={raceHref(lastRace.round)}>{lastRace.raceName}</a>
+              <a className="name-link" style={{ fontWeight: 'inherit' }} href={raceHref(lastRace.round, shownSeason)}>{lastRace.raceName}</a>
             </h2>
           </div>
           {(lastRace.Results ?? []).slice(0, 3).map((r) => (
@@ -158,9 +166,9 @@ export function Dashboard() {
   return (
     <>
       <LiveNowBanner />
-      {schedule.data && results.data && !spoilers.standingsHidden && (
+      {champSchedule.data && results.data && !spoilers.standingsHidden && (
         <ChampionsBanner
-          schedule={schedule.data}
+          schedule={champSchedule.data}
           races={results.data.races}
           sprints={results.data.sprints}
           driverCode={(id) => drivers.data?.standings.find((s) => s.Driver.driverId === id)?.Driver.code}
@@ -169,9 +177,9 @@ export function Dashboard() {
       <div className="row">
         <section className="card w2l" aria-labelledby="next-race">
           {schedule.error ? <ErrorBox error={schedule.error} what="the race calendar" /> : schedule.isLoading ? <Loading rows={6} /> : nextRace ? (
-            <NextRace race={nextRace} total={races.length} />
+            <NextRace race={nextRace} total={nextTotal} />
           ) : (
-            <SeasonComplete champion={drivers.data?.standings[0]} />
+            <SeasonComplete year={seasonYear} upcoming={drivers.data?.offseason?.upcoming ?? results.data?.offseason?.upcoming} />
           )}
         </section>
         <section className="card w1" aria-labelledby="conditions">
@@ -196,6 +204,7 @@ export function Dashboard() {
         <section className="card w3" aria-labelledby="wdc">
           <div className="card-head">
             <h2 className="h2" id="wdc">Drivers' Championship</h2>
+            <OffseasonNote data={drivers.data} />
             {!spoilers.standingsHidden && <ProvisionalNote data={drivers.data} />}
             <a className="link" href={href('standings')}>View all →</a>
           </div>
@@ -253,6 +262,7 @@ export function Dashboard() {
         <section className="card w2" aria-labelledby="wcc">
           <div className="card-head" style={{ marginBottom: 16 }}>
             <h2 className="h2" id="wcc">Constructors' Championship</h2>
+            <OffseasonNote data={teams.data} />
             {!spoilers.standingsHidden && <ProvisionalNote data={teams.data} />}
           </div>
           {spoilers.standingsHidden ? <SpoilerCover what="The standings" compact /> : teams.error ? <ErrorBox error={teams.error} what="constructor standings" /> : teams.isLoading ? <Loading rows={8} /> : !teams.data?.standings.length ? (
@@ -290,6 +300,7 @@ export function Dashboard() {
         <section className="card w3" aria-labelledby="fight">
           <div className="card-head">
             <h2 className="h2" id="fight">Title fight: points after each round</h2>
+            <OffseasonNote data={results.data} what="season" />
             {!spoilers.standingsHidden && <ProvisionalNote data={results.data} />}
             <div className="legend" hidden={spoilers.standingsHidden}>
               {series.map((s) => (
@@ -425,14 +436,21 @@ function NextRace({ race, total }: { race: Race; total: number }) {
   );
 }
 
-function SeasonComplete({ champion }: { champion?: { Driver: { givenName: string; familyName: string }; points: string } }) {
+/** No race to count down to: the season is over and the next calendar is not out yet. */
+function SeasonComplete({ year, upcoming }: { year: string; upcoming?: string }) {
+  // "upcoming": Jolpica has moved on to the new season but has no calendar for it yet.
+  const next = upcoming ?? (year ? String(Number(year) + 1) : '');
+  const done = upcoming ? String(Number(upcoming) - 1) : year;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <p className="kicker">Season complete</p>
+      <p className="kicker">{upcoming ? 'Off-season' : 'Season complete'}</p>
       <h1 className="race-title" id="next-race">
-        {champion ? `${champion.Driver.givenName} ${champion.Driver.familyName}` : 'No upcoming races'}
+        {done ? `That's the ${done} season` : 'No upcoming races'}
       </h1>
-      {champion && <div className="muted">Leads the final standings with {champion.points} points.</div>}
+      <div className="muted">
+        {next ? `The ${next} calendar has not been published yet. The first race shows here with its countdown as soon as it is.` : 'The calendar has no more races.'}
+      </div>
+      {done && <a className="link" href={href('review')}>The {done} season review →</a>}
     </div>
   );
 }

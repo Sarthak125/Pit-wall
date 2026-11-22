@@ -9,6 +9,7 @@ import { Drivers } from './pages/Drivers';
 import { LiveTiming } from './pages/LiveTiming';
 import { Settings } from './pages/Settings';
 import { Help } from './pages/Help';
+import { SeasonReview } from './pages/SeasonReview';
 import { Standings } from './pages/Standings';
 import { MyDriver } from './pages/MyDriver';
 import { MyTeam } from './pages/MyTeam';
@@ -18,7 +19,7 @@ import { UpdateBanner } from './components/UpdateBanner';
 import { useAlertWatcher } from './hooks/useFavourite';
 import { useRoute, useRouteParam } from './lib/router';
 
-const TITLES = { dashboard: 'Dashboard', live: 'Live Timing', driver: 'My Driver', team: 'My Team', race: 'Race results', standings: 'Standings', calendar: 'Calendar', drivers: 'Drivers', settings: 'Settings', help: 'How to use' };
+const TITLES = { dashboard: 'Dashboard', live: 'Live Timing', driver: 'My Driver', team: 'My Team', race: 'Race results', standings: 'Standings', calendar: 'Calendar', drivers: 'Drivers', settings: 'Settings', help: 'How to use', review: 'Season review' };
 
 export default function App() {
   const route = useRoute();
@@ -46,6 +47,7 @@ export default function App() {
       {route === 'drivers' && <Drivers />}
       {route === 'settings' && <Settings />}
       {route === 'help' && <Help />}
+      {route === 'review' && <SeasonReview />}
       <Toasts />
       <UpdateBanner />
     </Shell>

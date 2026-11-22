@@ -5,6 +5,7 @@ import {
   getRaceResults,
   getSchedule,
   getSprintResults,
+  type Race,
   type RaceWithResults,
 } from '../api/jolpica';
 import { openf1, type Session } from '../api/openf1';
@@ -12,8 +13,8 @@ import { getProvisional, type Provisional } from '../api/provisional';
 
 const MIN = 60_000;
 
-export function useSchedule(season: string) {
-  return useQuery({ queryKey: ['schedule', season], queryFn: () => getSchedule(season), staleTime: 30 * MIN });
+export function useSchedule(season: string, enabled = true) {
+  return useQuery({ queryKey: ['schedule', season], queryFn: () => getSchedule(season), staleTime: 30 * MIN, enabled });
 }
 
 /** Which race weekend the data includes provisionally (from OpenF1's classification), if any. */
@@ -43,6 +44,23 @@ export function provisionalSoon(season: string, late: () => void): Promise<Provi
   ]);
 }
 
+/**
+ * Between seasons. Jolpica moves its "current" season to the new year before that year's first race, and then has no
+ * standings or results for it. Until the first race, standings-type data (standings, results, the title chart, the
+ * champions) comes from the season before, tagged so pages can say so. The calendar stays on the new season.
+ */
+export interface OffseasonTag {
+  offseason?: { shown: string; upcoming: string };
+}
+
+/** The year Jolpica's "current" season stands for. */
+async function currentYear(): Promise<string> {
+  const races = await getSchedule('current').catch(() => [] as Race[]);
+  if (races[0]?.season) return races[0].season;
+  const standings = await getDriverStandings('current').catch(() => null);
+  return standings?.season || String(new Date().getFullYear());
+}
+
 export function useDriverStandings(season: string) {
   const qc = useQueryClient();
   return useQuery({
@@ -50,7 +68,15 @@ export function useDriverStandings(season: string) {
     queryFn: async () => {
       const late = () => qc.invalidateQueries({ queryKey: ['dstand', season] });
       const [jolpica, p] = await Promise.all([getDriverStandings(season), provisionalSoon(season, late)]);
-      return p ? { ...p.drivers, ...tag(p) } : (jolpica as typeof jolpica & ProvisionalTag);
+      type Out = typeof jolpica & ProvisionalTag & OffseasonTag;
+      if (p) return { ...p.drivers, season: jolpica.season, ...tag(p) } as Out;
+      if (season === 'current' && !jolpica.standings.length) {
+        const upcoming = jolpica.season || (await currentYear());
+        const shown = String(Number(upcoming) - 1);
+        const prev = await getDriverStandings(shown);
+        if (prev.standings.length) return { ...prev, offseason: { shown, upcoming } } as Out;
+      }
+      return jolpica as Out;
     },
     staleTime: 10 * MIN,
     refetchInterval: 10 * MIN,
@@ -64,7 +90,15 @@ export function useConstructorStandings(season: string) {
     queryFn: async () => {
       const late = () => qc.invalidateQueries({ queryKey: ['cstand', season] });
       const [jolpica, p] = await Promise.all([getConstructorStandings(season), provisionalSoon(season, late)]);
-      return p ? { ...p.constructors, ...tag(p) } : (jolpica as typeof jolpica & ProvisionalTag);
+      type Out = typeof jolpica & ProvisionalTag & OffseasonTag;
+      if (p) return { ...p.constructors, season: jolpica.season, ...tag(p) } as Out;
+      if (season === 'current' && !jolpica.standings.length) {
+        const upcoming = jolpica.season || (await currentYear());
+        const shown = String(Number(upcoming) - 1);
+        const prev = await getConstructorStandings(shown);
+        if (prev.standings.length) return { ...prev, offseason: { shown, upcoming } } as Out;
+      }
+      return jolpica as Out;
     },
     staleTime: 10 * MIN,
     refetchInterval: 10 * MIN,
@@ -78,11 +112,20 @@ export function useResults(season: string) {
     queryFn: async () => {
       const late = () => qc.invalidateQueries({ queryKey: ['results', season] });
       const [races, sprints, p] = await Promise.all([getRaceResults(season), getSprintResults(season), provisionalSoon(season, late)]);
-      if (!p) return { races, sprints } as { races: RaceWithResults[]; sprints: RaceWithResults[] } & ProvisionalTag;
+      type Out = { races: RaceWithResults[]; sprints: RaceWithResults[] } & ProvisionalTag & OffseasonTag;
+      if (!p) {
+        if (season === 'current' && !races.some((r) => r.Results?.length)) {
+          const upcoming = await currentYear();
+          const shown = String(Number(upcoming) - 1);
+          const [prevRaces, prevSprints] = await Promise.all([getRaceResults(shown), getSprintResults(shown)]);
+          if (prevRaces.some((r) => r.Results?.length)) return { races: prevRaces, sprints: prevSprints, offseason: { shown, upcoming } } as Out;
+        }
+        return { races, sprints } as Out;
+      }
       // The provisional sessions replace any empty entry Jolpica has for the round.
       const merge = (list: RaceWithResults[], add: RaceWithResults | null) =>
         add ? [...list.filter((r) => r.round !== add.round), add].sort((a, b) => Number(a.round) - Number(b.round)) : list;
-      return { races: merge(races, p.race), sprints: merge(sprints, p.sprint), ...tag(p) };
+      return { races: merge(races, p.race), sprints: merge(sprints, p.sprint), ...tag(p) } as Out;
     },
     staleTime: 15 * MIN,
   });
