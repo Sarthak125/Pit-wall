@@ -12,6 +12,8 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 ### Latest
 
+- **Season review:** a page with the season in numbers (`#/review`, linked from Standings): champions, highlights such as most wins, the biggest climb and the closest win, every driver's and team's record, and the team-mate battles. Works for past seasons too. See [Season review](#season-review).
+- **Ready for the off-season:** after the final race the Dashboard says the season is over and counts down to the next season's opener once its calendar is out; before a new season's first race, standings, results and the champions show the season before, labelled **Final <year> standings**. See [Between seasons](#between-seasons).
 - **Champions banner:** once a title can no longer be lost, the Dashboard names the World Champion and the Constructors' Champions, with when each title was decided (for 2026: Antonelli at the Mexico City Grand Prix, Mercedes at the Brazilian Grand Prix), and the standings tag them as **Champion**.
 - **Smaller fixes:** race pages show **Add to calendar** only for races still to come (it showed on past races while their results loaded), times read "India Standard Time" style rather than "Asia/Calcutta", and tyre strategy bars are big enough to tap on phones.
 - **Live check script:** `tests/live/check-live.cjs` checks Live Timing on the live site during a real session (see [Tests](#tests)).
@@ -261,6 +263,24 @@ Notes:
 - Buttons on the Dashboard's next race card, upcoming race pages and the Calendar download a standard calendar file (.ics) that Google Calendar, Apple Calendar and Outlook can import. Each session is its own event, with the circuit as the location and a link back to Pit Wall.
 - Times are exact start times in UTC, so your calendar shows them in your own time zone. End times are estimates (the usual session length), and the file is a one-off download: if F1 moves a session later, download it again.
 
+### Season review
+
+Open it from **Season review →** on the Standings page (or `#/review`; after the final race, also from the Dashboard). It follows the season picker, so any past season can be reviewed, and for the season in progress it is the story so far ("21 of 23 Grands Prix").
+
+- **Champions:** the same banner as the Dashboard, once a title is decided.
+- **Highlights:** how many different Grand Prix winners, most wins, most poles, most podiums, the biggest climb in one race (grid to finish), the closest win (gap to second), most retirements, most one-twos and most sprint wins. Each links to the driver, team or race.
+- **Drivers:** every driver's points, wins, podiums, poles, fastest laps, best and average finish, retirements (Grands Prix not classified) and places gained or lost from the grid.
+- **Team-mate battles:** for each team's regular pair (the two drivers with the most Grands Prix for it), who finished ahead in races they both started, who qualified ahead, and points, with bars in the team colour.
+- **Teams:** points, wins, podiums, one-twos and best result.
+
+Figures are for Grands Prix, except points, which include sprints. A driver who changed team during the season is listed with the team of their latest race.
+
+### Between seasons
+
+- **After the final race:** the Dashboard says the season is complete and links to its review. As soon as the next season's calendar is published, it counts down to the opener instead.
+- **Before a new season's first race:** Jolpica moves its "current" season to the new year before any race is run. Until the first race, the standings, results, title chart, last race card, champions banner and season review show the season before, labelled **Final <year> standings** (hover for why), while the Calendar shows the new season. If the new calendar is not out yet, the Dashboard and Calendar say so.
+- **Season picker:** labelled from the data (for example "2027 (current)"), so around New Year it never shows the same season twice.
+
 ### How to use
 
 The **?** button in the header (next to Settings) opens a guide to the app, also linked from the footer of every page. It covers getting started (favourites, installing, alerts), race day (where live data comes from, the feed status pill, what needs F1 TV), reading Live Timing (mini-sector, sector, tyre and fastest-lap colours, the tags and columns, qualifying, long runs and the race charts), watching later (TV delay and spoiler-free mode), planning ahead and common questions. The examples on it use the same styles as the app.
@@ -288,7 +308,7 @@ All settings are saved on each device separately.
 - Installable on Android (and desktop Chrome or Edge) and opens offline with the last loaded standings, calendar, circuit layouts and weather. There is also a free **Android app** (see [Use it on your Android tablet or phone](#use-it-on-your-android-tablet-or-phone)).
 - The short address https://sarthak125.github.io/ forwards to Pit Wall.
 - When a new version is published, a banner says "A new version of Pit Wall is ready" with a **Reload** button (or **Later**). The app checks when you open it, when you come back to it, and every 30 minutes.
-- Season picker for standings, results and calendar from previous years.
+- Season picker for standings, results, the calendar and the season review from previous years.
 - All times in the device's local time zone, named in everyday words (for example "Times in India Standard Time"); weather days use the circuit's local date.
 - Text is about 10% larger on laptops and 5% larger on tablets, for reading from a distance. Phones use the normal size so more fits on screen.
 
@@ -397,6 +417,16 @@ npm run test:e2e
 - **Browser tests** (Playwright, `tests/e2e`): every page at laptop and phone width with no errors and no sideways scrolling; the finished race (gaps, positions chart, pit stops, tyre strategy), qualifying knockouts, practice long runs, spoiler-free mode, the calendar download, Live Timing on a stand-in F1 feed during a live race, and the feed dropping and reconnecting.
 - The browser tests use recorded API responses from the 2026 Las Vegas weekend (`tests/fixtures`) and a fixed clock, so they do not depend on OpenF1, Jolpica, MultiViewer or Open-Meteo being up or within their limits. If an app change needs data the recordings do not have, the test fails rather than calling the real service; record again in that case.
 - The first time, install the browser with `npx playwright install chromium`.
+- **Off-season check** (`tests/manual/offseason.cjs`, not part of the automatic tests): fakes the date and Jolpica's answers for four stages between seasons (season over, next calendar out, new season with no races, new season with no calendar) and reports what the Dashboard, Standings, Calendar, season review and Settings show, with screenshots. Run it against a local build:
+
+```bash
+npx vite preview --port 4173
+```
+
+```bash
+node tests/manual/offseason.cjs offseason-check http://localhost:4173/
+```
+
 - **Live check** (`tests/live/check-live.cjs`, not part of the automatic tests): run during a real session to check the live site. It opens Live Timing at laptop and phone size for a minute and reports whether Formula 1's feed connects and sends data, the feed status pill, the timing tower filling in and updating, the Dashboard's LIVE banner, sideways scrolling and errors, with screenshots:
 
 ```bash
@@ -421,18 +451,18 @@ npm run build
 src/api/         OpenF1, Jolpica, MultiViewer (circuits) and Open-Meteo (weather) clients, Formula 1 live timing
                  feed client (f1live), rate limiter, cache
 src/hooks/       Polling, live timing, season data and favourites hooks
-src/lib/         Title decisions (titles), FIA message classifier and plain-English wording, driver stats, alerts, formatting, team colours,
+src/lib/         Title decisions (titles), season review figures (seasonReview), FIA message classifier and plain-English wording, driver stats, alerts, formatting, team colours,
                  calendar files (ics), long runs,
                  settings, routing, track geometry, sector lines, lap-by-lap positions, app updates, OpenF1 live
                  windows (openf1Window), F1 feed to app data adapter (f1adapter)
-src/pages/       Dashboard, Live Timing, Favourites (My Driver, My Team), Standings, Calendar, Race results, Drivers, Settings, How to use (Help)
+src/pages/       Dashboard, Live Timing, Favourites (My Driver, My Team), Standings, Calendar, Race results, Drivers, Settings, How to use (Help), Season review
 src/components/  App shell, charts, live track map, live championship, gap chart, dashboard extras, circuit overview and outline, weekend weather,
                  position chart, live driver and team views, team radio cards, FIA messages, strips, alerts, update
                  banner, champions banner, feed status, tyre strategy, long-run pace, rain watch, add to calendar, spoiler cover,
                  TV delay picker, loading and error states
 android/         Android app (Trusted Web Activity) project, generator, Digital Asset Links file and build notes
 tests/           Unit tests (unit), browser tests (e2e), recorded API responses and feed snapshot (fixtures), and the
-                 live session check (live)
+                 live session check (live) and off-season check (manual)
 ```
 
 ## Notes
