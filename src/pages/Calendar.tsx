@@ -1,3 +1,4 @@
+import { useSpoilers } from '../hooks/useSpoilers';
 import { SESSION_FIELDS, type Race } from '../api/jolpica';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { Footer } from '../components/Shell';
@@ -11,6 +12,7 @@ import { driverHref, raceHref, teamHref } from '../lib/router';
 export function Calendar() {
   const { season } = useSettings();
   const schedule = useSchedule(season);
+  const spoilers = useSpoilers();
   const results = useResults(season);
   const winners = new Map((results.data?.races ?? []).map((r) => [r.round, r.Results?.[0]]));
   const now = useNow(60_000);
@@ -38,7 +40,8 @@ export function Calendar() {
               <tbody>
                 {schedule.data.map((r, i) => {
                   const start = raceStart(r);
-                  const w = winners.get(r.round);
+                  // Spoiler-free mode: no winner for the weekend still hidden.
+                  const w = season === 'current' && spoilers.raceHidden(r.season, r.round) ? undefined : winners.get(r.round);
                   return (
                     <tr key={r.round} className={i === nextIdx ? 'me' : undefined}>
                       <td className="mono muted">{r.round}</td>
@@ -69,6 +72,8 @@ export function Calendar() {
                               {w.Constructor.name}
                             </a>
                           </div>
+                        ) : season === 'current' && spoilers.raceHidden(r.season, r.round) ? (
+                          <span className="faint" title="Spoiler-free mode: reveal it on the race page or Dashboard">Hidden</span>
                         ) : i === nextIdx ? (
                           <span className="pill tone-red">Next</span>
                         ) : (

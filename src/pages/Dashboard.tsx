@@ -1,3 +1,5 @@
+import { SpoilerCover } from '../components/SpoilerCover';
+import { useSpoilers } from '../hooks/useSpoilers';
 import type React from 'react';
 import { useLiveFeedSession } from '../hooks/useLiveFeed';
 import { feedMessages, feedWeather } from '../lib/f1adapter';
@@ -57,6 +59,9 @@ export function Dashboard() {
   const drivers = useDriverStandings(season);
   const teams = useConstructorStandings(season);
   const results = useResults(season);
+  // Spoiler-free mode only applies to the current season.
+  const spoilerState = useSpoilers();
+  const spoilers = season === 'current' ? spoilerState : { ...spoilerState, standingsHidden: false, raceHidden: () => false };
   const fav = useFavourite();
   const favTeam = useFavouriteTeam();
 
@@ -101,7 +106,12 @@ export function Dashboard() {
   // Last race podium: under the weekend forecast when there is a next race, otherwise beside the title fight chart.
   const lastRaceCard = (
     <section className={nextRace ? 'card' : 'card w2'} aria-labelledby="last-race" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {results.isLoading ? <Loading rows={4} /> : lastRace ? (
+      {lastRace && spoilers.raceHidden(lastRace.season, lastRace.round) ? (
+        <>
+          <p className="kicker">Last race · Round {lastRace.round}</p>
+          <SpoilerCover what="The podium" compact />
+        </>
+      ) : results.isLoading ? <Loading rows={4} /> : lastRace ? (
         <>
           <div>
             <p className="kicker">Last race · Round {lastRace.round}</p>
@@ -167,7 +177,7 @@ export function Dashboard() {
         </div>
       )}
 
-      <FavouriteStrip standings={drivers.data?.standings ?? []} races={results.data?.races ?? []} season={season} />
+      {!spoilers.standingsHidden && <FavouriteStrip standings={drivers.data?.standings ?? []} races={results.data?.races ?? []} season={season} />}
       <TeamStrip teams={teams.data?.standings ?? []} drivers={drivers.data?.standings ?? []} races={results.data?.races ?? []} />
 
       <div className="row">
@@ -176,7 +186,7 @@ export function Dashboard() {
             <h2 className="h2" id="wdc">Drivers' Championship</h2>
             <a className="link" href={href('standings')}>View all →</a>
           </div>
-          {drivers.error ? <ErrorBox error={drivers.error} what="driver standings" /> : drivers.isLoading ? <Loading rows={10} /> : !drivers.data?.standings.length ? (
+          {spoilers.standingsHidden ? <SpoilerCover what="The standings" compact /> : drivers.error ? <ErrorBox error={drivers.error} what="driver standings" /> : drivers.isLoading ? <Loading rows={10} /> : !drivers.data?.standings.length ? (
             <Empty>No standings yet for this season.</Empty>
           ) : (
             <div className="scroll-x">
@@ -231,7 +241,7 @@ export function Dashboard() {
           <h2 className="h2" id="wcc" style={{ marginBottom: 16 }}>
             Constructors' Championship
           </h2>
-          {teams.error ? <ErrorBox error={teams.error} what="constructor standings" /> : teams.isLoading ? <Loading rows={8} /> : !teams.data?.standings.length ? (
+          {spoilers.standingsHidden ? <SpoilerCover what="The standings" compact /> : teams.error ? <ErrorBox error={teams.error} what="constructor standings" /> : teams.isLoading ? <Loading rows={8} /> : !teams.data?.standings.length ? (
             <Empty>No standings yet for this season.</Empty>
           ) : (
             <div className="bars">
@@ -266,7 +276,7 @@ export function Dashboard() {
         <section className="card w3" aria-labelledby="fight">
           <div className="card-head">
             <h2 className="h2" id="fight">Title fight: points after each round</h2>
-            <div className="legend">
+            <div className="legend" hidden={spoilers.standingsHidden}>
               {series.map((s) => (
                 <span key={s.driverId}>
                   <svg width="18" height="8" aria-hidden="true"><line x1="0" y1="4" x2="18" y2="4" stroke={s.colour} strokeWidth="2.5" strokeDasharray={s.dashed ? '4 3' : undefined} /></svg>
@@ -275,7 +285,7 @@ export function Dashboard() {
               ))}
             </div>
           </div>
-          {results.error ? <ErrorBox error={results.error} what="race results" /> : results.isLoading || drivers.isLoading ? <Loading rows={6} /> : series.length ? (
+          {spoilers.standingsHidden ? <SpoilerCover what="The title fight chart" compact /> : results.error ? <ErrorBox error={results.error} what="race results" /> : results.isLoading || drivers.isLoading ? <Loading rows={6} /> : series.length ? (
             <PointsChart series={series} favCode={fav?.code} roundNames={roundNames} />
           ) : (
             <Empty>The chart appears after the first race.</Empty>

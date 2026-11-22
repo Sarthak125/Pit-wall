@@ -1,3 +1,5 @@
+import { SpoilerCover } from '../components/SpoilerCover';
+import { useSpoilers } from '../hooks/useSpoilers';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getRound, SESSION_FIELDS, type Race, type Result } from '../api/jolpica';
@@ -28,6 +30,9 @@ export function RaceResults() {
   const schedule = useSchedule(season);
   const data = useQuery({ queryKey: ['round', season, round], enabled: !!round, queryFn: () => getRound(season, round), staleTime: 10 * 60_000 });
   const now = useNow(60_000);
+  const spoilers = useSpoilers();
+  // Spoiler-free mode: this weekend's results stay covered (current season only).
+  const hidden = !fixedSeason && picked === 'current' && spoilers.on && spoilers.weekend?.round === round;
   const [tab, setTab] = useState<Tab>('race');
 
   const races = schedule.data ?? [];
@@ -79,7 +84,7 @@ export function RaceResults() {
           {info.Circuit.circuitName} · {info.Circuit.Location.locality}, {info.Circuit.Location.country}
           {start ? ` · ${fmtDayMonth(start)}` : ''}
         </div>
-        {finished && <Podium results={results} />}
+        {finished && !hidden && <Podium results={results} />}
       </section>
 
       <CircuitOverview race={info} />
@@ -114,14 +119,14 @@ export function RaceResults() {
               ))}
             </div>
           </div>
-          {data.error ? <ErrorBox error={data.error} what="the results" /> : data.isLoading ? <Loading rows={12} /> : shownTab === 'quali' ? (
+          {hidden ? <SpoilerCover what="Results" /> : data.error ? <ErrorBox error={data.error} what="the results" /> : data.isLoading ? <Loading rows={12} /> : shownTab === 'quali' ? (
             <QualiTable rows={quali} />
           ) : (
             <ResultsTable rows={shownTab === 'sprint' ? sprint : results} showFastest={shownTab === 'race'} />
           )}
         </section>
       )}
-      {finished && Number(info.season) >= 2023 && shownTab !== 'quali' && (
+      {finished && !hidden && Number(info.season) >= 2023 && shownTab !== 'quali' && (
         <section className="card" aria-labelledby="positions">
           <div className="card-head">
             <h2 className="h2" id="positions">Positions lap by lap{shownTab === 'sprint' ? ': sprint' : ''}</h2>

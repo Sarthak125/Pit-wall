@@ -21,10 +21,16 @@ export interface Settings {
   /** Favourite team's Jolpica constructorId (e.g. "ferrari"). Empty for none. */
   favoriteTeam: string;
   favoriteTeamName: string;
+  /** Seconds to hold back F1's live feed so it matches a TV or stream that runs behind (0 = no delay). */
+  liveDelay: number;
+  /** Hide results of the latest race weekend until revealed. */
+  spoilerFree: boolean;
+  /** Race weekend (season-round) whose results were revealed in spoiler-free mode. */
+  revealed: string;
 }
 
 const KEY = 'pitwall:settings';
-const DEFAULTS: Settings = { openf1Token: '', openf1PerMinute: 30, season: 'current', favoriteDriver: '', favoriteName: '', alertsEnabled: true, systemNotifications: false, trackMap: false, favoriteTeam: '', favoriteTeamName: '' };
+const DEFAULTS: Settings = { openf1Token: '', openf1PerMinute: 30, season: 'current', favoriteDriver: '', favoriteName: '', alertsEnabled: true, systemNotifications: false, trackMap: false, favoriteTeam: '', favoriteTeamName: '', liveDelay: 0, spoilerFree: false, revealed: '' };
 
 let current: Settings = load();
 const listeners = new Set<() => void>();

@@ -1,3 +1,5 @@
+import { SpoilerCover } from '../components/SpoilerCover';
+import { useSpoilers } from '../hooks/useSpoilers';
 import type React from 'react';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { Footer } from '../components/Shell';
@@ -14,6 +16,8 @@ import { driverHref, teamHref } from '../lib/router';
 export function Standings() {
   const { season } = useSettings();
   const drivers = useDriverStandings(season);
+  const spoilers = useSpoilers();
+  const hidden = season === 'current' && spoilers.standingsHidden;
   const teams = useConstructorStandings(season);
   const fav = useFavourite();
   const favTeam = useFavouriteTeam();
@@ -30,7 +34,7 @@ export function Standings() {
             <h1 className="h2" id="d">Drivers' Championship</h1>
             {results.data && <span className="muted">After round {doneRound}</span>}
           </div>
-          {drivers.error ? <ErrorBox error={drivers.error} what="driver standings" /> : drivers.isLoading ? <Loading rows={12} /> : !drivers.data?.standings.length ? <Empty>No standings yet.</Empty> : (
+          {hidden ? <SpoilerCover what="The standings" /> : drivers.error ? <ErrorBox error={drivers.error} what="driver standings" /> : drivers.isLoading ? <Loading rows={12} /> : !drivers.data?.standings.length ? <Empty>No standings yet.</Empty> : (
             <div className="scroll-x">
               <table className="tbl standings-drivers">
                 <thead>
@@ -79,7 +83,7 @@ export function Standings() {
             <h2 className="h2" id="c">Constructors' Championship</h2>
             <span className="muted" style={{ fontSize: 12 }}>Tap the flag to pick your team</span>
           </div>
-          {teams.error ? <ErrorBox error={teams.error} what="constructor standings" /> : teams.isLoading ? <Loading rows={10} /> : !teams.data?.standings.length ? <Empty>No standings yet.</Empty> : (
+          {hidden ? <SpoilerCover what="The standings" compact /> : teams.error ? <ErrorBox error={teams.error} what="constructor standings" /> : teams.isLoading ? <Loading rows={10} /> : !teams.data?.standings.length ? <Empty>No standings yet.</Empty> : (
             <div className="scroll-x">
             <table className="tbl">
               <thead>

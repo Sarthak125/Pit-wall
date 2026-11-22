@@ -68,7 +68,15 @@ export interface FavouriteSnapshot {
 }
 
 /** Compares with the last snapshot for this session and raises alerts for changes. */
+/** Set by the app shell while spoiler-free mode hides the current weekend. */
+let spoilerGuard = false;
+export function setSpoilerGuard(on: boolean) {
+  spoilerGuard = on;
+}
+
 export function ingestFavourite(s: FavouriteSnapshot) {
+  // Spoiler-free mode: no pop-ups about a weekend that is still hidden.
+  if (spoilerGuard) return;
   if (!getSettings().alertsEnabled) return;
   const key = `${s.sessionKey}-${s.code}`;
   const prev = baselines.get(key);

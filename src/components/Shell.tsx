@@ -1,5 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { useSchedule } from '../hooks/useSeason';
+import { useSpoilers } from '../hooks/useSpoilers';
+import { setSpoilerGuard } from '../lib/alerts';
 import { activeWindow, getBlocked, setLiveWindows } from '../lib/openf1Window';
 import { openf1 } from '../api/openf1';
 import { useIsFetching, useQueryClient } from '@tanstack/react-query';
@@ -31,6 +33,9 @@ export function Shell({ route, live, children }: { route: Route; live: boolean; 
           : route === 'race'
             ? 'calendar'
             : route;
+  // Spoiler-free mode silences alerts about the weekend it hides.
+  const spoilers = useSpoilers();
+  useEffect(() => setSpoilerGuard(spoilers.on), [spoilers.on]);
   // The current calendar tells the OpenF1 client when a live session's window is open (see lib/openf1Window).
   const calendar = useSchedule('current');
   useEffect(() => {

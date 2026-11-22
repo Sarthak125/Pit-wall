@@ -1,3 +1,5 @@
+import { DelayPicker } from '../components/DelayPicker';
+import { useSpoilers } from '../hooks/useSpoilers';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { clearCache } from '../api/http';
@@ -59,6 +61,7 @@ export function Settings() {
         </form>
       </section>
       <FavouriteSettings />
+      <WatchingLater />
       <section className="card">
         <h2 className="h2 sm" style={{ marginBottom: 8 }}>About</h2>
         <p className="muted" style={{ margin: 0, lineHeight: 1.6 }}>
@@ -173,6 +176,39 @@ function FavouriteSettings() {
           <span>
             Live track map on My Driver
             <span className="hint" style={{ display: 'block' }}>Shows where your driver is on the circuit. Uses about 15 extra OpenF1 requests a minute, which can slow other live updates on the free tier.</span>
+          </span>
+        </label>
+      </div>
+    </section>
+  );
+}
+
+/** TV delay and spoiler-free mode. */
+function WatchingLater() {
+  const s = useSettings();
+  const sp = useSpoilers();
+  return (
+    <section className="card">
+      <h2 className="h2 sm" style={{ marginBottom: 16 }}>Watching on TV or later</h2>
+      <div className="form">
+        <label>
+          TV delay
+          <span className="hint">During live sessions, timing comes from Formula 1's feed, which is usually 30 to 60 seconds ahead of TV and streams. Hold it back so overtakes and flags appear when you see them. Also on Live Timing.</span>
+          <DelayPicker bare />
+        </label>
+        <label style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+          <input type="checkbox" checked={s.spoilerFree} onChange={(e) => updateSettings({ spoilerFree: e.target.checked })} style={{ width: 22, height: 22, marginTop: 2 }} />
+          <span>
+            Spoiler-free mode
+            <span className="hint" style={{ display: 'block' }}>
+              Hides the latest race weekend until you press Reveal: its sessions on Live Timing, the race page and last race card, and the standings and title fight chart once the sprint or race has started. When the next weekend starts, it moves on to that one.
+            </span>
+            {s.spoilerFree && sp.weekend && (
+              <span className="hint" style={{ display: 'block', marginTop: 6 }}>
+                {sp.on ? `Hiding the ${sp.weekend.raceName}.` : `The ${sp.weekend.raceName} is revealed.`}{' '}
+                {!sp.on && <button className="link-btn" onClick={() => updateSettings({ revealed: '' })}>Hide it again</button>}
+              </span>
+            )}
           </span>
         </label>
       </div>

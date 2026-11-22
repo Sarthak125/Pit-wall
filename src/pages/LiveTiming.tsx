@@ -38,6 +38,9 @@ import type React from 'react';
 import { ingestFavourite } from '../lib/alerts';
 import { useOpenF1Blocked } from '../lib/openf1Window';
 import { OpenF1BlockedNotice } from '../components/OpenF1Blocked';
+import { DelayPicker } from '../components/DelayPicker';
+import { SpoilerCover } from '../components/SpoilerCover';
+import { useSpoilers } from '../hooks/useSpoilers';
 import { overtakeAid, type PitDetail } from '../api/openf1';
 import { PositionLines, type LineInfo } from '../components/PositionChart';
 import { getRacePositions } from '../lib/sectorLines';
@@ -55,6 +58,7 @@ export function LiveTiming() {
   const feedOn = !getSettings().openf1Token.trim() && !!activeWindow(now, 60 * 60_000);
   const feed = useF1Feed(feedOn);
   const feedSess = feedSession(feed);
+  const spoilers = useSpoilers();
 
   const list = sessions.data?.length ? sessions.data : feedSess ? [feedSess] : [];
   const defaultSession = list.find((s) => isSessionLive(s, now)) ?? [...list].reverse().find((s) => Date.parse(s.date_start) <= now) ?? list[0];
@@ -68,10 +72,11 @@ export function LiveTiming() {
   const favNum = t.rows.find((r) => r.driver.name_acronym === fav?.code)?.driver.driver_number ?? null;
 
   useEffect(() => {
-    if (!live || !session || !fav || favNum == null || t.loading) return;
+    // No pop-ups about the favourite while spoiler-free mode hides this weekend.
+    if (!live || !session || !fav || favNum == null || t.loading || spoilers.sessionHidden(session.date_start)) return;
     const me = t.rows.find((r) => r.driver.driver_number === favNum);
     ingestFavourite({ sessionKey: session.session_key, code: fav.code, position: me?.position ?? null, pits: me?.pits ?? 0, messages: t.messages.filter((m) => m.cars.includes(favNum)) });
-  }, [live, session, fav, favNum, t.rows, t.messages, t.loading]);
+  }, [live, session, fav, favNum, t.rows, t.messages, t.loading, spoilers]);
 
   const status = useMemo(() => trackStatus([...t.messages].reverse()), [t.messages]);
   const isRace = /race|sprint/i.test(session?.session_name ?? '') && !/qualifying|shootout/i.test(session?.session_name ?? '');
@@ -100,12 +105,21 @@ export function LiveTiming() {
     queryFn: () => getCircuitLaps(round!.Circuit.circuitId, isSprint),
   });
 
-  if (blocked && !feedSess) return feed?.status === 'connecting' ? <Loading rows={10} /> : <OpenF1BlockedNotice w={blocked} />;
+  if (blocked && !feedSess) {
+    if (feed?.status !== 'connecting') return <OpenF1BlockedNotice w={blocked} />;
+    return (
+      <>
+        {getSettings().liveDelay > 0 && <div className="feed-note" role="status">Syncing to your {getSettings().liveDelay} s TV delay: live timing appears once it has caught up with your stream.</div>}
+        <Loading rows={10} />
+      </>
+    );
+  }
   if (sessions.error && !feedSess) return <ErrorBox error={sessions.error} what="the session list" />;
   if (sessions.isLoading && !feedSess) return <Loading rows={10} />;
   if (!session) return <Empty>No sessions found on OpenF1 yet.</Empty>;
 
   const qBar = !isRace ? qualiLayout(t.rows, t.quali) : null;
+  const hideSpoilers = spoilers.sessionHidden(session.date_start);
   const start = Date.parse(session.date_start);
   const elapsed = live ? now - start : Date.parse(session.date_end) - start;
   const remaining = Math.max(0, Date.parse(session.date_end) - now);
@@ -119,6 +133,7 @@ export function LiveTiming() {
       {t.source === 'f1' && (
         <div className="feed-note" role="note">
           <strong>Live timing straight from Formula 1's feed.</strong> OpenF1 is paused for free users during live sessions, so this page reads F1's own timing instead. Live car positions on the track map, car speed and pit stop times need an F1 TV subscription; they fill in from OpenF1 about 30 minutes after the session.
+          <div style={{ marginTop: 8 }}><DelayPicker /> <span className="faint" style={{ fontSize: 12 }}>F1's feed is usually 30 to 60 s ahead of TV.</span></div>
         </div>
       )}
       <section className="card session-bar" aria-label="Session">
@@ -127,7 +142,11 @@ export function LiveTiming() {
             <span className="dot live-dot on" style={{ background: '#fff' }} />
             LIVE
           </span>
-        ) : upcoming ? (
+        ) : null}
+        {live && t.source === 'f1' && (feed?.delay ?? 0) > 0 ? (
+          <span className="delay-pill" title="Live timing is held back to match your TV (Settings or the TV delay picker)">Delayed {feed!.delay} s</span>
+        ) : null}
+        {live ? null : upcoming ? (
           <span className="pill" style={{ borderRadius: 6, padding: '6px 12px', background: '#14233a', color: '#8ab8ff' }}>
             UPCOMING
           </span>
@@ -240,6 +259,11 @@ export function LiveTiming() {
         </div>
       </section>
 
+      {hideSpoilers ? (
+        <SpoilerCover what="Live timing and results" />
+      ) : (
+        <>
+
       {t.error ? <ErrorBox error={t.error} what="live timing" /> : null}
 
       <div className="row top">
@@ -303,6 +327,8 @@ export function LiveTiming() {
       <RadioPanel session={session} live={live} drivers={t.driversByNumber} favNum={favNum} teamNums={teamNums} laps={t.laps} feedClips={t.source === 'f1' ? t.radio : null} />
       {isRace && !upcoming && <PitStops pits={t.pits} drivers={t.driversByNumber} live={live} fromFeed={t.source === 'f1'} favNum={favNum} teamNums={teamNums} />}
       <FiaSection messages={t.messages} drivers={t.driversByNumber} favNum={favNum} team={favTeam} teamNums={teamNums} isRace={isRace} />
+        </>
+      )}
       <Footer />
     </>
   );

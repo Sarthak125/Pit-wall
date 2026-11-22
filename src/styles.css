@@ -556,3 +556,11 @@ html { zoom: 1.1; }
 .q-part span { padding: 2px 8px; border-radius: 6px; border: 1px solid var(--line-strong); color: var(--faint); font-family: var(--mono); font-size: 14px; }
 .q-part span.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
 .q-part span.done { color: var(--muted); }
+
+/* Spoiler-free mode and TV delay */
+.spoiler-cover { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 18px 20px; border: 1px dashed var(--line-strong); border-radius: 12px; background: repeating-linear-gradient(135deg, transparent 0 10px, rgba(255,255,255,0.015) 10px 20px); }
+.spoiler-cover.compact { padding: 12px 14px; font-size: 13px; }
+.spoiler-cover strong { color: var(--text); }
+.spoiler-actions { display: flex; align-items: center; gap: 14px; }
+.delay-picker .select { min-height: 34px; }
+.delay-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: #14233a; color: #8ab8ff; font-size: 12px; font-weight: 600; }

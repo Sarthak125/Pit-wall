@@ -11,6 +11,7 @@
  * server pushes partial updates ("feed" messages) that are merged into the snapshot.
  */
 import { useEffect, useSyncExternalStore } from 'react';
+import { getSettings } from '../lib/settings';
 
 const URL = 'wss://livetiming.formula1.com/signalrcore';
 const RS = '\x1e';
@@ -64,6 +65,8 @@ export type FeedStatus = 'idle' | 'connecting' | 'live' | 'error';
 
 export interface FeedSnapshot {
   status: FeedStatus;
+  /** Seconds the feed is held back to match a TV or stream (Settings), 0 when shown as received. */
+  delay: number;
   state: F1State;
   laps: RecordedLap[];
   updatedAt: number | null;
@@ -88,7 +91,10 @@ class F1LiveFeed {
   private stopTimer: ReturnType<typeof setTimeout> | undefined;
   private notifyQueued = false;
   private listeners = new Set<() => void>();
-  private snap: FeedSnapshot = { status: 'idle', state: {}, laps: [], updatedAt: null };
+  private snap: FeedSnapshot = { status: 'idle', delay: 0, state: {}, laps: [], updatedAt: null };
+  // TV delay: messages wait here until they are `delay` seconds old, then are applied in order.
+  private pending: { at: number; apply: () => void }[] = []; // `at` = when the message arrived
+  private drain: ReturnType<typeof setInterval> | undefined;
   // Per driver: the number of laps last seen and whether the lap in progress started from the pit lane.
   private lapsSeen = new Map<number, number>();
   private pitOutThisLap = new Map<number, boolean>();
@@ -157,16 +163,21 @@ class F1LiveFeed {
         if (m.type === 3 && m.invocationId === '0') {
           if (m.error || !m.result) return this.fail();
           this.attempt = 0;
-          this.lapsSeen.clear();
-          const state: F1State = {};
-          for (const k of Object.keys(m.result)) state[k] = m.result[k];
-          this.track(state);
-          this.set({ status: 'live', state, laps: [], updatedAt: Date.now() });
+          const result = m.result;
+          this.later(() => {
+            this.lapsSeen.clear();
+            const state: F1State = {};
+            for (const k of Object.keys(result)) state[k] = result[k];
+            this.track(state);
+            this.set({ status: 'live', state, laps: [], updatedAt: Date.now() });
+          });
         } else if (m.type === 1 && m.target === 'feed' && Array.isArray(m.arguments)) {
           const [topic, data] = m.arguments as [string, any];
-          const state = { ...this.snap.state, [topic]: mergeF1(this.snap.state[topic], data) };
-          const laps = topic === 'TimingData' ? this.track(state) : null;
-          this.set({ state, updatedAt: Date.now(), ...(laps ? { laps: [...this.snap.laps, ...laps] } : {}) });
+          this.later(() => {
+            const state = { ...this.snap.state, [topic]: mergeF1(this.snap.state[topic], data) };
+            const laps = topic === 'TimingData' ? this.track(state) : null;
+            this.set({ state, updatedAt: Date.now(), ...(laps ? { laps: [...this.snap.laps, ...laps] } : {}) });
+          });
         } else if (m.type === 7) {
           ws.close();
         }
@@ -179,6 +190,26 @@ class F1LiveFeed {
       if (this.users > 0) this.fail();
       else this.set({ status: 'idle' });
     };
+  }
+
+  /** Applies a message now, or once it is as old as the TV delay set in Settings. */
+  private later(apply: () => void) {
+    const delay = liveDelaySeconds();
+    if (delay !== this.snap.delay) this.set({ delay });
+    if (!delay && !this.pending.length) return apply();
+    this.pending.push({ at: Date.now(), apply });
+    if (this.drain) return;
+    this.drain = setInterval(() => {
+      // The delay is read on every tick, so a longer one holds messages back further and a shorter one catches up.
+      const d = liveDelaySeconds();
+      if (d !== this.snap.delay) this.set({ delay: d });
+      const due = Date.now() - d * 1000;
+      while (this.pending.length && this.pending[0].at <= due) this.pending.shift()!.apply();
+      if (!this.pending.length && d === 0) {
+        clearInterval(this.drain);
+        this.drain = undefined;
+      }
+    }, 250);
   }
 
   /** Notes laps that have just been completed. */
@@ -225,13 +256,21 @@ class F1LiveFeed {
 
   private stop() {
     clearTimeout(this.retry);
+    clearInterval(this.drain);
+    this.drain = undefined;
+    this.pending = [];
     clearInterval(this.ping);
     const ws = this.ws;
     this.ws = null;
     ws?.close();
     this.attempt = 0;
-    this.set({ status: 'idle', state: {}, laps: [], updatedAt: null });
+    this.set({ status: 'idle', delay: this.snap.delay, state: {}, laps: [], updatedAt: null });
   }
+}
+
+/** The TV delay from Settings, in seconds (0 to 120). */
+export function liveDelaySeconds(): number {
+  return Math.max(0, Math.min(120, Math.round(getSettings().liveDelay || 0)));
 }
 
 export const f1Feed = new F1LiveFeed();
