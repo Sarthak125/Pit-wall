@@ -23,6 +23,16 @@ export const fmtDayMonth = (d: Date) => dayMonth.format(d);
 const weekday = new Intl.DateTimeFormat(undefined, { weekday: 'short' });
 /** Weekday and date in the device's time zone, for session schedules: "Fri 27 Nov". */
 export const fmtWeekdayDate = (d: Date) => `${weekday.format(d)} ${dayMonth.format(d)}`;
+/** Weekday, day of the month and time, for a session within a weekend whose month is shown nearby: "Fri 27 · 19:00". */
+export const fmtWeekdayDayTime = (d: Date) => `${weekday.format(d)} ${d.getDate()} · ${shortClock.format(d)}`;
+/** A date range in the device's time zone: "27–29 Nov", "31 Oct – 2 Nov" (or one date when both fall on the same day). */
+export function fmtDateRange(a: Date, b: Date): string {
+  try {
+    return dayMonth.formatRange(a, b);
+  } catch {
+    return a.toDateString() === b.toDateString() ? dayMonth.format(b) : `${dayMonth.format(a)} – ${dayMonth.format(b)}`;
+  }
+}
 export const fmtClock = (d: Date) => clock.format(d);
 export const fmtShortClock = (d: Date) => shortClock.format(d);
 

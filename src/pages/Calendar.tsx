@@ -4,7 +4,7 @@ import { SESSION_FIELDS, type Race } from '../api/jolpica';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { Footer } from '../components/Shell';
 import { useResults, useSchedule } from '../hooks/useSeason';
-import { fmtDayMonth, fmtDayTime, raceStart, timeZoneLabel, toDate } from '../lib/format';
+import { fmtDateRange, fmtWeekdayDayTime, raceStart, timeZoneLabel, toDate } from '../lib/format';
 import { useSettings } from '../lib/settings';
 import { useNow } from '../hooks/usePoll';
 import { teamColour } from '../lib/teams';
@@ -40,7 +40,7 @@ export function Calendar() {
                 <tr>
                   <th>Rd</th>
                   <th>Grand Prix</th>
-                  <th>Date</th>
+                  <th title="From the first session to the race, in your time zone">Weekend</th>
                   <th className="hide-sm">Sessions</th>
                   <th>Winner</th>
                 </tr>
@@ -57,7 +57,7 @@ export function Calendar() {
                         <a className="name-link" href={raceHref(r.round)}>{r.raceName}</a>
                         <div className="muted hide-sm" style={{ fontSize: 12 }}>{r.Circuit.circuitName} · {r.Circuit.Location.locality}, {r.Circuit.Location.country}</div>
                       </td>
-                      <td className="mono">{start ? fmtDayMonth(start) : r.date}</td>
+                      <td className="mono" style={{ whiteSpace: 'nowrap' }}>{start ? fmtDateRange(firstSession(r) ?? start, start) : r.date}</td>
                       <td className="hide-sm" style={{ whiteSpace: 'normal', minWidth: 200 }}>
                         <Sessions race={r} />
                       </td>
@@ -101,6 +101,12 @@ export function Calendar() {
   );
 }
 
+/** The weekend's first session (practice or sprint), for the date range. */
+function firstSession(race: Race): Date | null {
+  const times = SESSION_FIELDS.map((f) => toDate(race[f.key] as Race['FirstPractice'])).filter((d): d is Date => !!d);
+  return times.length ? new Date(Math.min(...times.map((d) => d.getTime()))) : null;
+}
+
 function Sessions({ race }: { race: Race }) {
   const list = SESSION_FIELDS.map((f) => ({ label: f.label, d: toDate(race[f.key] as Race['FirstPractice']) })).filter((s) => s.d);
   const start = raceStart(race);
@@ -109,7 +115,7 @@ function Sessions({ race }: { race: Race }) {
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px', fontSize: 12 }}>
       {list.map((s) => (
         <span key={s.label}>
-          <span className="muted">{s.label}</span> <span className="mono">{fmtDayTime(s.d!)}</span>
+          <span className="muted">{s.label}</span> <span className="mono">{fmtWeekdayDayTime(s.d!)}</span>
         </span>
       ))}
     </div>
