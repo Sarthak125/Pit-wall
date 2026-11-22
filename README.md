@@ -12,6 +12,9 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 ### Latest
 
+- **Champions banner:** once a title can no longer be lost, the Dashboard names the World Champion and the Constructors' Champions, with when each title was decided (for 2026: Antonelli at the Mexico City Grand Prix, Mercedes at the Brazilian Grand Prix), and the standings tag them as **Champion**.
+- **Smaller fixes:** race pages show **Add to calendar** only for races still to come (it showed on past races while their results loaded), times read "India Standard Time" style rather than "Asia/Calcutta", and tyre strategy bars are big enough to tap on phones.
+- **Live check script:** `tests/live/check-live.cjs` checks Live Timing on the live site during a real session (see [Tests](#tests)).
 - **Dates in schedules:** the Dashboard's weekend schedule and upcoming race pages show each session's weekday and date over its time ("Fri 27 Nov" / "19:00"), and the Calendar shows each weekend's dates ("27 – 29 Nov") with every session's day and time ("Fri 27 · 19:00"), all in your time zone.
 - **Standings updated right after a race:** until Jolpica publishes a race (which can take hours), standings, the title chart, the last race card, the Calendar winner and the race page use Formula 1 timing data from OpenF1 (the race classification and OpenF1's championship standings), labelled **Updated after <race> · F1 timing**. Jolpica's confirmed results replace it automatically.
 - **Android app:** a free 1 MB app (Android 7 or newer) that opens Pit Wall full screen, downloadable from the How to use page. See [Use it on your Android tablet or phone](#use-it-on-your-android-tablet-or-phone).
@@ -67,6 +70,7 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 - Weekend forecast for the next race (once it is within about 16 days), and the last race podium and fastest lap beside it. Right after a race, before Jolpica has published it, the podium comes from F1 timing data and is labelled **Updated after <race>** (see [Data sources](#data-sources)).
 - Track conditions from the latest session: air and track temperature, humidity, wind (km/h and direction), pressure, rain, and track status (green, yellow, safety car, red, chequered) while a session is live, with a compact **rain watch** underneath (see [Live Timing](#live-timing)).
 - Drivers' and Constructors' Championship tables, labelled **Updated after <race> · F1 timing** while they include a race Jolpica has not published yet.
+- **Champions banner** at the top once a title is decided: the World Champion with team, points and the race where the title was clinched (plus the lead and points still left while races remain), and the Constructors' Champions on a line below. Hidden in spoiler-free mode while the standings are.
 - **Title fight chart:** cumulative points after each round for the top four, plus your favourite driver (drawn thicker). Team-mates share their team colour with the second car dashed, each line ends in a label with its points, and hovering or tapping a round shows the race, everyone's points and the gap to the leader. It is drawn at the card's real width, so text stays a normal size on any screen.
 - Season calendar strip.
 - "Your driver" and "Your team" strips when favourites are set.
@@ -138,7 +142,7 @@ OpenF1 shares data only with paying supporters from 30 minutes before a session 
 
 **Tyre strategy** (races and sprints)
 
-- One row per driver in race order, with each stint as a bar in its tyre colour across the race laps, labelled with the tyre and its length (for example "M 18"). Used sets (fitted with laps already on them) are striped, and the joins between bars are pit stops. Hover or tap a stint for its laps and the tyre's age. Live, the current stint grows lap by lap.
+- One row per driver in race order, with each stint as a bar in its tyre colour across the race laps, labelled with the tyre and its length (for example "M 18"). Used sets (fitted with laps already on them) are striped, and the joins between bars are pit stops. On touch screens the bars are 24px tall, so they are easy to tap. Hover or tap a stint for its laps and the tyre's age. Live, the current stint grows lap by lap.
 
 **Long-run pace** (practice)
 
@@ -216,7 +220,7 @@ While the app is open and a session is live, pop-up alerts tell you when your fa
 
 ### Standings, Calendar and Drivers
 
-- **Standings:** full Drivers' and Constructors' tables, with your favourites highlighted and the flag button to pick a team. Driver and team names open their pages (see below). In the hours after a race, before Jolpica publishes it, the tables come from OpenF1's championship standings after that race and carry an **Updated after <race> · F1 timing** label; hover over it for the details. Jolpica's confirmed standings replace them automatically.
+- **Standings:** full Drivers' and Constructors' tables, with your favourites highlighted and the flag button to pick a team. Driver and team names open their pages (see below). In the hours after a race, before Jolpica publishes it, the tables come from OpenF1's championship standings after that race and carry an **Updated after <race> · F1 timing** label; hover over it for the details. Jolpica's confirmed standings replace them automatically. Once a title is decided, the champion driver and team carry a gold **Champion** tag; hover over it for when it was decided.
 - **Calendar:** every round with its **weekend** dates, from the first session to the race in your time zone ("27 – 29 Nov", "31 Oct – 2 Nov"), every session's weekday, day and time ("Practice 1 Fri 27 · 19:00"), and the winner (and their team) of each finished race. Sessions that fall after midnight where you are show the next day, so a race in the Americas can read "Race Mon 26 · 01:30" in India. Tap a race name for its race and circuit page (see above). Right after a race, the winner shows from F1 timing data before Jolpica has published the result. An **Add remaining 2 races to calendar** button (the number follows the season) (or **Add season to calendar** before the season starts) downloads every session still to come.
 - **On phones:** the Drivers' table shows position, driver, gap and points (the colour bar still shows the team), and the Calendar shows round, race, weekend dates and winner. The full session times are on each race page. Wider tables can be swiped sideways.
 - **Drivers:** the current grid with photos, numbers, teams and championship position, and the star to pick your favourite. Tap a driver to open their page (see below).
@@ -285,7 +289,7 @@ All settings are saved on each device separately.
 - The short address https://sarthak125.github.io/ forwards to Pit Wall.
 - When a new version is published, a banner says "A new version of Pit Wall is ready" with a **Reload** button (or **Later**). The app checks when you open it, when you come back to it, and every 30 minutes.
 - Season picker for standings, results and calendar from previous years.
-- All times in the device's local time zone (weather days use the circuit's local date).
+- All times in the device's local time zone, named in everyday words (for example "Times in India Standard Time"); weather days use the circuit's local date.
 - Text is about 10% larger on laptops and 5% larger on tablets, for reading from a distance. Phones use the normal size so more fits on screen.
 
 ## Design
@@ -334,6 +338,7 @@ How some values are worked out:
 - **FIA message types** come from the stewards' standard wording in each message. A message with unusual wording lands in "Other".
 - **Results before Jolpica has them:** when the latest race or sprint should be over but Jolpica has no results for it yet, Pit Wall reads OpenF1's classification (positions, status and points) for the results, and OpenF1's championship standings (`championship_drivers`, `championship_teams`) for the points and order, ties included. Wins add one for the race winner to Jolpica's count after the previous round. If OpenF1's championship standings are not available, Pit Wall adds the session's points to Jolpica's standings after the previous round itself and orders ties by wins, then the previous order. Grid positions come from OpenF1's starting grid, and a driver who changed team during the season is matched to the team OpenF1 lists for that session (team names are learnt from drivers who drove for one team only). Post-race penalties published later are not reflected until Jolpica's results arrive. If OpenF1 does not answer within 4 seconds, Jolpica's data is shown as it is and the provisional data appears at the next refresh.
 - **Finished rounds** are counted from the race results, because Jolpica's standings round can run ahead of the results.
+- **When a title is decided:** after each round, the leader's lead is compared with the most a rival could still score (25 for every remaining Grand Prix and 8 for every remaining sprint for drivers; a one-two, 43 and 15, for teams). A title counts as decided once no rival can finish ahead: a rival who could only draw level on points still counts as a threat unless they could not also match the leader's number of wins (the first step of countback). Points are added up from the season's race and sprint results.
 - **Title maths** assumes 25 points for a Grand Prix win and 8 for a sprint win (a one-two of 43 and 15 for a team), with no fastest-lap point. Ties decided by countback are not modelled.
 - **Overtakes** are as recorded by OpenF1 and only shown for races and sprints.
 - **Race distance (lap X/Y)** is the number of laps the winner ran in the latest race (or sprint) at that circuit. It is off if that race was shortened.
@@ -392,6 +397,11 @@ npm run test:e2e
 - **Browser tests** (Playwright, `tests/e2e`): every page at laptop and phone width with no errors and no sideways scrolling; the finished race (gaps, positions chart, pit stops, tyre strategy), qualifying knockouts, practice long runs, spoiler-free mode, the calendar download, Live Timing on a stand-in F1 feed during a live race, and the feed dropping and reconnecting.
 - The browser tests use recorded API responses from the 2026 Las Vegas weekend (`tests/fixtures`) and a fixed clock, so they do not depend on OpenF1, Jolpica, MultiViewer or Open-Meteo being up or within their limits. If an app change needs data the recordings do not have, the test fails rather than calling the real service; record again in that case.
 - The first time, install the browser with `npx playwright install chromium`.
+- **Live check** (`tests/live/check-live.cjs`, not part of the automatic tests): run during a real session to check the live site. It opens Live Timing at laptop and phone size for a minute and reports whether Formula 1's feed connects and sends data, the feed status pill, the timing tower filling in and updating, the Dashboard's LIVE banner, sideways scrolling and errors, with screenshots:
+
+```bash
+node tests/live/check-live.cjs https://sarthak125.github.io/Pit-wall/ live-check
+```
 
 ## Deploy
 
@@ -411,17 +421,18 @@ npm run build
 src/api/         OpenF1, Jolpica, MultiViewer (circuits) and Open-Meteo (weather) clients, Formula 1 live timing
                  feed client (f1live), rate limiter, cache
 src/hooks/       Polling, live timing, season data and favourites hooks
-src/lib/         FIA message classifier and plain-English wording, driver stats, alerts, formatting, team colours,
+src/lib/         Title decisions (titles), FIA message classifier and plain-English wording, driver stats, alerts, formatting, team colours,
                  calendar files (ics), long runs,
                  settings, routing, track geometry, sector lines, lap-by-lap positions, app updates, OpenF1 live
                  windows (openf1Window), F1 feed to app data adapter (f1adapter)
 src/pages/       Dashboard, Live Timing, Favourites (My Driver, My Team), Standings, Calendar, Race results, Drivers, Settings, How to use (Help)
 src/components/  App shell, charts, live track map, live championship, gap chart, dashboard extras, circuit overview and outline, weekend weather,
                  position chart, live driver and team views, team radio cards, FIA messages, strips, alerts, update
-                 banner, feed status, tyre strategy, long-run pace, rain watch, add to calendar, spoiler cover,
+                 banner, champions banner, feed status, tyre strategy, long-run pace, rain watch, add to calendar, spoiler cover,
                  TV delay picker, loading and error states
 android/         Android app (Trusted Web Activity) project, generator, Digital Asset Links file and build notes
-tests/           Unit tests (unit), browser tests (e2e) and recorded API responses and feed snapshot (fixtures)
+tests/           Unit tests (unit), browser tests (e2e), recorded API responses and feed snapshot (fixtures), and the
+                 live session check (live)
 ```
 
 ## Notes
