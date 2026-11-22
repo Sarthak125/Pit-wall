@@ -10,6 +10,8 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 ## Recently added
 
+### Latest
+
 - **Provisional results right after a race:** until Jolpica publishes a race (which can take hours), standings, the title chart, the last race card, the Calendar winner and the race page use the official classification from OpenF1, marked **Provisional**. Jolpica's confirmed results replace it automatically.
 - **Android app:** a free 1 MB app (Android 7 or newer) that opens Pit Wall full screen, downloadable from the How to use page. See [Use it on your Android tablet or phone](#use-it-on-your-android-tablet-or-phone).
 - **How to use page:** a guide inside the app (the **?** button next to Settings, or `#/help`): getting started, race day and the feed status pill, reading Live Timing (colours, tags, qualifying, long runs, charts), watching later, planning ahead and common questions.
@@ -23,6 +25,8 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 - **Long-run pace in practice:** each driver's longest run on one set of tyres, with average lap, laps and how much time they lost per lap.
 - **Feed status:** a pill in the session bar says whether F1's live feed is live, quiet, reconnecting or offline. If the connection drops, the last timing stays on screen while it reconnects.
 - **Automated tests before every deploy:** the site only goes live if the unit and browser tests pass. See [Tests](#tests).
+### Earlier
+
 - **Positions lap by lap on Live Timing:** during a live race it uses Formula 1's free lap-by-lap positions, so the chart is complete from the start however late you open the page; after the race it comes from OpenF1. See [Positions lap by lap](#live-timing).
 - **Pit stops panel:** every stop with its stationary time and pit lane time, the stop number, and the fastest stop highlighted.
 - **Clearer title fight chart on the Dashboard:** normal-sized text on any screen, the second car of a team dashed, end labels with points, more round markers, and a hover or tap tooltip with the race, points and gap to the leader.
@@ -59,9 +63,9 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 - A **LIVE** banner at the top while any session is running, with how long it has been going; tap it to open Live Timing.
 - Next race card with a live countdown to lights out and the weekend schedule (practice, sprint, qualifying, race) marked Done, Live, Next or Upcoming, and an **Add to calendar** button for the weekend's sessions.
 - Next race circuit: track map with S1 / S2 / S3 colours and turn numbers, lap length, turns and race laps, with a link to the full circuit and race page. On laptops the map grows to match the height of the column beside it; on tablets it is sized to the card's width.
-- Weekend forecast for the next race (once it is within about 16 days), and the last race podium and fastest lap beside it.
+- Weekend forecast for the next race (once it is within about 16 days), and the last race podium and fastest lap beside it. Right after a race, before Jolpica has published it, the podium comes from the official classification and is marked **Provisional** (see [Data sources](#data-sources)).
 - Track conditions from the latest session: air and track temperature, humidity, wind (km/h and direction), pressure, rain, and track status (green, yellow, safety car, red, chequered) while a session is live, with a compact **rain watch** underneath (see [Live Timing](#live-timing)).
-- Drivers' and Constructors' Championship tables.
+- Drivers' and Constructors' Championship tables, marked **Provisional · incl. <race>** while they include a race Jolpica has not published yet.
 - **Title fight chart:** cumulative points after each round for the top four, plus your favourite driver (drawn thicker). Team-mates share their team colour with the second car dashed, each line ends in a label with its points, and hovering or tapping a round shows the race, everyone's points and the gap to the leader. It is drawn at the card's real width, so text stays a normal size on any screen.
 - Season calendar strip.
 - "Your driver" and "Your team" strips when favourites are set.
@@ -210,7 +214,7 @@ While the app is open and a session is live, pop-up alerts tell you when your fa
 
 ### Standings, Calendar and Drivers
 
-- **Standings:** full Drivers' and Constructors' tables, with your favourites highlighted and the flag button to pick a team. Driver and team names open their pages (see below).
+- **Standings:** full Drivers' and Constructors' tables, with your favourites highlighted and the flag button to pick a team. Driver and team names open their pages (see below). In the hours after a race, before Jolpica publishes it, the tables add that race's points from the official classification and carry a **Provisional** label; hover over it for the details. Jolpica's confirmed standings replace them automatically.
 - **Calendar:** every round with all session times in your time zone and the winner (and their team) of each finished race. Tap a race name for its race and circuit page (see above). An **Add remaining 2 races to calendar** button (the number follows the season) (or **Add season to calendar** before the season starts) downloads every session still to come.
 - **On phones:** the Drivers' table shows position, driver, gap and points (the colour bar still shows the team), and the Calendar shows round, race, date and winner. The full session times are on each race page. Wider tables can be swiped sideways.
 - **Drivers:** the current grid with photos, numbers, teams and championship position, and the star to pick your favourite. Tap a driver to open their page (see below).
@@ -270,12 +274,13 @@ All settings are saved on each device separately.
 
 - Laptop layout with a top menu; tablet and phone layout with a bottom menu and large touch targets.
 - **On phones** (screens under 600px wide):
-  - The header fits on one row: logo, season picker, refresh and settings.
+  - The header fits on one row: logo, season picker, refresh, **?** (How to use) and settings, down to 360px wide.
   - The bottom menu uses short labels: Home, Live, Faves, Standings, Calendar, Drivers.
   - Cards, padding and headings are a little tighter, and every page fits the screen width with no sideways scrolling (checked at 390px and 360px wide).
   - Wide tables such as the timing tower swipe sideways, with POS and DRIVER pinned on the left.
   - The FIA feed on Live Timing starts with the newest 15 messages, with a **Show all** button.
-- Installable on Android (and desktop Chrome or Edge) and opens offline with the last loaded standings, calendar, circuit layouts and weather.
+- Installable on Android (and desktop Chrome or Edge) and opens offline with the last loaded standings, calendar, circuit layouts and weather. There is also a free **Android app** (see [Use it on your Android tablet or phone](#use-it-on-your-android-tablet-or-phone)).
+- The short address https://sarthak125.github.io/ forwards to Pit Wall.
 - When a new version is published, a banner says "A new version of Pit Wall is ready" with a **Reload** button (or **Later**). The app checks when you open it, when you come back to it, and every 30 minutes.
 - Season picker for standings, results and calendar from previous years.
 - All times in the device's local time zone (weather days use the circuit's local date).
@@ -297,11 +302,18 @@ The screen designs live on a design canvas: [Pit Wall design canvas](https://cla
 | Race results (opened from Calendar), with the circuit overview, weekend weather and positions lap by lap | Race results (laptop) | Race results (Android tablet, portrait), and Race page: circuit, weather and positions (Android tablet, portrait) for the screen further down |
 | Drivers | Drivers (laptop) | Drivers (Android tablet, portrait) |
 | Driver page, any driver (opened from Drivers) | Driver page, any driver (laptop) | Driver page, any driver (Android tablet, portrait) |
-| Settings | Settings (laptop) | Settings (Android tablet, portrait) |
+| Settings, including "Watching on TV or later" (TV delay and spoiler-free mode) | Settings (laptop) | Settings (Android tablet, portrait) |
+| Live Timing: qualifying knockout view (Q1 to Q3 columns, drop zone and cut line, PART and CUT-OFF, OUT tags) with rain watch | Live Timing: qualifying knockout view, with rain watch (laptop) | Live Timing: qualifying (phone) |
+| Live Timing: tyre strategy chart and the four feed status pills (live, quiet, reconnecting, offline) | Live Timing: tyre strategy and feed status (laptop) | |
+| Live Timing: practice long-run pace | Live Timing: practice long-run pace (laptop) | |
+| Spoiler-free mode (Standings before Reveal, and what stays hidden) | Spoiler-free mode: Standings before Reveal (laptop) | |
+| How to use (getting started, race day, reading Live Timing, watching later, planning ahead, questions) | How to use Pit Wall (laptop) | How to use Pit Wall (phone) |
+
+Every board's header has the **?** button that opens the How to use board, as in the app. The Dashboard board also shows the **Add to calendar** button and a compact rain watch, the Calendar board the **Add remaining races to calendar** button, and the live feed boards the feed status pill and TV delay picker.
 
 There is also a "Favourite driver: where it appears" board that maps every place the favourite driver shows up in the app.
 
-The tablet boards show one screen (800 × 1280) with the bottom menu (Dashboard, Live Timing, Favourites, Standings, Calendar, Drivers). The app's tablet layout is a single scrolling column with the same sections, so some boards note what sits further down the page. Every page also has a phone board (390 × 844, titled "(phone)") in a row below the others: Dashboard, Live Timing, Favourites (Driver and Team tabs), Standings, Calendar, Drivers, Settings, Race results and the driver page. They use the compact header, the short bottom menu labels and the trimmed tables described under [Works everywhere](#works-everywhere), and their menus link to each other.
+The tablet boards show one screen (800 × 1280) with the bottom menu (Dashboard, Live Timing, Favourites, Standings, Calendar, Drivers). The app's tablet layout is a single scrolling column with the same sections, so some boards note what sits further down the page. Every page also has a phone board (390 × 844, titled "(phone)") in a row below the others: Dashboard, Live Timing, Favourites (Driver and Team tabs), Standings, Calendar, Drivers, Settings, Race results, the driver page, Live Timing in qualifying, and How to use. They use the compact header, the short bottom menu labels and the trimmed tables described under [Works everywhere](#works-everywhere), and their menus link to each other.
 
 ## Data sources
 
@@ -389,6 +401,7 @@ npm run build
 
 - **GitHub Pages:** in the repository go to Settings, Pages, and set Source to **GitHub Actions**. The workflow in `.github/workflows/deploy.yml` runs the tests and then builds and publishes on every push to `main`; if any test fails, nothing is published and the live site stays as it was. This adds about 2 minutes to each deploy. The site is served at `https://<user>.github.io/<repo>/` (for this repository, https://sarthak125.github.io/Pit-wall/). The workflow builds with the repository's name as the path, so renaming the repository moves the site to the new address on the next deploy and the old address stops working.
 - **Netlify, Vercel or Cloudflare Pages:** build command `npm run build`, output folder `dist`.
+- **Android app:** the APK in `public/pit-wall.apk` deploys with the site. The file that lets it open without an address bar (`/.well-known/assetlinks.json`) lives in the separate [`Sarthak125.github.io`](https://github.com/Sarthak125/sarthak125.github.io) repository, which serves https://sarthak125.github.io/ and forwards the home page to Pit Wall. Building and signing new versions: [`android/README.md`](android/README.md).
 
 ## Project layout
 
