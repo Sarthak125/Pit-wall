@@ -1,23 +1,26 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
+import { Loading } from './components/States';
 import { isSessionLive } from './api/openf1';
 import { Shell } from './components/Shell';
 import { useNow } from './hooks/usePoll';
 import { useLatestSessions } from './hooks/useSeason';
-import { Calendar } from './pages/Calendar';
 import { Dashboard } from './pages/Dashboard';
-import { Drivers } from './pages/Drivers';
-import { LiveTiming } from './pages/LiveTiming';
-import { Settings } from './pages/Settings';
-import { Help } from './pages/Help';
-import { SeasonReview } from './pages/SeasonReview';
-import { Standings } from './pages/Standings';
-import { MyDriver } from './pages/MyDriver';
-import { MyTeam } from './pages/MyTeam';
-import { RaceResults } from './pages/RaceResults';
 import { Toasts } from './components/Toasts';
 import { UpdateBanner } from './components/UpdateBanner';
 import { useAlertWatcher } from './hooks/useFavourite';
 import { useRoute, useRouteParam } from './lib/router';
+
+// Pages other than the Dashboard load their code when first opened (all of it is still saved for offline use).
+const Calendar = lazy(() => import('./pages/Calendar').then((m) => ({ default: m.Calendar })));
+const Drivers = lazy(() => import('./pages/Drivers').then((m) => ({ default: m.Drivers })));
+const LiveTiming = lazy(() => import('./pages/LiveTiming').then((m) => ({ default: m.LiveTiming })));
+const Settings = lazy(() => import('./pages/Settings').then((m) => ({ default: m.Settings })));
+const Help = lazy(() => import('./pages/Help').then((m) => ({ default: m.Help })));
+const SeasonReview = lazy(() => import('./pages/SeasonReview').then((m) => ({ default: m.SeasonReview })));
+const Standings = lazy(() => import('./pages/Standings').then((m) => ({ default: m.Standings })));
+const MyDriver = lazy(() => import('./pages/MyDriver').then((m) => ({ default: m.MyDriver })));
+const MyTeam = lazy(() => import('./pages/MyTeam').then((m) => ({ default: m.MyTeam })));
+const RaceResults = lazy(() => import('./pages/RaceResults').then((m) => ({ default: m.RaceResults })));
 
 const TITLES = { dashboard: 'Dashboard', live: 'Live Timing', driver: 'My Driver', team: 'My Team', race: 'Race results', standings: 'Standings', calendar: 'Calendar', drivers: 'Drivers', settings: 'Settings', help: 'How to use', review: 'Season review' };
 
@@ -38,6 +41,7 @@ export default function App() {
   return (
     <Shell route={route} live={live}>
       {route === 'dashboard' && <Dashboard />}
+      <Suspense fallback={<Loading rows={8} />}>
       {route === 'live' && <LiveTiming />}
       {route === 'driver' && <MyDriver />}
       {route === 'team' && <MyTeam />}
@@ -48,6 +52,7 @@ export default function App() {
       {route === 'settings' && <Settings />}
       {route === 'help' && <Help />}
       {route === 'review' && <SeasonReview />}
+      </Suspense>
       <Toasts />
       <UpdateBanner />
     </Shell>

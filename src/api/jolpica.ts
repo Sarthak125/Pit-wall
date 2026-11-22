@@ -137,19 +137,45 @@ export async function getConstructorStandingsAt(season: string, round: number) {
   return { round, standings: list?.ConstructorStandings ?? [] };
 }
 
+
+/**
+ * How long a page of results can stay on the device. A finished season never changes, and a full page of the current
+ * season only holds rounds already run (a page fills up before the next round's rows go on the next page).
+ */
+const pastSeason = (season: string) => /^\d{4}$/.test(season) && Number(season) < new Date().getFullYear();
+type RowsPage = MR<{ RaceTable: { season?: string; Races: Array<{ Results?: unknown[]; SprintResults?: unknown[]; QualifyingResults?: unknown[] }> } }>;
+const rowCount = (d: RowsPage) =>
+  d.MRData.RaceTable.Races.reduce((n, r) => n + (r.Results?.length ?? 0) + (r.SprintResults?.length ?? 0) + (r.QualifyingResults?.length ?? 0), 0);
+function pageCache(season: string, offset: number) {
+  if (pastSeason(season)) return { cacheTtlMs: 30 * 24 * 60 * MIN };
+  // Page 0 says how many rows there are, so it is always checked again after 15 minutes.
+  if (offset === 0) return { cacheTtlMs: 15 * MIN };
+  return { cacheTtlMs: 15 * MIN, stableTtlMs: 7 * 24 * 60 * MIN, stable: (d: unknown) => rowCount(d as RowsPage) >= Number((d as RowsPage).MRData.limit || 100) };
+}
+/** Later pages must be from the same season as page 0 ("current" moves on to a new year between seasons). */
+const sameSeason = (a: RowsPage, b: RowsPage) => !a.MRData.RaceTable.season || a.MRData.RaceTable.season === b.MRData.RaceTable.season;
+
 /**
  * All race (or sprint) results of a season. The API pages results per
  * driver row (max 100), so this follows the pages and merges races.
  */
 async function getAllResults(season: string, kind: 'results' | 'sprint'): Promise<RaceWithResults[]> {
   const key = kind === 'results' ? 'Results' : 'SprintResults';
+  type Page = MR<{ RaceTable: { Races: RaceWithResults[] } }>;
+  const url = (offset: number) => `${BASE}/${season}/${kind}/?limit=100&offset=${offset}`;
+  const page = (offset: number) => fetchJson<Page>(url(offset), { limiter, ...pageCache(season, offset) });
+  // The first page says how many rows there are; the rest are requested together rather than one after another.
+  const first = await page(0);
+  const limit = Number(first.MRData.limit) || 100;
+  const total = Math.min(Number(first.MRData.total) || 0, 20 * limit);
+  const rest = await Promise.all(
+    Array.from({ length: Math.max(0, Math.ceil(total / limit) - 1) }, async (_, i) => {
+      const d = await page((i + 1) * limit);
+      return sameSeason(d, first) ? d : fetchJson<Page>(url((i + 1) * limit), { limiter });
+    }),
+  );
   const byRound = new Map<string, RaceWithResults>();
-  let offset = 0;
-  for (let page = 0; page < 20; page++) {
-    const data = await fetchJson<MR<{ RaceTable: { Races: RaceWithResults[] } }>>(
-      `${BASE}/${season}/${kind}/?limit=100&offset=${offset}`,
-      { limiter, cacheTtlMs: 15 * MIN },
-    );
+  for (const data of [first, ...rest]) {
     for (const race of data.MRData.RaceTable.Races) {
       const existing = byRound.get(race.round);
       if (existing) {
@@ -158,8 +184,6 @@ async function getAllResults(season: string, kind: 'results' | 'sprint'): Promis
         byRound.set(race.round, { ...race });
       }
     }
-    offset += Number(data.MRData.limit);
-    if (offset >= Number(data.MRData.total)) break;
   }
   return [...byRound.values()].sort((a, b) => Number(a.round) - Number(b.round));
 }
@@ -198,19 +222,24 @@ const DAY = 24 * 60 * MIN;
 export async function getQualifying(season: string, driverId?: string): Promise<RaceWithQualifying[]> {
   const path = driverId ? `${season}/drivers/${driverId}/qualifying` : `${season}/qualifying`;
   const races: RaceWithQualifying[] = [];
-  let offset = 0;
-  for (let page = 0; page < 20; page++) {
-    const data = await fetchJson<MR<{ RaceTable: { Races: RaceWithQualifying[] } }>>(`${BASE}/${path}/?limit=100&offset=${offset}`, {
-      limiter,
-      cacheTtlMs: 15 * MIN,
-    });
+  type Page = MR<{ RaceTable: { Races: RaceWithQualifying[] } }>;
+  const url = (offset: number) => `${BASE}/${path}/?limit=100&offset=${offset}`;
+  const page = (offset: number) => fetchJson<Page>(url(offset), { limiter, ...pageCache(season, offset) });
+  const first = await page(0);
+  const limit = Number(first.MRData.limit) || 100;
+  const total = Math.min(Number(first.MRData.total) || 0, 20 * limit);
+  const rest = await Promise.all(
+    Array.from({ length: Math.max(0, Math.ceil(total / limit) - 1) }, async (_, i) => {
+      const d = await page((i + 1) * limit);
+      return sameSeason(d, first) ? d : fetchJson<Page>(url((i + 1) * limit), { limiter });
+    }),
+  );
+  for (const data of [first, ...rest]) {
     for (const r of data.MRData.RaceTable.Races) {
       const existing = races.find((x) => x.round === r.round);
       if (existing) existing.QualifyingResults = [...(existing.QualifyingResults ?? []), ...(r.QualifyingResults ?? [])];
       else races.push({ ...r });
     }
-    offset += Number(data.MRData.limit);
-    if (offset >= Number(data.MRData.total)) break;
   }
   return races.sort((a, b) => Number(a.round) - Number(b.round));
 }

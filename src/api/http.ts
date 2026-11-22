@@ -69,16 +69,42 @@ interface FetchOptions {
   signal?: AbortSignal;
   /** Cache the parsed response in localStorage for this many ms. */
   cacheTtlMs?: number;
+  /**
+   * Keep a cached response this much longer when `stable` says it can no longer change (for example a full page of
+   * results from rounds already run), so past results stay on the device instead of being downloaded again.
+   */
+  stableTtlMs?: number;
+  stable?: (data: unknown) => boolean;
   retries?: number;
 }
 
 const CACHE_PREFIX = 'pitwall:cache:';
+
+/**
+ * Requests in flight, by URL. Two parts of a page asking for the same data at the same moment (for example a season's
+ * results, wanted by both the standings and the provisional check) share one request instead of each queuing for the
+ * rate limiter. Only for requests without an abort signal, so one caller giving up cannot cancel the other's.
+ */
+const inFlight = new Map<string, Promise<unknown>>();
 
 export async function fetchJson<T>(url: string, opts: FetchOptions): Promise<T> {
   if (opts.cacheTtlMs) {
     const hit = readCache<T>(url, opts.cacheTtlMs);
     if (hit !== undefined) return hit;
   }
+  if (opts.stableTtlMs && opts.stable) {
+    const kept = readCache<T>(url, opts.stableTtlMs);
+    if (kept !== undefined && opts.stable(kept)) return kept;
+  }
+  if (opts.signal) return load<T>(url, opts);
+  const pending = inFlight.get(url);
+  if (pending) return pending as Promise<T>;
+  const p = load<T>(url, opts).finally(() => inFlight.delete(url));
+  inFlight.set(url, p);
+  return p;
+}
+
+async function load<T>(url: string, opts: FetchOptions): Promise<T> {
 
   const retries = opts.retries ?? 2;
   for (let attempt = 0; ; attempt++) {
@@ -128,11 +154,35 @@ function readCache<T>(key: string, ttlMs: number): T | undefined {
 }
 
 function writeCache(key: string, data: unknown) {
+  const value = JSON.stringify({ t: Date.now(), d: data });
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      localStorage.setItem(CACHE_PREFIX + key, value);
+      return;
+    } catch {
+      // Storage full: drop the oldest half of the cached responses and try again. Caching is best effort only.
+      if (!dropOldest()) return;
+    }
+  }
+}
+
+function dropOldest(): boolean {
   try {
-    localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({ t: Date.now(), d: data }));
+    const entries = Object.keys(localStorage)
+      .filter((k) => k.startsWith(CACHE_PREFIX))
+      .map((k) => {
+        try {
+          return { k, t: Number(JSON.parse(localStorage.getItem(k) ?? '{}').t) || 0 };
+        } catch {
+          return { k, t: 0 };
+        }
+      })
+      .sort((a, b) => a.t - b.t);
+    if (!entries.length) return false;
+    entries.slice(0, Math.ceil(entries.length / 2)).forEach((e) => localStorage.removeItem(e.k));
+    return true;
   } catch {
-    // Storage full or blocked: caching is best effort only.
-    clearCache();
+    return false;
   }
 }
 
