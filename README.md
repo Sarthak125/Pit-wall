@@ -222,6 +222,7 @@ The screen designs live on a design canvas: [Pit Wall design canvas](https://cla
 | --- | --- | --- |
 | Dashboard (LIVE banner, next race, circuit map and facts, weekend forecast, last race, favourites, standings) | Dashboard (laptop) | Dashboard (Android tablet, portrait) |
 | Live Timing (timing tower with mini-sectors, tyre history, DIFF, PIT NOW, speed and pedals; championship if it ended now; track map with sector top 3; team radio cards; FIA feed; track limits and investigations panels) | Live Timing (laptop), and Live Timing before the race starts (laptop) for the starting-grid view | Live Timing (Android tablet, portrait), and Live Timing: track map and team radio (Android tablet, portrait) for the screen further down |
+| Live Timing during a live session without an OpenF1 token (timing from Formula 1's feed: note at the top, no SPEED or PEDALS columns, track map with flags and sector top 3 but no cars), and the "OpenF1 paused" notice shown if F1's feed is unavailable | Live Timing from F1's live feed (laptop), and OpenF1 paused during a live session (laptop) | Live Timing (phone) shows the feed note |
 | Favourites: Driver tab | Favourites: Driver tab (laptop) | Favourites: Driver tab (Android tablet, portrait) |
 | Favourites: Team tab | Favourites: Team tab and where the team appears | Favourites: Team tab (Android tablet, portrait) |
 | Standings | Standings (laptop) | Standings (Android tablet, portrait) |
