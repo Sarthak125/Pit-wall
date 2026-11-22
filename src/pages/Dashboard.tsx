@@ -31,7 +31,7 @@ import {
   useSchedule,
   type ProgressSeries,
 } from '../hooks/useSeason';
-import { fmtDayMonth, fmtDayTime, fmtShortClock, pad2, raceStart, splitCountdown, timeZoneLabel, toDate } from '../lib/format';
+import { fmtWeekdayDate, fmtDayMonth, fmtShortClock, pad2, raceStart, splitCountdown, timeZoneLabel, toDate } from '../lib/format';
 import { trackStatus } from '../lib/raceControl';
 import { driverHref, href, raceHref, teamHref } from '../lib/router';
 import { useSettings } from '../lib/settings';
@@ -403,7 +403,10 @@ function NextRace({ race, total }: { race: Race; total: number }) {
           return (
             <div className="item" key={s.label}>
               <div className="name">{s.label}</div>
-              <div className="when">{fmtDayTime(s.start)}</div>
+              <div className="when">
+                    <span className="when-date">{fmtWeekdayDate(s.start)}</span>
+                    <span className="when-time">{fmtShortClock(s.start)}</span>
+                  </div>
               <span className={`pill ${tone}`}>{status}</span>
             </div>
           );

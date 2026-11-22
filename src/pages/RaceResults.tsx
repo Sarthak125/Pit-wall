@@ -16,7 +16,7 @@ import { useFavourite, useFavouriteTeam } from '../hooks/useFavourite';
 import { useNow } from '../hooks/usePoll';
 import { useSchedule } from '../hooks/useSeason';
 import { isClassified } from '../lib/driverStats';
-import { fmtDayMonth, fmtDayTime, raceStart, timeZoneLabel, toDate } from '../lib/format';
+import { fmtWeekdayDate, fmtDayMonth, fmtShortClock, raceStart, timeZoneLabel, toDate } from '../lib/format';
 import { driverHref, href, raceHref, teamHref, useRouteParam } from '../lib/router';
 import { rowProps } from '../lib/rowStyle';
 import { useSettings } from '../lib/settings';
@@ -124,7 +124,10 @@ export function RaceResults() {
               .map((s) => (
                 <div className="item" key={s.label}>
                   <div className="name">{s.label}</div>
-                  <div className="when">{fmtDayTime(s.d!)}</div>
+                  <div className="when">
+                    <span className="when-date">{fmtWeekdayDate(s.d!)}</span>
+                    <span className="when-time">{fmtShortClock(s.d!)}</span>
+                  </div>
                 </div>
               ))}
           </div>

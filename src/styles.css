@@ -660,3 +660,7 @@ html { zoom: 1.1; }
 .provisional-pill { text-transform: none; letter-spacing: 0; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: #14233a; color: var(--blue-soft); font-size: 12px; font-weight: 600; white-space: nowrap; cursor: help; }
 .provisional-note { margin: 0 0 12px; padding: 10px 14px; border: 1px solid #1f3b5a; background: #0f1a26; border-radius: 10px; color: var(--muted); font-size: 13px; line-height: 1.5; }
 .provisional-note .provisional-pill { cursor: default; margin-right: 4px; }
+/* Weekend schedule: day and date over the time, in the device's time zone. */
+.sessions .when { display: flex; flex-direction: column; gap: 1px; line-height: 1.3; }
+.sessions .when-date { color: var(--muted); font-family: var(--body); font-size: 13px; }
+.sessions .when-time { color: var(--text); font-family: var(--mono); font-size: 14px; }

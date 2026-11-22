@@ -20,6 +20,9 @@ const shortClock = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute:
 
 export const fmtDayTime = (d: Date) => dayTime.format(d);
 export const fmtDayMonth = (d: Date) => dayMonth.format(d);
+const weekday = new Intl.DateTimeFormat(undefined, { weekday: 'short' });
+/** Weekday and date in the device's time zone, for session schedules: "Fri 27 Nov". */
+export const fmtWeekdayDate = (d: Date) => `${weekday.format(d)} ${dayMonth.format(d)}`;
 export const fmtClock = (d: Date) => clock.format(d);
 export const fmtShortClock = (d: Date) => shortClock.format(d);
 
