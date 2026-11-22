@@ -534,3 +534,14 @@ html { zoom: 1.1; }
 .drs { display: inline-block; margin-right: 6px; padding: 1px 5px; border-radius: 4px; font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.5px; vertical-align: middle; }
 .drs.open { background: var(--green); color: #06210f; }
 .drs.eligible { border: 1px solid var(--green); color: var(--green); }
+
+/* Title fight chart */
+.pc-axis text { font-family: var(--mono); font-size: 11px; fill: var(--faint); }
+.pc-grid { stroke: #1f242c; }
+.pc-base { stroke: #2a303a; }
+.pc-cross { stroke: #4a5260; stroke-dasharray: 3 3; }
+.pc-label { font-family: var(--mono); font-size: 12px; font-weight: 700; fill: var(--text); }
+.pc-label-v { font-weight: 500; fill: var(--muted); }
+.pc-tip-row { display: grid; grid-template-columns: 10px 34px 36px auto; align-items: center; gap: 6px; font-size: 12px; }
+.pc-tip-row i { width: 10px; height: 3px; border-radius: 2px; display: block; }
+.pc-tip-row .muted { text-align: right; }

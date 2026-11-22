@@ -80,13 +80,20 @@ export function Dashboard() {
     const prog = pointsProgression(results.data.races, results.data.sprints, top.map((d) => d.Driver.driverId));
     const used = new Set<string>();
     return top.map((d) => {
-      let colour = teamColour(d.Constructors[0]?.constructorId ?? d.Constructors[0]?.name);
-      // Team-mates share a colour; lighten the second one so the lines differ.
-      if (used.has(colour)) colour = `color-mix(in srgb, ${colour} 45%, white)`;
+      const colour = teamColour(d.Constructors[0]?.constructorId ?? d.Constructors[0]?.name);
+      // Team-mates share their team colour; the second car's line is dashed, as in the other charts.
+      const dashed = used.has(colour);
       used.add(colour);
-      return { driverId: d.Driver.driverId, code: d.Driver.code ?? d.Driver.familyName.slice(0, 3).toUpperCase(), colour, points: prog.get(d.Driver.driverId) ?? [] };
+      return { driverId: d.Driver.driverId, code: d.Driver.code ?? d.Driver.familyName.slice(0, 3).toUpperCase(), colour, dashed, points: prog.get(d.Driver.driverId) ?? [] };
     });
   }, [drivers.data, results.data, fav]);
+
+  // Short race names for the chart's tooltip, by round.
+  const roundNames = useMemo(() => {
+    const names: string[] = [];
+    for (const r of results.data?.races ?? []) names[Number(r.round) - 1] = r.raceName.replace(/ Grand Prix$/, '');
+    return names;
+  }, [results.data]);
 
   const leaderPts = Number(drivers.data?.standings[0]?.points ?? 0);
   const topTeamPts = Number(teams.data?.standings[0]?.points ?? 0) || 1;
@@ -262,14 +269,14 @@ export function Dashboard() {
             <div className="legend">
               {series.map((s) => (
                 <span key={s.driverId}>
-                  <span style={{ width: 14, height: 3, background: s.colour, display: 'inline-block' }} />
+                  <svg width="18" height="8" aria-hidden="true"><line x1="0" y1="4" x2="18" y2="4" stroke={s.colour} strokeWidth="2.5" strokeDasharray={s.dashed ? '4 3' : undefined} /></svg>
                   {s.code}
                 </span>
               ))}
             </div>
           </div>
           {results.error ? <ErrorBox error={results.error} what="race results" /> : results.isLoading || drivers.isLoading ? <Loading rows={6} /> : series.length ? (
-            <PointsChart series={series} />
+            <PointsChart series={series} favCode={fav?.code} roundNames={roundNames} />
           ) : (
             <Empty>The chart appears after the first race.</Empty>
           )}

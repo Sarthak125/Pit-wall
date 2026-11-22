@@ -50,6 +50,8 @@ export interface ProgressSeries {
   colour: string;
   /** Cumulative points after each round, index 0 = before round 1. */
   points: number[];
+  /** Second car of a team: drawn dashed in the team colour. */
+  dashed?: boolean;
 }
 
 /** Cumulative points (races plus sprints) per round for the given drivers. */
