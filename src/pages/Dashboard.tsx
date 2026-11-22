@@ -1,4 +1,6 @@
 import type React from 'react';
+import { useLiveFeedSession } from '../hooks/useLiveFeed';
+import { feedMessages, feedWeather } from '../lib/f1adapter';
 import { useMemo } from 'react';
 import { LiveNowBanner, NextRaceCircuit } from '../components/DashboardExtras';
 import { WeekendWeather } from '../components/WeekendWeather';
@@ -413,13 +415,16 @@ function FastestLap({ results }: { results: { FastestLap?: { rank?: string; Time
 /** Weather and track status from the most recent OpenF1 session. */
 function Conditions() {
   const sessions = useLatestSessions();
+  // While OpenF1 is paused for a live session, weather and flags come from F1's own feed.
+  const { feed, session: feedSess } = useLiveFeedSession();
   const now = useNow(60_000);
   const current: Session | undefined = useMemo(() => {
-    const list = sessions.data ?? [];
+    const list = sessions.data?.length ? sessions.data : feedSess ? [feedSess] : [];
     return list.find((s) => isSessionLive(s, now)) ?? [...list].reverse().find((s) => Date.parse(s.date_start) <= now);
-  }, [sessions.data, now]);
+  }, [sessions.data, feedSess, now]);
   const live = current ? isSessionLive(current, now) : false;
-  const sk = current?.session_key;
+  const useFeed = !!feed && !!feedSess && feedSess.session_key === current?.session_key;
+  const sk = useFeed ? undefined : current?.session_key;
 
   const weather = useQuery({
     queryKey: ['wx', sk],
@@ -437,8 +442,8 @@ function Conditions() {
     queryFn: () => openf1<RaceControlMsg>('race_control', { session_key: sk }),
     refetchInterval: 30_000,
   });
-  const status = live ? trackStatus(rc.data ?? []) : null;
-  const w = weather.data;
+  const status = live ? trackStatus(useFeed ? feedMessages(feed!) : (rc.data ?? [])) : null;
+  const w = useFeed ? feedWeather(feed!) ?? null : weather.data;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%' }}>
@@ -455,9 +460,9 @@ function Conditions() {
           <span className="pill tone-grey">No session running</span>
         )}
       </div>
-      {sessions.error ? (
+      {sessions.error && !useFeed ? (
         <ErrorBox error={sessions.error} what="session data" />
-      ) : sessions.isLoading || weather.isLoading ? (
+      ) : !useFeed && (sessions.isLoading || weather.isLoading) ? (
         <Loading rows={3} />
       ) : w ? (
         <div className="stat-grid">

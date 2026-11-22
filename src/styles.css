@@ -529,3 +529,5 @@ html { zoom: 1.1; }
 .of1-blocked-list { margin: 10px 0 0; padding-left: 18px; color: var(--muted); line-height: 1.7; }
 .of1-blocked.compact { padding: 10px 12px; border: 1px solid #5a4a12; border-radius: 10px; color: var(--muted); font-size: 13px; line-height: 1.5; }
 .of1-blocked.compact strong { color: var(--amber); }
+.feed-note { margin-bottom: 12px; padding: 10px 14px; border: 1px solid #1f3b5a; background: #0f1a26; border-radius: 10px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.feed-note strong { color: #8ab8ff; }

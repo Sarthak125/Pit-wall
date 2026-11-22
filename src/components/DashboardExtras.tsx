@@ -1,3 +1,4 @@
+import { useLiveFeedSession } from '../hooks/useLiveFeed';
 import { ErrorBox } from './States';
 import { OpenF1BlockedError } from '../lib/openf1Window';
 import { useQuery } from '@tanstack/react-query';
@@ -14,8 +15,9 @@ import { TrackOutline } from './TrackOutline';
 /** A banner while any session of the current weekend is running, linking to Live Timing. */
 export function LiveNowBanner() {
   const sessions = useLatestSessions();
+  const fromFeed = useLiveFeedSession().session;
   const now = useNow(1000);
-  const live = (sessions.data ?? []).find((s) => isSessionLive(s, now));
+  const live = [...(sessions.data ?? []), ...(fromFeed ? [fromFeed] : [])].find((s) => isSessionLive(s, now));
   if (!live) return null;
   const started = now >= Date.parse(live.date_start);
   return (

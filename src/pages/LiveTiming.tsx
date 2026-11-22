@@ -38,14 +38,22 @@ import type React from 'react';
 import { ingestFavourite } from '../lib/alerts';
 import { useOpenF1Blocked } from '../lib/openf1Window';
 import { OpenF1BlockedNotice } from '../components/OpenF1Blocked';
+import { activeWindow } from '../lib/openf1Window';
+import { useF1Feed } from '../api/f1live';
+import { feedSession } from '../lib/f1adapter';
+import { getSettings } from '../lib/settings';
 
 export function LiveTiming() {
   const sessions = useLatestSessions();
   const blocked = useOpenF1Blocked();
   const now = useNow(1000);
   const [picked, setPicked] = useState<number | null>(null);
+  // While a session's live window is open (and OpenF1 is paused for free users), F1's own feed names the session.
+  const feedOn = !getSettings().openf1Token.trim() && !!activeWindow(now, 60 * 60_000);
+  const feed = useF1Feed(feedOn);
+  const feedSess = feedSession(feed);
 
-  const list = sessions.data ?? [];
+  const list = sessions.data?.length ? sessions.data : feedSess ? [feedSess] : [];
   const defaultSession = list.find((s) => isSessionLive(s, now)) ?? [...list].reverse().find((s) => Date.parse(s.date_start) <= now) ?? list[0];
   const session = list.find((s) => s.session_key === picked) ?? defaultSession;
   const live = session ? isSessionLive(session, now) : false;
@@ -89,21 +97,26 @@ export function LiveTiming() {
     queryFn: () => getCircuitLaps(round!.Circuit.circuitId, isSprint),
   });
 
-  if (blocked) return <OpenF1BlockedNotice w={blocked} />;
-  if (sessions.error) return <ErrorBox error={sessions.error} what="the session list" />;
-  if (sessions.isLoading) return <Loading rows={10} />;
+  if (blocked && !feedSess) return feed?.status === 'connecting' ? <Loading rows={10} /> : <OpenF1BlockedNotice w={blocked} />;
+  if (sessions.error && !feedSess) return <ErrorBox error={sessions.error} what="the session list" />;
+  if (sessions.isLoading && !feedSess) return <Loading rows={10} />;
   if (!session) return <Empty>No sessions found on OpenF1 yet.</Empty>;
 
   const start = Date.parse(session.date_start);
   const elapsed = live ? now - start : Date.parse(session.date_end) - start;
   const remaining = Math.max(0, Date.parse(session.date_end) - now);
   const upcoming = now < start;
-  const total = planned.data?.laps;
+  const total = t.totalLaps ?? planned.data?.laps;
   const wx = t.weather;
   const compass = (deg: number) => ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(((deg % 360) + 360) % 360 / 45) % 8];
 
   return (
     <>
+      {t.source === 'f1' && (
+        <div className="feed-note" role="note">
+          <strong>Live timing straight from Formula 1's feed.</strong> OpenF1 is paused for free users during live sessions, so this page reads F1's own timing instead. Live car positions on the track map, car speed and pit stop times need an F1 TV subscription; they fill in from OpenF1 about 30 minutes after the session.
+        </div>
+      )}
       <section className="card session-bar" aria-label="Session">
         {live ? (
           <span className="pill tone-solid" style={{ borderRadius: 6, padding: '6px 12px', fontSize: 12, letterSpacing: 1 }}>
@@ -136,7 +149,7 @@ export function LiveTiming() {
           </label>
         </div>
         <div className="metrics">
-          <div className="metric" title={total ? `Planned distance: ${total} laps, as run in the ${planned.data!.season} ${isSprint ? 'sprint' : 'race'} here` : undefined}>
+          <div className="metric" title={total ? (t.totalLaps ? `Race distance: ${total} laps (from F1's live timing)` : `Planned distance: ${total} laps, as run in the ${planned.data?.season ?? 'last'} ${isSprint ? 'sprint' : 'race'} here`) : undefined}>
             <div className="l">LAP</div>
             <div className="v">
               {t.currentLap || '-'}
@@ -222,7 +235,7 @@ export function LiveTiming() {
             </div>
           </div>
           {t.loading ? <Loading rows={12} /> : t.rows.length === 0 ? <Empty>No timing data for this session yet.</Empty> : (
-            <TimingTable rows={t.rows} isRace={isRace} live={live} upcoming={upcoming} fastest={t.fastest} favNum={favNum} team={favTeam} pitLoss={pitLoss} neutral={status?.label === 'Safety car' ? 'sc' : status?.label === 'Virtual safety car' ? 'vsc' : null} />
+            <TimingTable rows={t.rows} isRace={isRace} live={live} upcoming={upcoming} fastest={t.fastest} favNum={favNum} team={favTeam} pitLoss={pitLoss} noCarData={t.source === 'f1'} neutral={status?.label === 'Safety car' ? 'sc' : status?.label === 'Virtual safety car' ? 'vsc' : null} />
           )}
         </section>
       </div>
@@ -253,10 +266,10 @@ export function LiveTiming() {
             <span><i className="sw" style={{ background: 'var(--accent)' }} />Red flag</span>
           </div>
         </div>
-        <LiveTrackMap session={session} live={live} drivers={[...t.driversByNumber.values()]} messages={t.messages} laps={t.laps} favNum={favNum} teamNums={teamNums} />
+        <LiveTrackMap session={session} live={live} drivers={[...t.driversByNumber.values()]} messages={t.messages} laps={t.laps} favNum={favNum} teamNums={teamNums} noPositions={t.source === 'f1'} />
       </section>
 
-      <RadioPanel session={session} live={live} drivers={t.driversByNumber} favNum={favNum} teamNums={teamNums} laps={t.laps} />
+      <RadioPanel session={session} live={live} drivers={t.driversByNumber} favNum={favNum} teamNums={teamNums} laps={t.laps} feedClips={t.source === 'f1' ? t.radio : null} />
       <FiaSection messages={t.messages} drivers={t.driversByNumber} favNum={favNum} team={favTeam} teamNums={teamNums} isRace={isRace} />
       <Footer />
     </>
@@ -285,7 +298,7 @@ function Segments({ segs }: { segs: (number | null)[] | null | undefined }) {
   );
 }
 
-function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitLoss, neutral }: { rows: TimingRow[]; isRace: boolean; live: boolean; upcoming: boolean; fastest: number | null; favNum: number | null; team: FavouriteTeam | null; pitLoss?: { normal?: string; sc?: string; vsc?: string }; neutral: 'sc' | 'vsc' | null }) {
+function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitLoss, neutral, noCarData = false }: { rows: TimingRow[]; isRace: boolean; live: boolean; upcoming: boolean; fastest: number | null; favNum: number | null; team: FavouriteTeam | null; pitLoss?: { normal?: string; sc?: string; vsc?: string }; neutral: 'sc' | 'vsc' | null; noCarData?: boolean }) {
   // Where each car would rejoin if it pitted now: its gap to the leader plus the pit loss, placed among the other
   // cars' gaps. Under a safety car or VSC the field is slower, so the smaller neutralised loss applies.
   const loss = Number((neutral === 'sc' ? pitLoss?.sc : neutral === 'vsc' ? pitLoss?.vsc : pitLoss?.normal) ?? NaN);
@@ -321,8 +334,8 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitL
             <th>TYRES</th>
             {isRace && <th className="r" title="Places gained or lost against the starting grid">DIFF</th>}
             {showPit && <th title={`Where the car would rejoin if it pitted now (pit loss ${loss.toFixed(1)} s${neutral ? ` under ${neutral === 'sc' ? 'safety car' : 'VSC'}` : ''}). Lapped cars are left out.`}>PIT NOW</th>}
-            <th className="r" title="Current speed. Shows 0 when there is no live data.">SPEED</th>
-            <th>PEDALS</th>
+            {!noCarData && <th className="r" title="Current speed. Shows 0 when there is no live data.">SPEED</th>}
+            {!noCarData && <th>PEDALS</th>}
           </tr>
         </thead>
         <tbody>
@@ -417,13 +430,15 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitL
                     })()}
                   </td>
                 )}
-                <td className="r mono">{speed}<span className="faint" style={{ fontSize: 11 }}> km/h</span></td>
-                <td>
-                  <div className="pedals" title={tel ? `Throttle ${tel.throttle}%, brake ${tel.brake ? 'on' : 'off'}` : 'No live car data'}>
-                    <i className="thr"><b style={{ width: `${Math.max(0, Math.min(100, tel?.throttle ?? 0))}%` }} /></i>
-                    <i className="brk"><b style={{ width: `${tel?.brake ? 100 : 0}%` }} /></i>
-                  </div>
-                </td>
+                {!noCarData && <td className="r mono">{speed}<span className="faint" style={{ fontSize: 11 }}> km/h</span></td>}
+                {!noCarData && (
+                  <td>
+                    <div className="pedals" title={tel ? `Throttle ${tel.throttle}%, brake ${tel.brake ? 'on' : 'off'}` : 'No live car data'}>
+                      <i className="thr"><b style={{ width: `${Math.max(0, Math.min(100, tel?.throttle ?? 0))}%` }} /></i>
+                      <i className="brk"><b style={{ width: `${tel?.brake ? 100 : 0}%` }} /></i>
+                    </div>
+                  </td>
+                )}
               </tr>
             );
           })}
@@ -568,10 +583,12 @@ function FiaSection({ messages, drivers, favNum, team, teamNums, isRace }: { mes
 }
 
 /** Team radio for the whole session. */
-function RadioPanel({ session, live, drivers, favNum, teamNums, laps }: { session: Session; live: boolean; drivers: Map<number, OF1Driver>; favNum: number | null; teamNums: number[]; laps: Lap[] }) {
+function RadioPanel({ session, live, drivers, favNum, teamNums, laps, feedClips }: { session: Session; live: boolean; drivers: Map<number, OF1Driver>; favNum: number | null; teamNums: number[]; laps: Lap[]; feedClips: TeamRadio[] | null }) {
   const sk = session.session_key;
   const [who, setWho] = useState<number>(0);
-  const radio = usePoll<TeamRadio[]>(`radio-all-${sk}-${live}`, (_p, signal) => openf1<TeamRadio>('team_radio', { session_key: sk }, signal), live ? liveEvery(60_000) : 0, 1_500);
+  const polled = usePoll<TeamRadio[]>(feedClips ? null : `radio-all-${sk}-${live}`, (_p, signal) => openf1<TeamRadio>('team_radio', { session_key: sk }, signal), live ? liveEvery(60_000) : 0, 1_500);
+  // From F1's live feed while OpenF1 is paused.
+  const radio = feedClips ? { data: feedClips, error: null, loading: false } : polled;
   const labels = new Map<number, DriverLabel>([...drivers.values()].map((d) => [d.driver_number, { code: d.name_acronym, colour: teamColour(d.team_name, d.team_colour) }]));
   const clips = (radio.data ?? []).filter((c) => (who === -1 ? teamNums.includes(c.driver_number) : who ? c.driver_number === who : true));
   const withRadio = [...new Set((radio.data ?? []).map((c) => c.driver_number))].sort((a, b) => (labels.get(a)?.code ?? '').localeCompare(labels.get(b)?.code ?? ''));

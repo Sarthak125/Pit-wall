@@ -26,10 +26,12 @@ interface Props {
   laps: Lap[];
   favNum: number | null;
   teamNums: number[];
+  /** Live car positions are not available (F1's free feed does not carry them): show the map without cars. */
+  noPositions?: boolean;
 }
 
 /** Whole-field track map: circuit outline with turn numbers, flagged sectors and every car moving. */
-export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, teamNums }: Props) {
+export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, teamNums, noPositions = false }: Props) {
   const [showSectors, setShowSectors] = useState(true);
   const circuit = useQuery({
     queryKey: ['circuit', session.circuit_key, session.year],
@@ -117,7 +119,7 @@ export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, t
     };
     // Nothing to show before the session starts. Otherwise wait a moment, so the timing tower's requests go first
     // and quickly flicking through sessions does not spend the request budget on car positions.
-    if (!live && Date.now() < start) return () => { cancelled = true; };
+    if ((!live && Date.now() < start) || noPositions) return () => { cancelled = true; };
     let id: ReturnType<typeof setInterval> | undefined;
     const first = setTimeout(() => {
       tick();
@@ -129,7 +131,7 @@ export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, t
       clearTimeout(first);
       clearInterval(id);
     };
-  }, [session.session_key, live, start, end, speed]);
+  }, [session.session_key, live, start, end, speed, noPositions]);
 
   // Advance the clock every animation frame.
   useEffect(() => {
@@ -175,7 +177,7 @@ export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, t
     .sort((a, b) => a.lap_duration! - b.lap_duration!)[0];
   const bounds = useQuery({
     queryKey: ['sector-bounds', session.session_key],
-    enabled: !!refLap,
+    enabled: !!refLap && !noPositions,
     staleTime: Infinity,
     // Live, OpenF1's position data can lag a little behind the lap times. Keep trying until the sector lines are found.
     refetchInterval: (q: { state: { status: string } }) => (q.state.status === 'error' ? 30_000 : false),
@@ -321,7 +323,7 @@ export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, t
       <div className="tmap-bar">
         {live ? (
           <span className="muted">
-            <span className="dot live-dot on" /> Live, about {Math.round((liveEvery(LIVE_POLL_MS) + 3_000) / 1000)} s behind · {fmtClock(new Date(head))}
+            <span className="dot live-dot on" /> {noPositions ? 'Live flags and sector times' : `Live, about ${Math.round((liveEvery(LIVE_POLL_MS) + 3_000) / 1000)} s behind · ${fmtClock(new Date(head))}`}
           </span>
         ) : (
           <>
@@ -347,9 +349,10 @@ export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, t
           </>
         )}
         {loading && cars.length === 0 && <span className="faint">Loading positions…</span>}
-        {error && <span style={{ color: 'var(--amber)' }}>Positions: {error}</span>}
+        {error && !noPositions && <span style={{ color: 'var(--amber)' }}>Positions: {error}</span>}
+        {noPositions && <span className="faint">Live car positions need an F1 TV subscription; they appear about 30 minutes after the session. Flags and sector times are live.</span>}
         <button className="tab" aria-pressed={showSectors} onClick={() => setShowSectors(!showSectors)} style={{ marginLeft: 'auto' }}>Sectors</button>
-        <span className="faint">Layout: MultiViewer · Positions: OpenF1</span>
+        <span className="faint">Layout: MultiViewer · {noPositions ? 'Timing: Formula 1 live timing' : 'Positions: OpenF1'}</span>
       </div>
     </div>
   );

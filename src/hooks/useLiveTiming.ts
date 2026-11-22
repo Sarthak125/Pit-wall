@@ -10,6 +10,7 @@ import {
   type Position,
   type RaceControlMsg,
   type Session,
+  type TeamRadio,
   type Stint,
   type Weather,
   getStartingGrid,
@@ -19,6 +20,9 @@ import {
 import { classify, type ClassifiedMsg } from '../lib/raceControl';
 import { teamColour } from '../lib/teams';
 import { usePoll } from './usePoll';
+import { useF1Feed } from '../api/f1live';
+import { feedDrivers, feedLaps, feedMessages, feedProgress, feedRadio, feedRows, feedWeather } from '../lib/f1adapter';
+import { getSettings } from '../lib/settings';
 import { useQuery } from '@tanstack/react-query';
 
 /**
@@ -105,7 +109,10 @@ function pitStatus(mine: Lap[], pits: Pit[], t: number): TimingRow['status'] {
 }
 
 export function useLiveTiming(session: Session | undefined, live: boolean, carDriver: number | null) {
-  const sk = session?.session_key;
+  // During a live session without an OpenF1 token, read F1's own live timing feed instead (see api/f1live).
+  const feed = useF1Feed(live && !getSettings().openf1Token.trim());
+  const fromFeed = !!feed && feed.status === 'live' && Number(feed.state.SessionInfo?.Key) === session?.session_key;
+  const sk = fromFeed ? undefined : session?.session_key;
   const every = (ms: number) => (live ? liveEvery(ms) : 0);
   const endMs = session ? Date.parse(session.date_end) : 0;
 
@@ -154,7 +161,7 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
   const isRaceSession = /race|sprint/i.test(session?.session_name ?? '') && !/qualifying|shootout/i.test(session?.session_name ?? '');
   const grid = useQuery({
     queryKey: ['grid', sk],
-    enabled: !!session && isRaceSession,
+    enabled: !!sk && !!session && isRaceSession,
     // Refreshed every few minutes before the start, in case the official grid (with penalties) is published late.
     staleTime: 5 * 60_000,
     refetchInterval: 5 * 60_000,
@@ -273,7 +280,39 @@ export function useLiveTiming(session: Session | undefined, live: boolean, carDr
   const loading = drivers.loading || positions.loading;
   const updatedAt = Math.max(positions.updatedAt ?? 0, laps.updatedAt ?? 0, raceControl.updatedAt ?? 0) || null;
 
+  const fromF1 = useMemo(() => {
+    if (!fromFeed || !feed) return null;
+    const feedRowsList = feedRows(feed, isRaceSession);
+    const progress = feedProgress(feed);
+    const best = feedRowsList.reduce<number | null>((m, r) => (r.bestLap != null && (m == null || r.bestLap < m) ? r.bestLap : m), null);
+    const drivers = feedDrivers(feed);
+    return {
+      rows: feedRowsList,
+      messages: feedMessages(feed).map(classify).reverse(),
+      stints: feedRowsList.flatMap((r) => r.stints),
+      weather: feedWeather(feed),
+      car: null,
+      currentLap: progress.lap ?? feedRowsList.reduce((m, r) => Math.max(m, r.lapsDone), 0),
+      fastest: best,
+      loading: false,
+      error: null,
+      updatedAt: feed.updatedAt,
+      driversByNumber: new Map(drivers.map((d) => [d.driver_number, d])),
+      laps: feedLaps(feed),
+      pits: [] as PitDetail[],
+      source: 'f1' as const,
+      radio: feedRadio(feed),
+      totalLaps: progress.total,
+      remaining: progress.remaining,
+    };
+  }, [fromFeed, feed, isRaceSession]);
+  if (fromF1) return fromF1;
+
   return {
+    source: 'openf1' as const,
+    radio: null as TeamRadio[] | null,
+    totalLaps: null as number | null,
+    remaining: null as string | null,
     rows,
     messages,
     stints: stints.data ?? [],
