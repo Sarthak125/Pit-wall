@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { clearCache } from '../api/http';
 import { Footer } from '../components/Shell';
 import { timeZoneLabel } from '../lib/format';
+import { applyTheme, type ThemeChoice } from '../lib/theme';
 import { setFavorite, setFavoriteTeam, updateSettings, useSettings } from '../lib/settings';
 import { useConstructorStandings, useDriverStandings } from '../hooks/useSeason';
 
@@ -62,6 +63,7 @@ export function Settings() {
       </section>
       <FavouriteSettings />
       <WatchingLater />
+      <Appearance />
       <section className="card">
         <h2 className="h2 sm" style={{ marginBottom: 8 }}>About</h2>
         <p className="muted" style={{ margin: 0, lineHeight: 1.6 }}>
@@ -211,6 +213,30 @@ function WatchingLater() {
             )}
           </span>
         </label>
+      </div>
+    </section>
+  );
+}
+
+/** Dark, light, or follow the device. */
+function Appearance() {
+  const s = useSettings();
+  const options: [ThemeChoice, string][] = [['dark', 'Dark'], ['light', 'Light'], ['auto', 'Auto']];
+  return (
+    <section className="card">
+      <h2 className="h2 sm" style={{ marginBottom: 16 }}>Appearance</h2>
+      <div className="form">
+        <div>
+          <div id="theme-label">Theme</div>
+          <span className="hint">Auto follows your device's light or dark setting. Track maps stay dark either way. Saved on this device only.</span>
+          <div className="tabs" role="radiogroup" aria-labelledby="theme-label" style={{ marginTop: 8, marginBottom: 0 }}>
+            {options.map(([v, label]) => (
+              <button key={v} role="radio" className="tab" aria-checked={s.theme === v} onClick={() => { updateSettings({ theme: v }); applyTheme(v); }}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

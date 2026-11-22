@@ -9,6 +9,7 @@ import { Toasts } from './components/Toasts';
 import { UpdateBanner } from './components/UpdateBanner';
 import { useAlertWatcher } from './hooks/useFavourite';
 import { useRoute, useRouteParam } from './lib/router';
+import { useResolvedTheme } from './lib/theme';
 
 // Pages other than the Dashboard load their code when first opened (all of it is still saved for offline use).
 const Calendar = lazy(() => import('./pages/Calendar').then((m) => ({ default: m.Calendar })));
@@ -32,6 +33,8 @@ export default function App() {
   const live = (sessions.data ?? []).some((s) => isSessionLive(s, now));
   // Live Timing and My Driver feed alerts from their own data; elsewhere a light watcher does.
   useAlertWatcher(route !== 'live' && route !== 'driver');
+  // Charts read some colours (such as the hard tyre) when drawn, so the page is redrawn when the theme changes.
+  const theme = useResolvedTheme();
 
   useEffect(() => {
     document.title = `${TITLES[route]} · Pit Wall`;
@@ -40,8 +43,9 @@ export default function App() {
 
   return (
     <Shell route={route} live={live}>
+      {/* One boundary keyed by page, so a page still loading never leaves the previous one on screen. */}
+      <Suspense fallback={<Loading rows={8} />} key={`${route}:${theme}`}>
       {route === 'dashboard' && <Dashboard />}
-      <Suspense fallback={<Loading rows={8} />}>
       {route === 'live' && <LiveTiming />}
       {route === 'driver' && <MyDriver />}
       {route === 'team' && <MyTeam />}

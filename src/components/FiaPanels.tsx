@@ -32,9 +32,9 @@ export function TrackLimitsPanel({ limits, penalties, drivers, isRace, favNum }:
   const cells = Math.max(4, ...limits.map((l) => l.deleted));
   const tone = (k: number, l: LimitsSummary) => {
     if (k >= l.deleted) return 'var(--line-soft)';
-    if (!isRace) return '#8B93A1';
+    if (!isRace) return 'var(--faint)';
     // In races, repeated offences lead to a warning flag and then a penalty, so the bar warms up as they add up.
-    return l.deleted >= 4 ? '#F87171' : l.deleted === 3 ? 'var(--amber)' : '#8B93A1';
+    return l.deleted >= 4 ? 'var(--down)' : l.deleted === 3 ? 'var(--amber)' : 'var(--faint)';
   };
   return (
     <section className="card tight" aria-labelledby="limits">

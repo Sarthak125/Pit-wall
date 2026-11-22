@@ -27,10 +27,12 @@ export interface Settings {
   spoilerFree: boolean;
   /** Race weekend (season-round) whose results were revealed in spoiler-free mode. */
   revealed: string;
+  /** Colours: dark (default), light, or auto to follow the device. */
+  theme: 'dark' | 'light' | 'auto';
 }
 
 const KEY = 'pitwall:settings';
-const DEFAULTS: Settings = { openf1Token: '', openf1PerMinute: 30, season: 'current', favoriteDriver: '', favoriteName: '', alertsEnabled: true, systemNotifications: false, trackMap: false, favoriteTeam: '', favoriteTeamName: '', liveDelay: 0, spoilerFree: false, revealed: '' };
+const DEFAULTS: Settings = { openf1Token: '', openf1PerMinute: 30, season: 'current', favoriteDriver: '', favoriteName: '', alertsEnabled: true, systemNotifications: false, trackMap: false, favoriteTeam: '', favoriteTeamName: '', liveDelay: 0, spoilerFree: false, revealed: '', theme: 'dark' };
 
 let current: Settings = load();
 const listeners = new Set<() => void>();
@@ -56,6 +58,12 @@ export function updateSettings(patch: Partial<Settings>) {
     // Settings still apply for this visit.
   }
   listeners.forEach((l) => l());
+}
+
+/** Called after every settings change; returns a function that stops it. */
+export function subscribe(cb: () => void): () => void {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
 }
 
 export function useSettings(): Settings {

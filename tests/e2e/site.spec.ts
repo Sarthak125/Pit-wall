@@ -15,6 +15,10 @@ async function setUp(page: Page, at = AFTER_RACE, settings?: object) {
   await page.routeFromHAR(HAR, { url: APIS, notFound: 'abort' });
   // Practice 3, recorded separately; tried first, anything it lacks falls through to the main recording.
   await page.routeFromHAR(PRACTICE_HAR, { url: /api\.openf1\.org/, notFound: 'fallback' });
+  // Standings after round 20, which the provisional Las Vegas results build on (asked for after the recording was made).
+  for (const kind of ['driverstandings', 'constructorstandings']) {
+    await page.route(`https://api.jolpi.ca/ergast/f1/current/20/${kind}/?limit=100`, (r) => r.fulfill({ path: `tests/fixtures/r20-${kind}.json`, headers: { 'access-control-allow-origin': '*' } }));
+  }
   return errors;
 }
 
@@ -189,5 +193,64 @@ test('the season review shows highlights, drivers, team-mate battles and teams',
   await expect(page.locator('.review-tiles')).toContainText('Different winners');
   await expect(page.locator('.review-tbl').first().locator('tbody tr')).toHaveCount(25, { timeout: 30_000 });
   await expect(page.locator('.review-battle')).toHaveCount(11);
+  expect(errors).toEqual([]);
+});
+
+test('moving between pages shows only the new page', async ({ page }) => {
+  const errors = await setUp(page);
+  await page.goto('#/');
+  await expect(page.locator('.champions')).toBeVisible({ timeout: 30_000 });
+  await page.evaluate(() => (location.hash = '#/settings'));
+  await expect(page.locator('main h1')).toHaveText('Settings');
+  await expect(page.locator('.champions')).toHaveCount(0);
+  await page.evaluate(() => (location.hash = '#/calendar'));
+  await expect(page.locator('main h2', { hasText: 'Appearance' })).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('a race page tells the race story', async ({ page }) => {
+  const errors = await setUp(page);
+  await page.goto('#/race/21');
+  const story = page.locator('.story');
+  await expect(story).toContainText('Max Verstappen leads away from pole', { timeout: 60_000 });
+  await expect(story).toContainText('Battle for the lead: George Russell and Max Verstappen');
+  await expect(story).toContainText('Laps 19 to 25');
+  await expect(story).toContainText('+10s for Lewis Hamilton');
+  await expect(story).toContainText('Max Verstappen wins');
+  const before = await story.locator('li').count();
+  await page.getByRole('button', { name: /Show all pit stops/ }).click();
+  expect(await story.locator('li').count()).toBeGreaterThan(before);
+  expect(errors).toEqual([]);
+});
+
+test('lap times of two drivers can be compared in the race', async ({ page }) => {
+  const errors = await setUp(page);
+  await page.goto('#/race/21');
+  const card = page.locator('section:has(#lapcmp)');
+  await expect(card.locator('svg[role=img]')).toBeVisible({ timeout: 60_000 });
+  await expect(card.getByRole('tab', { name: 'Race' })).toHaveAttribute('aria-selected', 'true');
+  await expect(card.locator('select').first()).toHaveValue('3');
+  await expect(card.locator('select').nth(1)).toHaveValue('1');
+  await expect(card).toContainText('a lap quicker on average');
+  await card.locator('select').nth(1).selectOption('81');
+  await expect(card).toContainText('PIA');
+  await card.getByRole('button', { name: 'Show laps as a table' }).click();
+  await expect(card.locator('table tbody tr')).toHaveCount(50);
+  await noSidewaysScroll(page);
+  expect(errors).toEqual([]);
+});
+
+test('the light theme can be picked in Settings and is kept', async ({ page }) => {
+  const errors = await setUp(page);
+  await page.goto('#/settings');
+  const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  expect(await bg()).toBe('rgb(11, 13, 16)');
+  await page.getByRole('radio', { name: 'Light' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-resolved-theme', 'light');
+  expect(await bg()).toBe('rgb(244, 245, 247)');
+  await page.reload();
+  expect(await page.locator('html').getAttribute('data-resolved-theme')).toBe('light');
+  await page.getByRole('radio', { name: 'Auto' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'auto');
   expect(errors).toEqual([]);
 });

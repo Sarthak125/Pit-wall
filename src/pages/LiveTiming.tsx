@@ -156,7 +156,7 @@ export function LiveTiming() {
           <span className="delay-pill" title="Live timing is held back to match your TV (Settings or the TV delay picker)">Delayed {feed!.delay} s</span>
         ) : null}
         {live ? null : upcoming ? (
-          <span className="pill" style={{ borderRadius: 6, padding: '6px 12px', background: '#14233a', color: '#8ab8ff' }}>
+          <span className="pill tone-blue" style={{ borderRadius: 6, padding: '6px 12px' }}>
             UPCOMING
           </span>
         ) : (
@@ -250,7 +250,7 @@ export function LiveTiming() {
           </div>
           <div className="metric">
             <div className="l">RAIN</div>
-            <div className="v" style={{ color: wx?.rainfall ? '#4f9dff' : undefined }}>{wx ? (wx.rainfall ? 'Yes' : 'No') : '-'}</div>
+            <div className="v" style={{ color: wx?.rainfall ? 'var(--pit-blue)' : undefined }}>{wx ? (wx.rainfall ? 'Yes' : 'No') : '-'}</div>
           </div>
           <div className="metric">
             <div className="l">STATUS</div>
@@ -286,7 +286,7 @@ export function LiveTiming() {
               <span><i className="sw" style={{ background: 'var(--purple)' }} />Overall best</span>
               <span><i className="sw" style={{ background: 'var(--green)' }} />Personal best</span>
               <span><i className="sw" style={{ background: 'var(--amber)' }} />Slower</span>
-              <span><i className="sw" style={{ background: '#4f9dff' }} />Pit lane</span>
+              <span><i className="sw" style={{ background: 'var(--pit-blue)' }} />Pit lane</span>
               {t.updatedAt && <span className="faint">Updated {fmtClock(new Date(t.updatedAt))}</span>}
             </div>
           </div>

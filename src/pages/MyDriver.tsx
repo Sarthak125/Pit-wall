@@ -188,8 +188,8 @@ function Profile({ code, name: givenName, season, isFav }: { code: string; name:
                 <h2 className="h2" id="gvf">Grid vs finish, every round</h2>
                 <div className="legend">
                   <span><i style={{ width: 14, height: 3, background: colour, display: 'inline-block' }} />Finish</span>
-                  <span><i style={{ width: 8, height: 8, borderRadius: '50%', border: '2px solid #A9B1BC', display: 'inline-block' }} />Grid</span>
-                  <span><i style={{ width: 8, height: 8, background: '#F87171', transform: 'rotate(45deg)', display: 'inline-block' }} />DNF</span>
+                  <span><i style={{ width: 8, height: 8, borderRadius: '50%', border: '2px solid var(--muted)', display: 'inline-block' }} />Grid</span>
+                  <span><i style={{ width: 8, height: 8, background: 'var(--down)', transform: 'rotate(45deg)', display: 'inline-block' }} />DNF</span>
                 </div>
               </div>
               {gpRows.length ? <GridFinishChart rows={gpRows} colour={colour} /> : <Empty>No races yet.</Empty>}
@@ -226,10 +226,10 @@ export function GridFinishChart({ rows, colour }: { rows: RoundRow[]; colour: st
   const finished = rows.filter((r) => r.finish != null);
   return (
     <svg role="img" aria-label="Grid and finishing position for each round" viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
-      <g fontFamily="JetBrains Mono, monospace" fontSize={10} fill="#7D8693">
+      <g fontFamily="JetBrains Mono, monospace" fontSize={10} fill="var(--faint)">
         {[1, 5, 10, 15, maxPos].map((p) => (
           <g key={p}>
-            <line x1={L} x2={R} y1={y(p)} y2={y(p)} stroke="#1F242C" />
+            <line x1={L} x2={R} y1={y(p)} y2={y(p)} stroke="var(--line-soft)" />
             <text x={L - 6} y={y(p) + 3} textAnchor="end">P{p}</text>
           </g>
         ))}
@@ -239,12 +239,12 @@ export function GridFinishChart({ rows, colour }: { rows: RoundRow[]; colour: st
       </g>
       <polyline points={finished.map((r) => `${x(r.round).toFixed(1)},${y(r.finish!).toFixed(1)}`).join(' ')} fill="none" stroke={colour} strokeWidth={2.5} strokeLinejoin="round" />
       {rows.filter((r) => r.grid != null).map((r) => (
-        <circle key={`g${r.round}`} cx={x(r.round)} cy={y(r.grid!)} r={3.5} fill="#14171C" stroke="#A9B1BC" strokeWidth={1.5}>
+        <circle key={`g${r.round}`} cx={x(r.round)} cy={y(r.grid!)} r={3.5} fill="var(--card)" stroke="var(--muted)" strokeWidth={1.5}>
           <title>{`R${r.round} ${r.name}: grid P${r.grid}, ${r.finishText}`}</title>
         </circle>
       ))}
       {rows.filter((r) => r.finish == null).map((r) => (
-        <rect key={`d${r.round}`} x={x(r.round) - 4.5} y={y(maxPos) - 4.5} width={9} height={9} fill="#F87171" transform={`rotate(45 ${x(r.round)} ${y(maxPos)})`}>
+        <rect key={`d${r.round}`} x={x(r.round) - 4.5} y={y(maxPos) - 4.5} width={9} height={9} fill="var(--down)" transform={`rotate(45 ${x(r.round)} ${y(maxPos)})`}>
           <title>{`R${r.round} ${r.name}: ${r.finishText} (${r.status})`}</title>
         </rect>
       ))}

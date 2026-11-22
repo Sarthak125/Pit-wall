@@ -170,7 +170,7 @@ export function LiveDriver({ session, code, alerts = true }: { session: Session;
                 })()}
               </div>
               <Bar label="Throttle" v={t.car.throttle} c="var(--green)" />
-              <Bar label="Brake" v={t.car.brake} c="#F87171" />
+              <Bar label="Brake" v={t.car.brake} c="var(--down)" />
             </>
           ) : (
             <span className="muted">No car data received yet.</span>
@@ -276,10 +276,10 @@ function LapChart({ laps: all, pitLaps, colour, joined }: { laps: { lap: number;
   const y = (t: number) => B - ((top - Math.min(t, top)) / 3) * (B - T);
   return (
     <svg role="img" aria-label="Lap time for each completed lap, pit stops marked" viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
-      <g fontFamily="JetBrains Mono, monospace" fontSize={10} fill="#7D8693">
+      <g fontFamily="JetBrains Mono, monospace" fontSize={10} fill="var(--faint)">
         {[0, 1.5, 3].map((d) => (
           <g key={d}>
-            <line x1={L} x2={R} y1={y(best + d)} y2={y(best + d)} stroke="#1F242C" />
+            <line x1={L} x2={R} y1={y(best + d)} y2={y(best + d)} stroke="var(--line-soft)" />
             <text x={L - 6} y={y(best + d) + 3} textAnchor="end">{fmtLap(best + d).slice(0, -2)}</text>
           </g>
         ))}
@@ -287,8 +287,8 @@ function LapChart({ laps: all, pitLaps, colour, joined }: { laps: { lap: number;
         <text x={R} y={H - 8} textAnchor="end">L{maxLap}</text>
         {pitLaps.map((p) => (
           <g key={p}>
-            <line x1={x(p)} x2={x(p)} y1={T - 4} y2={B} stroke="#4A5260" strokeDasharray="3 3" />
-            <text x={x(p)} y={T - 6} textAnchor="middle" fill="#A9B1BC">PIT</text>
+            <line x1={x(p)} x2={x(p)} y1={T - 4} y2={B} stroke="var(--hover-line)" strokeDasharray="3 3" />
+            <text x={x(p)} y={T - 6} textAnchor="middle" fill="var(--muted)">PIT</text>
           </g>
         ))}
       </g>
