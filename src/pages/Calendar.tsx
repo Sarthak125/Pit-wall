@@ -1,3 +1,4 @@
+import { AddToCalendar } from '../components/AddToCalendar';
 import { useSpoilers } from '../hooks/useSpoilers';
 import { SESSION_FIELDS, type Race } from '../api/jolpica';
 import { Empty, ErrorBox, Loading } from '../components/States';
@@ -23,7 +24,14 @@ export function Calendar() {
       <section className="card" aria-labelledby="cal">
         <div className="card-head">
           <h1 className="h2" id="cal">{schedule.data?.[0]?.season ?? ''} Calendar</h1>
-          <span className="muted">Times in {timeZoneLabel()}</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <span className="muted">Times in {timeZoneLabel()}</span>
+            {(() => {
+              // The races still to come (whose race has not started), as one calendar file.
+              const left = (schedule.data ?? []).filter((r) => (raceStart(r)?.getTime() ?? 0) > Date.now());
+              return left.length ? <AddToCalendar races={left} label={left.length === schedule.data!.length ? 'Add season to calendar' : `Add remaining ${left.length} race${left.length === 1 ? '' : 's'} to calendar`} name={`F1 ${left[0].season}`} filename={`f1-${left[0].season}-calendar.ics`} /> : null;
+            })()}
+          </span>
         </div>
         {schedule.error ? <ErrorBox error={schedule.error} what="the calendar" /> : schedule.isLoading ? <Loading rows={12} /> : !schedule.data?.length ? <Empty>No races published for this season.</Empty> : (
           <div className="scroll-x">

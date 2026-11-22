@@ -1,3 +1,4 @@
+import { AddToCalendar } from '../components/AddToCalendar';
 import { RaceTyreStrategy } from '../components/TyreStrategy';
 import { SpoilerCover } from '../components/SpoilerCover';
 import { useSpoilers } from '../hooks/useSpoilers';
@@ -86,6 +87,7 @@ export function RaceResults() {
           {start ? ` · ${fmtDayMonth(start)}` : ''}
         </div>
         {finished && !hidden && <Podium results={results} />}
+        {!finished && <div style={{ marginTop: 12 }}><AddToCalendar races={[info]} /></div>}
       </section>
 
       <CircuitOverview race={info} />

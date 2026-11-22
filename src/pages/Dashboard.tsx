@@ -1,3 +1,4 @@
+import { AddToCalendar } from '../components/AddToCalendar';
 import { SpoilerCover } from '../components/SpoilerCover';
 import { useSpoilers } from '../hooks/useSpoilers';
 import type React from 'react';
@@ -380,6 +381,9 @@ function NextRace({ race, total }: { race: Race; total: number }) {
         )}
         <div className="muted" style={{ fontSize: 12 }}>
           Until lights out · times in {timeZoneLabel()}
+        </div>
+        <div style={{ marginTop: 4 }}>
+          <AddToCalendar races={[race]} />
         </div>
       </div>
       <div className="sessions" style={{ flex: '1 1 260px' }}>
