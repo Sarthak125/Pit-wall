@@ -12,6 +12,7 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 ### Latest
 
+- **Dates in schedules:** the Dashboard's weekend schedule and upcoming race pages show each session's weekday and date over its time ("Fri 27 Nov" / "19:00"), and the Calendar shows each weekend's dates ("27 – 29 Nov") with every session's day and time ("Fri 27 · 19:00"), all in your time zone.
 - **Standings updated right after a race:** until Jolpica publishes a race (which can take hours), standings, the title chart, the last race card, the Calendar winner and the race page use Formula 1 timing data from OpenF1 (the race classification and OpenF1's championship standings), labelled **Updated after <race> · F1 timing**. Jolpica's confirmed results replace it automatically.
 - **Android app:** a free 1 MB app (Android 7 or newer) that opens Pit Wall full screen, downloadable from the How to use page. See [Use it on your Android tablet or phone](#use-it-on-your-android-tablet-or-phone).
 - **How to use page:** a guide inside the app (the **?** button next to Settings, or `#/help`): getting started, race day and the feed status pill, reading Live Timing (colours, tags, qualifying, long runs, charts), watching later, planning ahead and common questions.
@@ -61,7 +62,7 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 ### Dashboard
 
 - A **LIVE** banner at the top while any session is running, with how long it has been going; tap it to open Live Timing.
-- Next race card with a live countdown to lights out and the weekend schedule (practice, sprint, qualifying, race) marked Done, Live, Next or Upcoming, and an **Add to calendar** button for the weekend's sessions.
+- Next race card with a live countdown to lights out and the weekend schedule (practice, sprint, qualifying, race), each session with its weekday and date over its time in your time zone ("Fri 27 Nov" / "19:00") and marked Done, Live, Next or Upcoming, and an **Add to calendar** button for the weekend's sessions.
 - Next race circuit: track map with S1 / S2 / S3 colours and turn numbers, lap length, turns and race laps, with a link to the full circuit and race page. On laptops the map grows to match the height of the column beside it; on tablets it is sized to the card's width.
 - Weekend forecast for the next race (once it is within about 16 days), and the last race podium and fastest lap beside it. Right after a race, before Jolpica has published it, the podium comes from F1 timing data and is labelled **Updated after <race>** (see [Data sources](#data-sources)).
 - Track conditions from the latest session: air and track temperature, humidity, wind (km/h and direction), pressure, rain, and track status (green, yellow, safety car, red, chequered) while a session is live, with a compact **rain watch** underneath (see [Live Timing](#live-timing)).
@@ -170,7 +171,7 @@ OpenF1 shares data only with paying supporters from 30 minutes before a session 
 
 Open any race from the Calendar (or anywhere a race name links). Addresses: `#/race/20` follows the season picker, `#/race/2023/21` is a specific season.
 
-- **Results:** podium, full race results (grid, places gained or lost, laps, time or status, fastest lap, points), sprint results on sprint weekends and qualifying (Q1, Q2, Q3), with links to the previous and next race. Upcoming races show the weekend schedule instead, with an **Add to calendar** button.
+- **Results:** podium, full race results (grid, places gained or lost, laps, time or status, fastest lap, points), sprint results on sprint weekends and qualifying (Q1, Q2, Q3), with links to the previous and next race. Upcoming races show the weekend schedule instead (each session's weekday and date over its time, in your time zone), with an **Add to calendar** button.
 - **Right after a race**, before Jolpica has published it, the results table comes from F1 timing data (OpenF1's classification, with grid positions from its starting grid) and is labelled **Updated after <race> · F1 timing**. A driver who changed team during the season is listed under the team he drove for in that race. Fastest laps and qualifying appear once Jolpica has the round.
 - **Circuit overview:**
   - Track map with numbered turns, the three timing sectors in the same colours as on Live Timing (sector lines placed from the fastest lap of that weekend), the start/finish line and the direction of travel.
@@ -216,8 +217,8 @@ While the app is open and a session is live, pop-up alerts tell you when your fa
 ### Standings, Calendar and Drivers
 
 - **Standings:** full Drivers' and Constructors' tables, with your favourites highlighted and the flag button to pick a team. Driver and team names open their pages (see below). In the hours after a race, before Jolpica publishes it, the tables come from OpenF1's championship standings after that race and carry an **Updated after <race> · F1 timing** label; hover over it for the details. Jolpica's confirmed standings replace them automatically.
-- **Calendar:** every round with all session times in your time zone and the winner (and their team) of each finished race. Tap a race name for its race and circuit page (see above). Right after a race, the winner shows from F1 timing data before Jolpica has published the result. An **Add remaining 2 races to calendar** button (the number follows the season) (or **Add season to calendar** before the season starts) downloads every session still to come.
-- **On phones:** the Drivers' table shows position, driver, gap and points (the colour bar still shows the team), and the Calendar shows round, race, date and winner. The full session times are on each race page. Wider tables can be swiped sideways.
+- **Calendar:** every round with its **weekend** dates, from the first session to the race in your time zone ("27 – 29 Nov", "31 Oct – 2 Nov"), every session's weekday, day and time ("Practice 1 Fri 27 · 19:00"), and the winner (and their team) of each finished race. Sessions that fall after midnight where you are show the next day, so a race in the Americas can read "Race Mon 26 · 01:30" in India. Tap a race name for its race and circuit page (see above). Right after a race, the winner shows from F1 timing data before Jolpica has published the result. An **Add remaining 2 races to calendar** button (the number follows the season) (or **Add season to calendar** before the season starts) downloads every session still to come.
+- **On phones:** the Drivers' table shows position, driver, gap and points (the colour bar still shows the team), and the Calendar shows round, race, weekend dates and winner. The full session times are on each race page. Wider tables can be swiped sideways.
 - **Drivers:** the current grid with photos, numbers, teams and championship position, and the star to pick your favourite. Tap a driver to open their page (see below).
 
 ### Driver and team pages
