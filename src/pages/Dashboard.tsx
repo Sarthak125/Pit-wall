@@ -1,3 +1,4 @@
+import { RainWatch } from '../components/RainWatch';
 import { AddToCalendar } from '../components/AddToCalendar';
 import { SpoilerCover } from '../components/SpoilerCover';
 import { useSpoilers } from '../hooks/useSpoilers';
@@ -164,7 +165,7 @@ export function Dashboard() {
           )}
         </section>
         <section className="card w1" aria-labelledby="conditions">
-          <Conditions />
+          <Conditions race={nextRace} />
         </section>
       </div>
 
@@ -434,7 +435,7 @@ function FastestLap({ results }: { results: { FastestLap?: { rank?: string; Time
 }
 
 /** Weather and track status from the most recent OpenF1 session. */
-function Conditions() {
+function Conditions({ race }: { race?: Race }) {
   const sessions = useLatestSessions();
   // While OpenF1 is paused for a live session, weather and flags come from F1's own feed.
   const { feed, session: feedSess } = useLiveFeedSession();
@@ -504,6 +505,7 @@ function Conditions() {
       ) : (
         <Empty>No weather readings yet.</Empty>
       )}
+      {live && race?.Circuit.Location.lat && <RainWatch lat={race.Circuit.Location.lat} long={race.Circuit.Location.long} compact />}
       {current && (
         <div className="muted" style={{ fontSize: 12, marginTop: 'auto' }}>
           {live ? 'Live from' : 'Last reading from'} {current.session_name}, {current.location}

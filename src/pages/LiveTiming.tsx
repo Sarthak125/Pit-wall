@@ -39,6 +39,7 @@ import { ingestFavourite } from '../lib/alerts';
 import { useOpenF1Blocked } from '../lib/openf1Window';
 import { OpenF1BlockedNotice } from '../components/OpenF1Blocked';
 import { DelayPicker } from '../components/DelayPicker';
+import { RainWatch } from '../components/RainWatch';
 import { TyreStrategy } from '../components/TyreStrategy';
 import { SpoilerCover } from '../components/SpoilerCover';
 import { useSpoilers } from '../hooks/useSpoilers';
@@ -268,6 +269,7 @@ export function LiveTiming() {
         <SpoilerCover what="Live timing and results" />
       ) : (
         <>
+          {live && round?.Circuit.Location.lat && <RainWatch lat={round.Circuit.Location.lat} long={round.Circuit.Location.long} />}
 
       {t.error ? <ErrorBox error={t.error} what="live timing" /> : null}
 

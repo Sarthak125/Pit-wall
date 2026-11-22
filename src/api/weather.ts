@@ -67,3 +67,26 @@ export function describeWeather(code: number | null): { text: string; icon: stri
   if (code <= 86) return { text: 'Snow showers', icon: '🌨' };
   return { text: 'Thunderstorm', icon: '⛈' };
 }
+
+export interface RainWatch {
+  /** Rain (mm) in each 15 minutes of the next 2 hours, from now. */
+  quarters: { t: number; mm: number }[];
+  /** Chance of rain (%) and rain (mm) for each of the next 3 hours. */
+  hours: { t: number; chance: number | null; mm: number }[];
+}
+
+interface RainResp {
+  minutely_15?: { time: string[]; precipitation: (number | null)[] };
+  hourly?: { time: string[]; precipitation_probability: (number | null)[]; precipitation: (number | null)[] };
+}
+
+/** Short-term rain at the circuit: the next 2 hours in 15-minute steps, and the next 3 hours' rain chance (UTC). */
+export async function getRainWatch(lat: string, long: string, signal?: AbortSignal): Promise<RainWatch> {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&minutely_15=precipitation&forecast_minutely_15=8&hourly=precipitation_probability,precipitation&forecast_hours=3&timezone=UTC`;
+  const d = await fetchJson<RainResp>(url, { limiter, retries: 0, signal });
+  const ms = (t: string) => Date.parse(`${t}Z`);
+  return {
+    quarters: (d.minutely_15?.time ?? []).map((t, i) => ({ t: ms(t), mm: d.minutely_15?.precipitation[i] ?? 0 })),
+    hours: (d.hourly?.time ?? []).map((t, i) => ({ t: ms(t), chance: d.hourly?.precipitation_probability[i] ?? null, mm: d.hourly?.precipitation[i] ?? 0 })),
+  };
+}

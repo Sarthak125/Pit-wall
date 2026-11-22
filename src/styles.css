@@ -580,3 +580,18 @@ html { zoom: 1.1; }
 .strategy-tip { margin-top: 10px; padding: 8px 12px; border: 1px solid var(--line-strong); border-radius: 8px; font-size: 13px; background: var(--bar); }
 .used-sw { background: repeating-linear-gradient(135deg, #8b93a1 0 3px, #3a404b 3px 6px); }
 .cal-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; font-size: 13px; }
+
+/* Rain watch */
+.rain-watch { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+.rain-watch.compact { padding: 10px 12px; }
+.rain-head { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.rain-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); flex: none; }
+.rain-watch.maybe .rain-dot { background: var(--amber); }
+.rain-watch.wet { border-color: #1f3b5a; background: linear-gradient(180deg, #0f1a26, var(--card)); }
+.rain-watch.wet .rain-dot { background: #3b82f6; }
+.rain-body { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 24px; }
+.rain-bars { display: flex; align-items: flex-end; gap: 4px; height: 56px; }
+.rain-bar { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; width: 34px; height: 100%; }
+.rain-bar i { width: 100%; background: #3b82f6; border-radius: 2px 2px 0 0; display: block; }
+.rain-bar span { font-family: var(--mono); font-size: 9px; color: var(--faint); }
+.rain-hours { display: flex; gap: 16px; font-size: 12px; }
