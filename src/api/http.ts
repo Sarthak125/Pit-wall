@@ -35,13 +35,14 @@ export class RateLimiter {
       if (signal?.aborted) throw abortError();
       const now = Date.now();
       this.stamps = this.stamps.filter((t) => now - t < 60_000);
-      const lastSecond = this.stamps.filter((t) => now - t < 1_000);
+      // A slightly longer window than a second leaves a margin, so requests never bunch up past the per-second limit.
+      const lastSecond = this.stamps.filter((t) => now - t < 1_100);
       if (this.stamps.length < this.perMinute && lastSecond.length < this.perSecond) {
         this.stamps.push(now);
         return;
       }
       const waitMinute = this.stamps.length >= this.perMinute ? 60_000 - (now - this.stamps[0]) : 0;
-      const waitSecond = lastSecond.length >= this.perSecond ? 1_000 - (now - lastSecond[0]) : 0;
+      const waitSecond = lastSecond.length >= this.perSecond ? 1_100 - (now - lastSecond[0]) : 0;
       await sleep(Math.max(waitMinute, waitSecond, 25), signal);
     }
   }

@@ -52,7 +52,11 @@ export function LiveTiming() {
   const now = useNow(1000);
   const [picked, setPicked] = useState<number | null>(null);
   // While a session's live window is open (and OpenF1 is paused for free users), F1's own feed names the session.
-  const feedOn = !getSettings().openf1Token.trim() && !!activeWindow(now, 60 * 60_000);
+  // Only while it is needed: OpenF1 is paused, its session list is not in yet, or a session is live.
+  const feedOn =
+    !getSettings().openf1Token.trim() &&
+    !!activeWindow(now, 60 * 60_000) &&
+    (!!blocked || !sessions.data?.length || sessions.data.some((x) => isSessionLive(x, now)));
   const feed = useF1Feed(feedOn);
   const feedSess = feedSession(feed);
 
