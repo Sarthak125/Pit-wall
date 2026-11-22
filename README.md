@@ -1,6 +1,6 @@
 # Pit Wall: F1 dashboard
 
-An installable web app (PWA) for Formula 1: live timing with a moving track map, pit stop predictions and live championship standings, FIA race control and stewards' messages in plain English, team radio, standings, a calendar with a page for every race and circuit, driver and team pages, and a personal page for your favourite driver and team. One codebase runs in a laptop browser and installs on an Android tablet or phone like an app.
+An installable web app (PWA) for Formula 1: live timing with a moving track map, pit stop predictions and live championship standings, FIA race control and stewards' messages in plain English, team radio, standings, a calendar with a page for every race and circuit (with the race story and a lap time comparison), driver and team pages, and a personal page for your favourite driver and team. One codebase runs in a laptop browser and installs on an Android tablet or phone like an app.
 
 Live site: https://sarthak125.github.io/Pit-wall/
 
@@ -12,6 +12,10 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 ### Latest
 
+- **Race story:** each race page tells the race as a timeline, worked out from the data: the start, lead changes, safety cars, virtual safety cars and red flags, pit stops with the tyres fitted, stewards' penalties, retirements, the fastest lap and the finish. See [Race and circuit pages](#race-and-circuit-pages).
+- **Lap time comparison:** on race pages, pick any session of the weekend (practice, qualifying, sprint or race) and two drivers to see their lap times side by side, with pit stops and tyre changes marked.
+- **Light theme:** Settings, Appearance: **Dark** (the default), **Light**, or **Auto** to follow your device. See [Settings](#settings).
+- **Faster loading:** the first visit to the Dashboard or Calendar takes about half as long (Calendar about 4 s instead of 9 s, Dashboard about 6 s instead of 11 s), and coming back later downloads much less, because results already shown stay on the device. See [Notes](#notes).
 - **Season review:** a page with the season in numbers (`#/review`, linked from Standings): champions, highlights such as most wins, the biggest climb and the closest win, every driver's and team's record, and the team-mate battles. Works for past seasons too. See [Season review](#season-review).
 - **Ready for the off-season:** after the final race the Dashboard says the season is over and counts down to the next season's opener once its calendar is out; before a new season's first race, standings, results and the champions show the season before, labelled **Final <year> standings**. See [Between seasons](#between-seasons).
 - **Champions banner:** once a title can no longer be lost, the Dashboard names the World Champion and the Constructors' Champions, with when each title was decided (for 2026: Antonelli at the Mexico City Grand Prix, Mercedes at the Brazilian Grand Prix), and the standings tag them as **Champion**.
@@ -185,6 +189,18 @@ Open any race from the Calendar (or anywhere a race name links). Addresses: `#/r
   - History from every Grand Prix held there: first Grand Prix, how many have been held, how often the pole sitter won, the win from furthest back, the fastest race lap on record (fastest laps are recorded from 2004, and layouts change over the years), most wins by a driver and by a team, and the last six winners with grid slot and pole sitter.
   - A link to a map of the area.
 - **Weekend weather:** one card per day, in local track time, with that day's sessions: conditions, high and low temperature, rain and wind. A forecast (with rain chance) once the weekend is within about 16 days, and the recorded weather for past races.
+- **Race story** (finished races and sprints from 2023 onward): the race as a timeline, lap by lap, for the race or sprint tab you are on:
+  - **Start:** who led lap 1, and from where on the grid.
+  - **Lead changes:** the leader is the first car across the line on each lap. Back-and-forth swaps between the same two drivers a few laps apart show as one **Battle for the lead** (for example Russell and Verstappen swapping the lead 6 times from lap 28 to lap 38 in Las Vegas, 2026).
+  - **Safety car, virtual safety car and red flag** periods, with the laps they covered.
+  - **Pit stops** with the tyres taken off and fitted and the stop time (for example "Soft to Medium · 2.4 s stop"). Stops by drivers outside the top five are hidden behind **Show all pit stops**; your favourite driver's are always shown.
+  - **Stewards' penalties** with the reason, **retirements** with the cause where known, the **fastest lap** and the **finish** with the winning margin.
+  - Your favourite driver's moments are highlighted. Sources: OpenF1 positions, laps, pit stops, tyres and race control messages, plus the classification.
+- **Lap time comparison** (from the first session of a weekend, 2023 onward): pick a session (FP1, FP2, FP3, sprint qualifying, sprint, qualifying or race) and two drivers.
+  - One line per driver (the second dashed), lower is faster. Pit stops are marked under the chart, a dot in the tyre's colour marks each new set, and laps far slower than normal pace (safety car, cool-down laps) sit at the top edge so they do not squash the rest.
+  - Hover or tap a lap for both drivers' times, the tyre and how many laps old it was, and who was quicker.
+  - In races and sprints: the average gap over the laps both drivers did at full pace (pit laps left out). In practice and qualifying, where drivers run different programmes, it compares best laps instead.
+  - Drivers are listed in finishing order for races, by best lap otherwise; your favourite is picked first. **Show laps as a table** lists every lap.
 - **Tyre strategy** (finished races and sprints from 2023 onward): the same chart as on Live Timing, in finishing order, for the race or sprint tab you are on.
 - **Positions lap by lap** (finished races and sprints from 2023 onward): one line per driver in team colours (team-mates share a colour, the second car is dashed), the top 10 by default with a button for everyone, and a hover tooltip with the order on each lap. These are positions on track, so post-race penalties are not reflected; the results table has the official classification.
 
@@ -291,6 +307,7 @@ The **?** button in the header (next to Settings) opens a guide to the app, also
 - Alerts on or off, and device notifications.
 - Live track map on the Favourites driver page on or off (Live Timing always has its own map).
 - **Watching on TV or later:** TV delay and spoiler-free mode (see above).
+- **Appearance:** **Dark** (the default), **Light**, or **Auto**, which follows your device's light or dark setting and changes with it. Track maps stay dark in both themes, and the hard tyre shows as silver on the light theme so it stands out from the page.
 - Optional OpenF1 access token and request budget. OpenF1 allows 30 requests a minute (3 a second) for free use and 60 a minute (6 a second) with its paid supporter plan; the per-second cap follows the per-minute setting. At the default 30 Live Timing stays just under it, and at 60 or more everything updates up to twice as often. Without a token, live sessions use Formula 1's free feed instead (see [During live sessions](#during-live-sessions)).
 - Clear cached data.
 
@@ -308,6 +325,7 @@ All settings are saved on each device separately.
 - Installable on Android (and desktop Chrome or Edge) and opens offline with the last loaded standings, calendar, circuit layouts and weather. There is also a free **Android app** (see [Use it on your Android tablet or phone](#use-it-on-your-android-tablet-or-phone)).
 - The short address https://sarthak125.github.io/ forwards to Pit Wall.
 - When a new version is published, a banner says "A new version of Pit Wall is ready" with a **Reload** button (or **Later**). The app checks when you open it, when you come back to it, and every 30 minutes.
+- **Light or dark:** pick a theme in Settings (see above). The choice is applied before the page first draws, so there is no flash of the other theme.
 - Season picker for standings, results, the calendar and the season review from previous years.
 - All times in the device's local time zone, named in everyday words (for example "Times in India Standard Time"); weather days use the circuit's local date.
 - Text is about 10% larger on laptops and 5% larger on tablets, for reading from a distance. Phones use the normal size so more fits on screen.
@@ -349,7 +367,7 @@ Formula 1 has no public official API. This app uses free community APIs:
 | --- | --- | --- |
 | [OpenF1](https://openf1.org) | Timing, positions, gaps, laps, sectors and mini-sectors, tyres, pit stops (pit lane and stationary times), race control messages, track weather, car data (speed, throttle, brake, DRS), car positions (track map), overtakes, starting grid, session results (retirements, and the classification with points right after a race), championship standings right after a race, team radio, meetings (circuit type), lap-by-lap positions for the position chart | Historical data (2023 onward) is free: 30 requests a minute, 3 a second. During a live session, from 30 minutes before it starts until 30 minutes after it ends, every request without a token is refused (past sessions included); real-time access needs OpenF1's paid supporter plan (6 a second, 60 a minute), whose token goes in **Settings**. Default budget is 30 requests a minute, adjustable in Settings. |
 | Formula 1 live timing (`livetiming.formula1.com`) | During live sessions without an OpenF1 token: timing, gaps, laps, sectors and mini-sectors, pit and retirement flags, tyres, grid positions, lap count, time left, track status, race control messages, weather, team radio and lap-by-lap positions | Unofficial and undocumented; it is the feed OpenF1 and other fan apps are built on. Read directly by your browser over a WebSocket, no account. Live car positions, car data and pit stop times need an F1 TV subscription and are not used. Formula 1 can change or restrict it at any time, and its terms limit how the data may be used; this app is a personal, non-commercial dashboard. |
-| [Jolpica-F1](https://github.com/jolpica/jolpica-f1) | Calendar, results, qualifying, sprints, driver and constructor standings (also the starting point for the live championship; for the hours after a race until Jolpica publishes it, OpenF1 fills in), career totals, circuit history (winners, poles, fastest laps), planned race distance | Ergast-compatible. Responses are cached on the device, from 10 minutes for standings up to a week for past seasons. |
+| [Jolpica-F1](https://github.com/jolpica/jolpica-f1) | Calendar, results, qualifying, sprints, driver and constructor standings (also the starting point for the live championship; for the hours after a race until Jolpica publishes it, OpenF1 fills in), career totals, circuit history (winners, poles, fastest laps), planned race distance | Ergast-compatible. Responses are cached on the device: 10 minutes for standings, 15 minutes for the first page of a season's results, a week for full pages of rounds already run, and 30 days for past seasons. |
 | [Open-Meteo](https://open-meteo.com) | Weekend weather on race pages (forecast and recorded), rain watch during live sessions | Free, no key, for non-commercial use. Requests come from your own device. |
 | [MultiViewer](https://multiviewer.app) circuit API | Track outlines, turn numbers, marshal sectors and map rotation (Live Timing map and circuit overview), pit stop time loss estimates | Unofficial and free, no key. Layouts are cached on the device for a week. If a layout is missing, the map says so and the rest of the page works as normal. |
 
@@ -413,9 +431,9 @@ npm run build
 npm run test:e2e
 ```
 
-- **Unit tests** (Vitest, `tests/unit`): merging F1 feed updates, lap time parsing, turning a real feed snapshot into the timing tower, long-run pace, qualifying knockouts, calendar files, OpenF1's live windows and the request limiter.
-- **Browser tests** (Playwright, `tests/e2e`): every page at laptop and phone width with no errors and no sideways scrolling; the finished race (gaps, positions chart, pit stops, tyre strategy), qualifying knockouts, practice long runs, spoiler-free mode, the calendar download, Live Timing on a stand-in F1 feed during a live race, and the feed dropping and reconnecting.
-- The browser tests use recorded API responses from the 2026 Las Vegas weekend (`tests/fixtures`) and a fixed clock, so they do not depend on OpenF1, Jolpica, MultiViewer or Open-Meteo being up or within their limits. If an app change needs data the recordings do not have, the test fails rather than calling the real service; record again in that case.
+- **Unit tests** (Vitest, `tests/unit`): merging F1 feed updates, lap time parsing, turning a real feed snapshot into the timing tower, long-run pace, qualifying knockouts, calendar files, OpenF1's live windows, the request limiter, the cache (shared requests, keeping past results, dropping the oldest entries when storage is full), the race story and the lap time comparison.
+- **Browser tests** (Playwright, `tests/e2e`): every page at laptop and phone width with no errors and no sideways scrolling; the finished race (gaps, positions chart, pit stops, tyre strategy), qualifying knockouts, practice long runs, spoiler-free mode, the calendar download, Live Timing on a stand-in F1 feed during a live race, the feed dropping and reconnecting, the race story, the lap time comparison, picking the light theme, and moving between pages showing only the new page.
+- The browser tests use recorded API responses from the 2026 Las Vegas weekend (`tests/fixtures`) and a fixed clock, so they do not depend on OpenF1, Jolpica, MultiViewer or Open-Meteo being up or within their limits. If an app change needs data the recordings do not have, the test fails rather than calling the real service; record again in that case, or add the missing response as a file (the standings after round 20, `tests/fixtures/r20-*.json`, were added this way).
 - The first time, install the browser with `npx playwright install chromium`.
 - **Off-season check** (`tests/manual/offseason.cjs`, not part of the automatic tests): fakes the date and Jolpica's answers for four stages between seasons (season over, next calendar out, new season with no races, new season with no calendar) and reports what the Dashboard, Standings, Calendar, season review and Settings show, with screenshots. Run it against a local build:
 
@@ -451,7 +469,7 @@ npm run build
 src/api/         OpenF1, Jolpica, MultiViewer (circuits) and Open-Meteo (weather) clients, Formula 1 live timing
                  feed client (f1live), rate limiter, cache
 src/hooks/       Polling, live timing, season data and favourites hooks
-src/lib/         Title decisions (titles), season review figures (seasonReview), FIA message classifier and plain-English wording, driver stats, alerts, formatting, team colours,
+src/lib/         Race story (raceStory), lap time comparison (lapCompare), theme, title decisions (titles), season review figures (seasonReview), FIA message classifier and plain-English wording, driver stats, alerts, formatting, team colours,
                  calendar files (ics), long runs,
                  settings, routing, track geometry, sector lines, lap-by-lap positions, app updates, OpenF1 live
                  windows (openf1Window), F1 feed to app data adapter (f1adapter)
@@ -459,7 +477,7 @@ src/pages/       Dashboard, Live Timing, Favourites (My Driver, My Team), Standi
 src/components/  App shell, charts, live track map, live championship, gap chart, dashboard extras, circuit overview and outline, weekend weather,
                  position chart, live driver and team views, team radio cards, FIA messages, strips, alerts, update
                  banner, champions banner, feed status, tyre strategy, long-run pace, rain watch, add to calendar, spoiler cover,
-                 TV delay picker, loading and error states
+                 TV delay picker, race story, lap time comparison, loading and error states
 android/         Android app (Trusted Web Activity) project, generator, Digital Asset Links file and build notes
 tests/           Unit tests (unit), browser tests (e2e), recorded API responses and feed snapshot (fixtures), and the
                  live session check (live) and off-season check (manual)
@@ -467,6 +485,7 @@ tests/           Unit tests (unit), browser tests (e2e), recorded API responses 
 
 ## Notes
 
+- **Loading:** Jolpica allows about 2 requests a second, so a first visit mostly waits on it. To keep that short: two parts of a page asking for the same data at the same moment share one request; a season's results pages are requested together rather than one after another; results already shown stay on the device (see [Data sources](#data-sources)), and when storage fills up the oldest saved responses are dropped first; and each page's code loads when that page is first opened (all of it is still saved for offline use). Measured on the live site: Calendar about 4 s and Dashboard about 6.5 s on a first visit (before: 9 s and 11 s), a fraction of a second on a repeat visit.
 - Live Timing stays under OpenF1's default budget of 30 requests a minute (about 28 with the track map and team radio): gaps every 10 seconds, race control every 20, positions, speed and pedals every 15, track map positions every 12, and laps, tyres, pit stops, radio, weather and the classification less often. Raise the budget in Settings (for example with a paid OpenF1 plan) and everything polls faster, up to twice as often at 60 a minute. Polling pauses while the app is in the background. Replays load a minute of positions at a time. The optional live track map on the driver page (Settings) adds about 15 requests a minute.
 - Data already loaded is kept in memory for the visit, so returning to a session or page is instant: a finished session is not downloaded again for 5 minutes, and a live one carries on from where it left off. Requests for a session or page you have already left are cancelled without using any of the budget, and new pages start loading a fraction of a second after you open them, so flicking through sessions costs nothing.
 - Formula 1's live feed sends about 180 KB a minute during a race, over one connection that only opens during a session's live window and closes a minute after you leave the live pages.
