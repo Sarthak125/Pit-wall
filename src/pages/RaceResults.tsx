@@ -3,6 +3,7 @@ import { provisionalSoon, type ProvisionalTag } from '../hooks/useSeason';
 import { AddToCalendar } from '../components/AddToCalendar';
 import { RaceTyreStrategy } from '../components/TyreStrategy';
 import { RaceStory } from '../components/RaceStory';
+import { LapCompare } from '../components/LapCompare';
 import { SpoilerCover } from '../components/SpoilerCover';
 import { useSpoilers } from '../hooks/useSpoilers';
 import { useState } from 'react';
@@ -85,6 +86,9 @@ export function RaceResults() {
     ['quali', 'Qualifying', quali.length],
   ];
   const shownTab: Tab = tab === 'sprint' && !sprint.length ? 'race' : tab;
+  // The weekend has started once its first session has (practice lap times can be compared from then on).
+  const firstSession = Math.min(...[...SESSION_FIELDS.map((f) => toDate(info[f.key] as Race['FirstPractice'])), start].filter((d): d is Date => !!d).map((d) => d.getTime()));
+  const weekendStarted = finished || firstSession < now;
 
   return (
     <>
@@ -175,6 +179,14 @@ export function RaceResults() {
             <h2 className="h2" id="strategy">Tyre strategy{shownTab === 'sprint' ? ': sprint' : ''}</h2>
           </div>
           <RaceTyreStrategy key={shownTab} race={info} results={shownTab === 'sprint' ? sprint : results} sprint={shownTab === 'sprint'} />
+        </section>
+      )}
+      {weekendStarted && !hidden && Number(info.season) >= 2023 && (
+        <section className="card" aria-labelledby="lapcmp">
+          <div className="card-head">
+            <h2 className="h2" id="lapcmp">Lap time comparison</h2>
+          </div>
+          <LapCompare race={info} now={now} />
         </section>
       )}
       <Footer />

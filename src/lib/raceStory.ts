@@ -10,6 +10,7 @@ import type { Result } from '../api/jolpica';
 import type { Lap, PitDetail, RaceControlMsg, Stint } from '../api/openf1';
 import type { PositionTrace } from './sectorLines';
 import { classify, summarisePenalties } from './raceControl';
+import { fmtLap } from './format';
 
 export type StoryKind = 'start' | 'lead' | 'sc' | 'vsc' | 'red' | 'pit' | 'penalty' | 'retire' | 'fastest' | 'finish';
 
@@ -35,13 +36,6 @@ export interface StoryInput {
 
 const COMPOUND: Record<string, string> = { SOFT: 'Soft', MEDIUM: 'Medium', HARD: 'Hard', INTERMEDIATE: 'Intermediate', WET: 'Wet' };
 const tyre = (c: string | null | undefined) => (c ? (COMPOUND[c.toUpperCase()] ?? c) : null);
-
-/** "1:23.456" from seconds. */
-export function lapClock(s: number): string {
-  const m = Math.floor(s / 60);
-  const rest = (s - m * 60).toFixed(3).padStart(6, '0');
-  return m ? `${m}:${rest}` : rest;
-}
 
 const plainCase = (s: string) => {
   const t = s.trim().toLowerCase();
@@ -192,7 +186,7 @@ export function raceStory(input: StoryInput): StoryEvent[] {
     events.push({ lap: Number(fl.FastestLap.lap), kind: 'fastest', title: `Fastest lap: ${name(Number(fl.number))}`, detail: fl.FastestLap.Time?.time, cars: [Number(fl.number)] });
   } else {
     const best = lapRows.filter((l) => l.lap_duration && !l.is_pit_out_lap).sort((a, b) => a.lap_duration! - b.lap_duration!)[0];
-    if (best) events.push({ lap: best.lap_number, kind: 'fastest', title: `Fastest lap: ${name(best.driver_number)}`, detail: lapClock(best.lap_duration!), cars: [best.driver_number] });
+    if (best) events.push({ lap: best.lap_number, kind: 'fastest', title: `Fastest lap: ${name(best.driver_number)}`, detail: fmtLap(best.lap_duration!), cars: [best.driver_number] });
   }
 
   // The finish.
