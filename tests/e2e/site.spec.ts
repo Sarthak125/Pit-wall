@@ -126,3 +126,30 @@ test('during a live race with OpenF1 paused, Live Timing reads F1\'s feed', asyn
   await expect(page.locator('table.timing th', { hasText: 'SPEED' })).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test('when F1\'s feed drops, the last timing stays up and the status pill offers a retry', async ({ page }) => {
+  const snapshot = JSON.parse(readFileSync('tests/fixtures/feed-snapshot.json', 'utf8'));
+  const errors = await setUp(page, new Date('2026-11-22T04:30:00Z'));
+  const sockets: { close: () => Promise<void> }[] = [];
+  await page.routeWebSocket(/livetiming\.formula1\.com/, (ws) => {
+    sockets.push(ws);
+    ws.onMessage((msg) => {
+      for (const part of String(msg).split('\x1e')) {
+        if (!part) continue;
+        const m = JSON.parse(part);
+        if (m.protocol) ws.send('{}\x1e');
+        if (m.target === 'Subscribe') ws.send(JSON.stringify({ type: 3, invocationId: '0', result: snapshot }) + '\x1e');
+      }
+    });
+  });
+  await page.goto('#/live');
+  const pill = page.locator('.feed-status');
+  await expect(pill).toHaveText('F1 feed live', { timeout: 30_000 });
+  await sockets[0].close();
+  await expect(pill).toContainText('Reconnecting');
+  await expect(page.locator('table.timing tbody tr')).toHaveCount(22);
+  await pill.getByRole('button', { name: 'Retry now' }).click();
+  await expect(pill).toHaveText('F1 feed live');
+  expect(sockets).toHaveLength(2);
+  expect(errors).toEqual([]);
+});

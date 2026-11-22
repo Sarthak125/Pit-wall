@@ -598,3 +598,14 @@ html { zoom: 1.1; }
 .lr-gap { display: flex; align-items: center; gap: 8px; }
 .lr-gap i { height: 6px; border-radius: 3px; display: block; max-width: 110px; opacity: 0.8; }
 .tbl.longruns td { padding-top: 7px; padding-bottom: 7px; }
+
+/* F1 feed connection status (session bar) */
+.feed-status { display: inline-flex; align-items: center; gap: 6px; border-radius: 6px; padding: 5px 10px; font-size: 12px; font-weight: 600; border: 1px solid var(--line); white-space: nowrap; }
+.feed-status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
+.feed-status.ok { color: #3ecf8e; background: rgba(62, 207, 142, 0.1); border-color: rgba(62, 207, 142, 0.35); }
+.feed-status.ok .feed-status-dot { animation: feed-pulse 2s ease-in-out infinite; }
+.feed-status.warn { color: #f5b544; background: rgba(245, 181, 68, 0.1); border-color: rgba(245, 181, 68, 0.35); }
+.feed-status.bad { color: #ff6b6b; background: rgba(255, 107, 107, 0.1); border-color: rgba(255, 107, 107, 0.35); }
+.feed-status-retry { margin-left: 4px; font: inherit; font-weight: 600; color: inherit; background: none; border: 0; border-left: 1px solid currentColor; padding: 0 0 0 8px; cursor: pointer; text-decoration: underline; }
+@keyframes feed-pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .feed-status.ok .feed-status-dot { animation: none; } }

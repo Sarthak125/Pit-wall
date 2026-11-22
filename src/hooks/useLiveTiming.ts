@@ -138,7 +138,8 @@ function pitStatus(mine: Lap[], pits: Pit[], t: number): TimingRow['status'] {
 export function useLiveTiming(session: Session | undefined, live: boolean, carDriver: number | null) {
   // During a live session without an OpenF1 token, read F1's own live timing feed instead (see api/f1live).
   const feed = useF1Feed(live && !getSettings().openf1Token.trim());
-  const fromFeed = !!feed && feed.status === 'live' && Number(feed.state.SessionInfo?.Key) === session?.session_key;
+  // While the feed reconnects after a drop, keep showing what it last sent (the status pill says it is reconnecting).
+  const fromFeed = !!feed && feed.status !== 'idle' && Number(feed.state.SessionInfo?.Key) === session?.session_key;
   const sk = fromFeed ? undefined : session?.session_key;
   const every = (ms: number) => (live ? liveEvery(ms) : 0);
   const endMs = session ? Date.parse(session.date_end) : 0;

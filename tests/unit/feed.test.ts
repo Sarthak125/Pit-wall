@@ -3,7 +3,7 @@ import snapshot from '../fixtures/feed-snapshot.json';
 import { mergeF1, parseLapTime, type FeedSnapshot } from '../../src/api/f1live';
 import { feedDrivers, feedMessages, feedRows, feedSession, feedWeather } from '../../src/lib/f1adapter';
 
-const snap = (state: object): FeedSnapshot => ({ status: 'live', delay: 0, state: state as FeedSnapshot['state'], laps: [], updatedAt: Date.parse('2026-11-22T04:22:46Z') });
+const snap = (state: object): FeedSnapshot => ({ status: 'live', delay: 0, state: state as FeedSnapshot['state'], laps: [], updatedAt: Date.parse('2026-11-22T04:22:46Z'), receivedAt: null, retryAt: null });
 
 describe('mergeF1', () => {
   it('merges nested objects without losing other keys', () => {

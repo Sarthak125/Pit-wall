@@ -15,5 +15,5 @@ export function useLiveFeedSession(): { feed: FeedSnapshot | null; session: Sess
   // Only while OpenF1 is paused for free users; otherwise OpenF1 has everything.
   const on = !getSettings().openf1Token.trim() && !!activeWindow(now, 60 * 60_000) && !!blocked;
   const feed = useF1Feed(on);
-  return { feed, session: feed?.status === 'live' ? feedSession(feed) : null };
+  return { feed, session: feed && feed.status !== 'idle' ? feedSession(feed) : null };
 }

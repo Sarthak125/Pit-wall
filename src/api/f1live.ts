@@ -82,6 +82,10 @@ export interface FeedSnapshot {
   state: F1State;
   laps: RecordedLap[];
   updatedAt: number | null;
+  /** When the last timing message arrived from F1 (before any TV delay), for spotting a quiet or stalled feed. */
+  receivedAt: number | null;
+  /** After a dropped connection: when the next attempt is due. */
+  retryAt: number | null;
 }
 
 export function parseLapTime(v: unknown): number | null {
@@ -103,7 +107,7 @@ class F1LiveFeed {
   private stopTimer: ReturnType<typeof setTimeout> | undefined;
   private notifyQueued = false;
   private listeners = new Set<() => void>();
-  private snap: FeedSnapshot = { status: 'idle', delay: 0, state: {}, laps: [], updatedAt: null };
+  private snap: FeedSnapshot = { status: 'idle', delay: 0, state: {}, laps: [], updatedAt: null, receivedAt: null, retryAt: null };
   // TV delay: messages wait here until they are `delay` seconds old, then are applied in order.
   private pending: { at: number; apply: () => void }[] = []; // `at` = when the message arrived
   private drain: ReturnType<typeof setInterval> | undefined;
@@ -141,8 +145,15 @@ class F1LiveFeed {
     }, 500);
   }
 
+  /** Reconnects straight away instead of waiting for the next scheduled attempt. */
+  retryNow = () => {
+    if (this.users <= 0 || this.ws) return;
+    clearTimeout(this.retry);
+    this.connect();
+  };
+
   private connect() {
-    this.set({ status: 'connecting' });
+    this.set({ status: 'connecting', retryAt: null });
     let ws: WebSocket;
     try {
       ws = new WebSocket(URL);
@@ -174,6 +185,7 @@ class F1LiveFeed {
         }
         if (m.type === 3 && m.invocationId === '0') {
           if (m.error || !m.result) return this.fail();
+          this.set({ receivedAt: Date.now() });
           this.attempt = 0;
           const result = m.result;
           this.later(() => {
@@ -189,6 +201,7 @@ class F1LiveFeed {
           });
         } else if (m.type === 1 && m.target === 'feed' && Array.isArray(m.arguments)) {
           const [topic, data] = m.arguments as [string, any];
+          this.snap = { ...this.snap, receivedAt: Date.now() };
           this.later(() => {
             const state = { ...this.snap.state, [topic]: mergeF1(this.snap.state[topic], data) };
             const laps = topic === 'TimingData' ? this.track(state) : null;
@@ -289,10 +302,10 @@ class F1LiveFeed {
   private fail() {
     this.ws = null;
     clearInterval(this.ping);
-    this.set({ status: 'error' });
-    if (this.users <= 0) return;
+    if (this.users <= 0) return this.set({ status: 'error', retryAt: null });
     // Try again, waiting longer each time (up to a minute).
     const wait = Math.min(60_000, 3_000 * 2 ** this.attempt++);
+    this.set({ status: 'error', retryAt: Date.now() + wait });
     clearTimeout(this.retry);
     this.retry = setTimeout(() => this.users > 0 && this.connect(), wait);
   }
@@ -307,7 +320,7 @@ class F1LiveFeed {
     this.ws = null;
     ws?.close();
     this.attempt = 0;
-    this.set({ status: 'idle', delay: this.snap.delay, state: {}, laps: [], updatedAt: null });
+    this.set({ status: 'idle', delay: this.snap.delay, state: {}, laps: [], updatedAt: null, receivedAt: null, retryAt: null });
   }
 }
 

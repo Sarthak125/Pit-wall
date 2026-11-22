@@ -49,6 +49,7 @@ import { PositionLines, type LineInfo } from '../components/PositionChart';
 import { getRacePositions } from '../lib/sectorLines';
 import { activeWindow } from '../lib/openf1Window';
 import { useF1Feed } from '../api/f1live';
+import { FeedStatus } from '../components/FeedStatus';
 import { feedSession } from '../lib/f1adapter';
 import { getSettings } from '../lib/settings';
 
@@ -150,6 +151,7 @@ export function LiveTiming() {
             LIVE
           </span>
         ) : null}
+        {t.source === 'f1' && feed ? <FeedStatus feed={feed} now={now} /> : null}
         {live && t.source === 'f1' && (feed?.delay ?? 0) > 0 ? (
           <span className="delay-pill" title="Live timing is held back to match your TV (Settings or the TV delay picker)">Delayed {feed!.delay} s</span>
         ) : null}
