@@ -223,3 +223,18 @@ export function feedProgress(s: FeedSnapshot): { lap: number | null; total: numb
     trackStatus: s.state.TrackStatus?.Message ?? null,
   };
 }
+
+/**
+ * Every driver's position at the start (index 0, the grid) and at the end of each lap so far, from F1's LapSeries
+ * topic. Complete from the first lap, however late the page was opened.
+ */
+export function feedPositionTraces(s: FeedSnapshot): { laps: number; traces: { driver: number; positions: (number | null)[] }[] } | null {
+  const ls = s.state.LapSeries;
+  if (!ls || typeof ls !== 'object') return null;
+  const traces = Object.keys(ls)
+    .filter((k) => /^\d+$/.test(k))
+    .map((k) => ({ driver: Number(k), positions: list(ls[k]?.LapPosition).map((p) => num(p)) }))
+    .filter((t) => t.positions.length > 0);
+  if (!traces.length) return null;
+  return { laps: Math.max(...traces.map((t) => t.positions.length - 1)), traces };
+}

@@ -3,16 +3,13 @@ import { useMemo, useState } from 'react';
 import { findMeeting } from '../api/openf1';
 import type { Race, Result } from '../api/jolpica';
 import { useFavourite } from '../hooks/useFavourite';
-import { getRacePositions } from '../lib/sectorLines';
+import { getRacePositions, type PositionTrace } from '../lib/sectorLines';
 import { teamColour } from '../lib/teams';
 
 const W = 1000, H = 440, L = 40, R = 64, T = 14, B = 30;
 
 /** Lap-by-lap race positions (OpenF1, 2023 onward), one line per driver in team colours. */
 export function PositionChart({ race, results, sprint }: { race: Race; results: Result[]; sprint: boolean }) {
-  const fav = useFavourite();
-  const [all, setAll] = useState(false);
-  const [hoverLap, setHoverLap] = useState<number | null>(null);
   const meeting = useQuery({
     queryKey: ['meeting-year', race.season, race.round],
     staleTime: Infinity,
@@ -40,8 +37,33 @@ export function PositionChart({ race, results, sprint }: { race: Race; results: 
 
   if (meeting.isLoading || data.isLoading) return <div className="empty">Loading positions…</div>;
   if (!data.data) return <div className="empty">Lap-by-lap positions are not available for this {sprint ? 'sprint' : 'race'}.</div>;
+  return (
+    <PositionLines
+      laps={data.data.laps}
+      traces={data.data.traces}
+      info={info}
+      note="Position at the end of each lap, from OpenF1. Team-mates share a colour; the second car's line is dashed. Lines that stop early are retirements. These are positions on track, so post-race penalties and disqualifications are not reflected; the results table above has the official classification."
+    />
+  );
+}
 
-  const { laps, traces } = data.data;
+export interface LineInfo {
+  code: string;
+  colour: string;
+  dashed: boolean;
+  /** Finishing (or current) position, for the order and the top 10 filter. */
+  finish: number;
+}
+
+/**
+ * The chart itself: one line per driver from the start (index 0, the grid) to the end of each lap. `distance` stretches
+ * the lap axis to the full race distance, so a live race fills in from the left.
+ */
+export function PositionLines({ laps: done, traces, info, note, distance }: { laps: number; traces: PositionTrace[]; info: Map<number, LineInfo>; note: string; distance?: number | null }) {
+  const fav = useFavourite();
+  const [all, setAll] = useState(false);
+  const [hoverLap, setHoverLap] = useState<number | null>(null);
+  const laps = Math.max(done, distance ?? 0, 1);
   const shown = traces
     .filter((t) => info.has(t.driver))
     .sort((a, b) => info.get(a.driver)!.finish - info.get(b.driver)!.finish)
@@ -94,7 +116,7 @@ export function PositionChart({ race, results, sprint }: { race: Race; results: 
           onMouseMove={(e) => {
             const box = (e.currentTarget as SVGSVGElement).getBoundingClientRect();
             const px = ((e.clientX - box.left) / box.width) * W;
-            setHoverLap(Math.max(0, Math.min(laps, Math.round(((px - L) / (W - L - R)) * laps))));
+            setHoverLap(Math.max(0, Math.min(done, Math.round(((px - L) / (W - L - R)) * laps))));
           }}
           onMouseLeave={() => setHoverLap(null)}
         >
@@ -143,7 +165,7 @@ export function PositionChart({ race, results, sprint }: { race: Race; results: 
           </div>
         )}
       </div>
-      <div className="faint" style={{ fontSize: 12, marginTop: 6 }}>Position at the end of each lap, from OpenF1. Team-mates share a colour; the second car's line is dashed. Lines that stop early are retirements. These are positions on track, so post-race penalties and disqualifications are not reflected; the results table above has the official classification.</div>
+      <div className="faint" style={{ fontSize: 12, marginTop: 6 }}>{note}</div>
     </div>
   );
 }

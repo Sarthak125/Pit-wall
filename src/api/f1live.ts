@@ -16,7 +16,7 @@ const URL = 'wss://livetiming.formula1.com/signalrcore';
 const RS = '\x1e';
 export const F1_TOPICS = [
   'Heartbeat', 'ExtrapolatedClock', 'TimingStats', 'TimingAppData', 'WeatherData', 'TrackStatus', 'DriverList',
-  'RaceControlMessages', 'SessionInfo', 'SessionData', 'LapCount', 'TimingData', 'TeamRadio',
+  'RaceControlMessages', 'SessionInfo', 'SessionData', 'LapCount', 'TimingData', 'TeamRadio', 'LapSeries',
 ];
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

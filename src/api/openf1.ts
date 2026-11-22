@@ -197,6 +197,17 @@ export interface CarData {
   rpm: number;
   throttle: number;
   brake: number;
+  /** DRS status (FastF1's mapping): 10, 12 or 14 open; 8 eligible in an activation zone. Not used under the 2026 rules. */
+  drs?: number | null;
+}
+
+/** DRS state from a car data sample, or null when DRS is closed or not reported. */
+export function drsState(c: Pick<CarData, 'drs'> | null | undefined): 'open' | 'eligible' | null {
+  const v = c?.drs ?? null;
+  if (v == null) return null;
+  if (v >= 10) return 'open';
+  if (v === 8) return 'eligible';
+  return null;
 }
 
 /** A session counts as live from its start until 15 minutes after its scheduled end. */

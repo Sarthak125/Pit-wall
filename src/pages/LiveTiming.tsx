@@ -38,6 +38,9 @@ import type React from 'react';
 import { ingestFavourite } from '../lib/alerts';
 import { useOpenF1Blocked } from '../lib/openf1Window';
 import { OpenF1BlockedNotice } from '../components/OpenF1Blocked';
+import { drsState, type PitDetail } from '../api/openf1';
+import { PositionLines, type LineInfo } from '../components/PositionChart';
+import { getRacePositions } from '../lib/sectorLines';
 import { activeWindow } from '../lib/openf1Window';
 import { useF1Feed } from '../api/f1live';
 import { feedSession } from '../lib/f1adapter';
@@ -253,6 +256,15 @@ export function LiveTiming() {
         </section>
       )}
 
+      {isRace && !upcoming && (
+        <section className="card tight" aria-labelledby="positions">
+          <div className="card-head">
+            <h2 className="h2" id="positions">Positions lap by lap</h2>
+          </div>
+          <LivePositions session={session} live={live} sprint={isSprint} rows={t.rows} feed={t.positionTraces} distance={total ?? null} />
+        </section>
+      )}
+
       <section className="card tight" aria-labelledby="map">
         <div className="card-head">
           <div>
@@ -270,6 +282,7 @@ export function LiveTiming() {
       </section>
 
       <RadioPanel session={session} live={live} drivers={t.driversByNumber} favNum={favNum} teamNums={teamNums} laps={t.laps} feedClips={t.source === 'f1' ? t.radio : null} />
+      {isRace && !upcoming && <PitStops pits={t.pits} drivers={t.driversByNumber} live={live} fromFeed={t.source === 'f1'} favNum={favNum} teamNums={teamNums} />}
       <FiaSection messages={t.messages} drivers={t.driversByNumber} favNum={favNum} team={favTeam} teamNums={teamNums} isRace={isRace} />
       <Footer />
     </>
@@ -430,7 +443,12 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitL
                     })()}
                   </td>
                 )}
-                {!noCarData && <td className="r mono">{speed}<span className="faint" style={{ fontSize: 11 }}> km/h</span></td>}
+                {!noCarData && (
+                  <td className="r mono">
+                    {drsState(tel) && <span className={`drs ${drsState(tel)}`} title={drsState(tel) === 'open' ? 'DRS open' : 'DRS available in this zone'}>DRS</span>}
+                    {speed}<span className="faint" style={{ fontSize: 11 }}> km/h</span>
+                  </td>
+                )}
                 {!noCarData && (
                   <td>
                     <div className="pedals" title={tel ? `Throttle ${tel.throttle}%, brake ${tel.brake ? 'on' : 'off'}` : 'No live car data'}>
@@ -609,6 +627,129 @@ function RadioPanel({ session, live, drivers, favNum, teamNums, laps, feedClips 
         </label>
       </div>
       {radio.error ? <ErrorBox error={radio.error} what="team radio" /> : radio.loading ? <Loading rows={3} /> : <RadioCards clips={clips} drivers={drivers} favNum={favNum} teamNums={teamNums} laps={laps} limit={8} />}
+    </section>
+  );
+}
+
+/**
+ * Lap-by-lap positions on the Live Timing page. Live without an OpenF1 token they come from F1's LapSeries topic
+ * (complete from the first lap); after the session from OpenF1, as on the race page.
+ */
+function LivePositions({ session, live, sprint, rows, feed, distance }: { session: Session; live: boolean; sprint: boolean; rows: TimingRow[]; feed: { laps: number; traces: { driver: number; positions: (number | null)[] }[] } | null; distance: number | null }) {
+  const fromOpenF1 = useQuery({
+    queryKey: ['race-positions', session.meeting_key, sprint],
+    enabled: !feed && !live,
+    staleTime: Infinity,
+    queryFn: ({ signal }) => getRacePositions(session.meeting_key, sprint, signal),
+  });
+  const info = useMemo(() => {
+    const seen = new Set<string>();
+    const m = new Map<number, LineInfo>();
+    rows.forEach((r, i) => {
+      const team = r.driver.team_name ?? r.driver.name_acronym;
+      const dashed = seen.has(team);
+      seen.add(team);
+      m.set(r.driver.driver_number, { code: r.driver.name_acronym, colour: r.colour, dashed, finish: r.position ?? i + 1 });
+    });
+    return m;
+  }, [rows]);
+  const data = feed ?? fromOpenF1.data;
+  if (!data) {
+    if (live) return <Empty>Lap-by-lap positions appear here after the session.</Empty>;
+    if (fromOpenF1.error) return <ErrorBox error={fromOpenF1.error} what="lap-by-lap positions" />;
+    return fromOpenF1.isLoading ? <Loading rows={4} /> : <Empty>Lap-by-lap positions are not available for this session.</Empty>;
+  }
+  return (
+    <PositionLines
+      laps={data.laps}
+      traces={data.traces}
+      info={info}
+      distance={live ? distance : null}
+      note={feed
+        ? "Live, from Formula 1's lap-by-lap positions: complete from the start, whenever you opened the page. Team-mates share a colour; the second car's line is dashed. Lines that stop early are retirements."
+        : "Position at the end of each lap, from OpenF1. Team-mates share a colour; the second car's line is dashed. Lines that stop early are retirements. These are positions on track, so post-race penalties are not reflected."}
+    />
+  );
+}
+
+/**
+ * Every pit stop with its stationary time and time in the pit lane (OpenF1). OpenF1 may only fill in stationary times a
+ * few hours after a 2026 session; F1's free live feed has no pit times at all.
+ */
+function PitStops({ pits, drivers, live, fromFeed, favNum, teamNums }: { pits: PitDetail[]; drivers: Map<number, OF1Driver>; live: boolean; fromFeed: boolean; favNum: number | null; teamNums: number[] }) {
+  const [all, setAll] = useState(false);
+  const stops = [...pits].sort((a, b) => b.lap_number - a.lap_number || b.date.localeCompare(a.date));
+  const lane = (p: PitDetail) => p.lane_duration ?? p.pit_duration ?? null;
+  const stationary = stops.map((p) => p.stop_duration).filter((v): v is number => v != null && v > 0);
+  const fastest = stationary.length ? Math.min(...stationary) : null;
+  const fastestStop = stops.find((p) => p.stop_duration === fastest);
+  const shown = all ? stops : stops.slice(0, 10);
+  const code = (n: number) => drivers.get(n)?.name_acronym ?? `#${n}`;
+  const colour = (n: number) => {
+    const d = drivers.get(n);
+    return teamColour(d?.team_name, d?.team_colour);
+  };
+  return (
+    <section className="card tight" aria-labelledby="pitstops">
+      <div className="card-head">
+        <h2 className="h2" id="pitstops">Pit stops</h2>
+        {fastestStop && fastest != null && (
+          <span className="muted">
+            Fastest stop <b className="mono" style={{ color: 'var(--purple)' }}>{fastest.toFixed(1)} s</b> · {code(fastestStop.driver_number)}, lap {fastestStop.lap_number}
+          </span>
+        )}
+      </div>
+      {fromFeed ? (
+        <Empty>Pit stop times are not in Formula 1's free live feed (they need F1 TV). They appear here about 30 minutes after the session, from OpenF1.</Empty>
+      ) : stops.length === 0 ? (
+        <Empty>{live ? 'No pit stops yet.' : 'No pit stops recorded for this session.'}</Empty>
+      ) : (
+        <>
+          <div className="scroll-x">
+            <table className="tbl">
+              <thead>
+                <tr>
+                  <th>Lap</th>
+                  <th>Driver</th>
+                  <th className="r" title="Time the car stood still in the pit box">Stationary</th>
+                  <th className="r" title="Time from pit entry to pit exit">Pit lane</th>
+                  <th className="r">Stop</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shown.map((p) => {
+                  const n = stops.filter((x) => x.driver_number === p.driver_number && x.lap_number <= p.lap_number).length;
+                  const isFast = fastest != null && p.stop_duration === fastest;
+                  return (
+                    <tr key={`${p.driver_number}-${p.lap_number}-${p.date}`} className={p.driver_number === favNum ? 'fav' : teamNums.includes(p.driver_number) ? 'team' : undefined} style={{ '--team': colour(p.driver_number) } as React.CSSProperties}>
+                      <td className="mono muted">{p.lap_number}</td>
+                      <td>
+                        <div className="who">
+                          <span className="team-bar" style={{ background: colour(p.driver_number) }} />
+                          <span className="code">{code(p.driver_number)}</span>
+                        </div>
+                      </td>
+                      <td className="r mono">
+                        {p.stop_duration != null && p.stop_duration > 0 ? (
+                          <span className={isFast ? 'lap-pill best' : undefined} title={isFast ? 'Fastest stop of the session' : undefined}>{p.stop_duration.toFixed(1)} s</span>
+                        ) : (
+                          <span className="faint" title="OpenF1 usually adds stationary times a few hours after the session">later</span>
+                        )}
+                      </td>
+                      <td className="r mono muted">{lane(p) != null ? `${lane(p)!.toFixed(1)} s` : '-'}</td>
+                      <td className="r mono muted">{n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {stops.length > 10 && (
+            <button className="tab" style={{ marginTop: 10 }} onClick={() => setAll(!all)}>{all ? 'Show latest 10' : `Show all ${stops.length} stops`}</button>
+          )}
+          <div className="faint" style={{ fontSize: 12, marginTop: 6 }}>Newest first. Stationary is the time standing still in the box; pit lane is entry to exit, the time a stop really costs. From OpenF1, which may add stationary times a few hours after the session.</div>
+        </>
+      )}
     </section>
   );
 }
