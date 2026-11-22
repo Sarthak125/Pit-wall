@@ -8,6 +8,7 @@
  */
 import { fetchJson, HttpError, RateLimiter } from './http';
 import { getSettings } from '../lib/settings';
+import { activeWindow, getBlocked, OpenF1BlockedError, setBlocked } from '../lib/openf1Window';
 
 const BASE = (import.meta.env.VITE_OPENF1_BASE as string | undefined) ?? 'https://api.openf1.org/v1';
 
@@ -45,18 +46,37 @@ function query(params: Params): string {
     .join('&');
 }
 
+/** While OpenF1 is refusing free requests, the next time we try one anyway to see if access is back. */
+let nextProbe = 0;
+const PROBE_MS = 2 * 60_000;
+
 export async function openf1<T>(endpoint: string, params: Params, signal?: AbortSignal): Promise<T[]> {
   const { openf1Token, openf1PerMinute } = getSettings();
   openf1Limiter.setLimits(perSecondFor(openf1PerMinute), openf1PerMinute);
   const headers: Record<string, string> = {};
-  if (openf1Token.trim()) headers.Authorization = `Bearer ${openf1Token.trim()}`;
+  const token = openf1Token.trim();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  // Without a token, OpenF1 refuses everything during a live session's window (see lib/openf1Window). Inside a
+  // window, fail fast instead of retrying, and only ask again every couple of minutes until access returns.
+  const win = token ? null : activeWindow(Date.now(), 60 * 60_000);
+  if (win && getBlocked() && Date.now() < nextProbe) throw new OpenF1BlockedError(win);
   try {
-    const data = await fetchJson<T[] | { detail?: string }>(`${BASE}/${endpoint}?${query(params)}`, { limiter: openf1Limiter, headers, signal });
+    const data = await fetchJson<T[] | { detail?: string }>(`${BASE}/${endpoint}?${query(params)}`, { limiter: openf1Limiter, headers, signal, retries: win ? 0 : undefined });
+    if (getBlocked()) setBlocked(null);
     return Array.isArray(data) ? data : [];
   } catch (err) {
     // OpenF1 answers 404 {"detail":"No results found."} when a filter matches nothing,
     // for example when no new messages arrived since the last poll.
-    if (err instanceof HttpError && err.status === 404) return [];
+    if (err instanceof HttpError && err.status === 404) {
+      if (getBlocked()) setBlocked(null);
+      return [];
+    }
+    const refused = err instanceof HttpError ? err.status === 401 || err.status === 403 : !signal?.aborted && !(err instanceof DOMException && err.name === 'AbortError');
+    if (win && refused) {
+      nextProbe = Date.now() + PROBE_MS;
+      setBlocked(win);
+      throw new OpenF1BlockedError(win);
+    }
     throw err;
   }
 }
@@ -270,6 +290,27 @@ export async function getStartingGrid(race: Pick<Session, 'meeting_key' | 'sessi
  * uses the same circuit's meeting in a later year (found through `laterDate`), which gives the same circuit key.
  */
 export async function findMeeting(dates: string[], signal?: AbortSignal): Promise<Meeting | null> {
+  // Remembered on the device: a weekend's meeting never changes, and this keeps circuit maps working while OpenF1
+  // is paused for free users during a live session.
+  const key = 'pitwall:meeting:' + dates.join(',');
+  try {
+    const hit = localStorage.getItem(key);
+    if (hit) return JSON.parse(hit) as Meeting;
+  } catch {
+    // storage unavailable: look it up
+  }
+  const found = await lookUpMeeting(dates, signal);
+  if (found) {
+    try {
+      localStorage.setItem(key, JSON.stringify(found));
+    } catch {
+      // best effort
+    }
+  }
+  return found;
+}
+
+async function lookUpMeeting(dates: string[], signal?: AbortSignal): Promise<Meeting | null> {
   for (const date of dates) {
     const year = Number(date.slice(0, 4));
     if (year < 2023) continue;

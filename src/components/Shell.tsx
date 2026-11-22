@@ -1,7 +1,10 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
+import { useSchedule } from '../hooks/useSeason';
+import { activeWindow, getBlocked, setLiveWindows } from '../lib/openf1Window';
+import { openf1 } from '../api/openf1';
 import { useIsFetching, useQueryClient } from '@tanstack/react-query';
 import { href, useRouteParam, type Route } from '../lib/router';
-import { updateSettings, useSettings } from '../lib/settings';
+import { getSettings, updateSettings, useSettings } from '../lib/settings';
 import { CalendarIcon, DashIcon, GearIcon, HelmetIcon, RefreshIcon, StarIcon, TimerIcon, TrophyIcon } from './Icons';
 
 const NAV: { route: Route; label: string; short?: string; icon: () => ReactNode }[] = [
@@ -28,6 +31,14 @@ export function Shell({ route, live, children }: { route: Route; live: boolean; 
           : route === 'race'
             ? 'calendar'
             : route;
+  // The current calendar tells the OpenF1 client when a live session's window is open (see lib/openf1Window).
+  const calendar = useSchedule('current');
+  useEffect(() => {
+    setLiveWindows(calendar.data ?? []);
+    // Inside a live window without a token, check OpenF1 straight away (it answers fast now), so the "paused"
+    // notice shows without waiting for slower requests that started before the calendar was known.
+    if (!getSettings().openf1Token.trim() && activeWindow() && !getBlocked()) openf1('sessions', { meeting_key: 'latest' }).catch(() => undefined);
+  }, [calendar.data]);
   const qc = useQueryClient();
   const fetching = useIsFetching();
   const year = new Date().getFullYear();

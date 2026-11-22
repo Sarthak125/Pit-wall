@@ -36,9 +36,12 @@ import { openf1, type TeamRadio } from '../api/openf1';
 import { FlagIcon } from '../components/Icons';
 import type React from 'react';
 import { ingestFavourite } from '../lib/alerts';
+import { useOpenF1Blocked } from '../lib/openf1Window';
+import { OpenF1BlockedNotice } from '../components/OpenF1Blocked';
 
 export function LiveTiming() {
   const sessions = useLatestSessions();
+  const blocked = useOpenF1Blocked();
   const now = useNow(1000);
   const [picked, setPicked] = useState<number | null>(null);
 
@@ -86,6 +89,7 @@ export function LiveTiming() {
     queryFn: () => getCircuitLaps(round!.Circuit.circuitId, isSprint),
   });
 
+  if (blocked) return <OpenF1BlockedNotice w={blocked} />;
   if (sessions.error) return <ErrorBox error={sessions.error} what="the session list" />;
   if (sessions.isLoading) return <Loading rows={10} />;
   if (!session) return <Empty>No sessions found on OpenF1 yet.</Empty>;

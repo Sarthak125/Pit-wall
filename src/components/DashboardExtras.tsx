@@ -1,3 +1,5 @@
+import { ErrorBox } from './States';
+import { OpenF1BlockedError } from '../lib/openf1Window';
 import { useQuery } from '@tanstack/react-query';
 import { getCircuitLaps, type Race } from '../api/jolpica';
 import { isSessionLive } from '../api/openf1';
@@ -57,7 +59,7 @@ export function NextRaceCircuit({ race }: { race: Race }) {
       ) : layout.isLoading || meeting.isLoading ? (
         <div className="empty">Loading the circuit…</div>
       ) : (
-        <div className="empty">No track layout available for this circuit.</div>
+        meeting.error instanceof OpenF1BlockedError ? <ErrorBox error={meeting.error} what="the track layout" /> : <div className="empty">No track layout available for this circuit.</div>
       )}
       <div className="circuit-facts" style={{ marginTop: 10 }}>
         <div className="stat inset" title="Measured along the recorded track outline"><div className="l">LAP LENGTH</div><div className="v" style={{ fontSize: 18 }}>{length ? `≈ ${length.toFixed(2)} km` : '-'}</div></div>

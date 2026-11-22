@@ -1,3 +1,5 @@
+import { OpenF1BlockedError } from '../lib/openf1Window';
+import { OpenF1BlockedNotice } from './OpenF1Blocked';
 import { HttpError } from '../api/http';
 
 export function Skeleton({ h = 20, w = '100%' }: { h?: number; w?: number | string }) {
@@ -15,6 +17,7 @@ export function Loading({ rows = 5 }: { rows?: number }) {
 }
 
 export function ErrorBox({ error, what }: { error: unknown; what: string }) {
+  if (error instanceof OpenF1BlockedError) return <OpenF1BlockedNotice w={error.window} compact />;
   let detail = 'Check your internet connection and try again.';
   if (error instanceof HttpError) {
     if (error.status === 401 || error.status === 403) {

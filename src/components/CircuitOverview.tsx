@@ -1,3 +1,5 @@
+import { ErrorBox } from './States';
+import { OpenF1BlockedError } from '../lib/openf1Window';
 import { useQuery } from '@tanstack/react-query';
 import { getCircuit } from '../api/circuit';
 import { getCircuitRecords, type Race, type RaceWithResults } from '../api/jolpica';
@@ -52,7 +54,7 @@ export function CircuitOverview({ race }: { race: Race }) {
           ) : meeting.isLoading || layout.isLoading || current.isLoading ? (
             <Loading rows={6} />
           ) : (
-            <div className="empty">No track layout available for this circuit.</div>
+            meeting.error instanceof OpenF1BlockedError ? <ErrorBox error={meeting.error} what="the track layout" /> : <div className="empty">No track layout available for this circuit.</div>
           )}
           {layout.data && (
             <div className="faint" style={{ fontSize: 12, marginTop: 6 }}>

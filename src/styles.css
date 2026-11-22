@@ -516,3 +516,16 @@ html { zoom: 1.1; }
 }
 @media (max-width: 380px) { .bottomnav a { font-size: 10px; } .bottomnav svg { width: 20px; height: 20px; } }
 @media (min-width: 600px) { .cal-tbl { min-width: 640px; } }
+
+/* OpenF1 paused during a live session */
+.of1-blocked { border-color: #5a4a12; background: linear-gradient(180deg, #1d1b12, var(--card) 70%); }
+.of1-blocked p { line-height: 1.55; max-width: 820px; }
+.of1-blocked-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.of1-blocked .live-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; background: var(--accent); color: #fff; font-weight: 700; font-size: 12px; letter-spacing: 1px; }
+.of1-blocked .live-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: pulse 1.4s ease-in-out infinite; }
+.of1-blocked-when { display: flex; flex-wrap: wrap; gap: 12px 40px; margin: 14px 0 6px; }
+.of1-blocked-when .l { font-size: 11px; letter-spacing: 1.5px; color: var(--muted); }
+.of1-blocked-when .v { font-family: var(--mono); font-size: 26px; margin-top: 2px; }
+.of1-blocked-list { margin: 10px 0 0; padding-left: 18px; color: var(--muted); line-height: 1.7; }
+.of1-blocked.compact { padding: 10px 12px; border: 1px solid #5a4a12; border-radius: 10px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.of1-blocked.compact strong { color: var(--amber); }
