@@ -9,17 +9,17 @@ export function ProvisionalNote({ data, block = false }: { data?: ProvisionalTag
   if (!p) return null;
   const what = p.sessions.length === 2 ? 'sprint and race' : p.sessions[0] === 'Sprint' ? 'sprint' : 'race';
   const name = p.raceName.replace(/ Grand Prix$/, '');
-  const detail = `Includes the ${p.raceName} ${what} from the official timing classification (via OpenF1). Pit Wall's usual source, Jolpica, has not published it yet; its confirmed results replace this automatically when they arrive. Post-race penalties may still change it.`;
+  const detail = `Updated after the ${p.raceName} ${what} with Formula 1 timing data from OpenF1. Jolpica, Pit Wall's source for confirmed results, has not published it yet and replaces this automatically when it does. Stewards' decisions after the race can still change it.`;
   if (block) {
     return (
       <div className="provisional-note" role="note">
-        <span className="provisional-pill">Provisional</span> {detail}
+        <span className="provisional-pill">Updated after {name}</span> {detail}
       </div>
     );
   }
   return (
-    <span className="provisional-pill" title={detail} aria-label={`Provisional: ${detail}`}>
-      Provisional · incl. {name}
+    <span className="provisional-pill" title={detail} aria-label={detail}>
+      Updated after {name} · F1 timing
     </span>
   );
 }

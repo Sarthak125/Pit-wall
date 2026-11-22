@@ -236,7 +236,7 @@ function ResultsTable({ rows, showFastest }: { rows: Result[]; showFastest: bool
                 <td className="mono muted">{pos ?? r.positionText}</td>
                 <td><DriverCell r={r} /></td>
                 <td><a className="name-link" style={{ fontWeight: 400, color: 'var(--muted)' }} href={teamHref(r.Constructor.constructorId)}>{r.Constructor.name}</a></td>
-                <td className="r mono">{grid > 0 ? grid : 'Pit lane'}</td>
+                <td className="r mono">{r.grid == null ? '-' : grid > 0 ? grid : 'Pit lane'}</td>
                 <td className={`r mono ${delta == null ? 'faint' : delta > 0 ? 'delta-up' : delta < 0 ? 'delta-down' : 'muted'}`}>{delta == null ? '-' : delta > 0 ? `+${delta}` : delta}</td>
                 <td className="r mono">{r.laps ?? '-'}</td>
                 <td className="r mono">{r.Time?.time ?? r.status}</td>

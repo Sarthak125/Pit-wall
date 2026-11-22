@@ -76,14 +76,22 @@ async function build(season: string, now: number): Promise<Provisional | null> {
   const load = async (name: 'Race' | 'Sprint') => {
     const s = sessions.find((x) => x.session_name === name);
     if (!s) return null;
-    const [results, drivers] = await Promise.all([openf1<SessionResult>('session_result', { session_key: s.session_key }), openf1<OF1Driver>('drivers', { session_key: s.session_key })]);
+    // The grid comes from the qualifying session that set it (OpenF1 files the starting grid under it).
+    const quali = sessions.find((x) => (name === 'Race' ? x.session_name === 'Qualifying' : /Sprint (Qualifying|Shootout)/.test(x.session_name)));
+    const [results, drivers, grid] = await Promise.all([
+      openf1<SessionResult>('session_result', { session_key: s.session_key }),
+      openf1<OF1Driver>('drivers', { session_key: s.session_key }),
+      quali ? openf1<{ driver_number: number; position: number }>('starting_grid', { session_key: quali.session_key }).catch(() => []) : Promise.resolve([]),
+    ]);
     // Only a complete classification with points counts.
     if (!results.length || !results.some((r) => r.position === 1 && typeof r.points === 'number')) return null;
-    return toResults(results, drivers, baseDrivers.standings);
+    return { results: toResults(results, drivers, baseDrivers.standings, new Map(grid.map((g) => [g.driver_number, g.position]))), drivers, sessionKey: s.session_key };
   };
-  const raceResults = needRace ? await load('Race') : null;
-  const sprintResults = needSprint ? await load('Sprint') : null;
-  if (!raceResults && !sprintResults) return null;
+  const raceLoad = needRace ? await load('Race') : null;
+  const sprintLoad = needSprint ? await load('Sprint') : null;
+  if (!raceLoad && !sprintLoad) return null;
+  const raceResults = raceLoad?.results ?? null;
+  const sprintResults = sprintLoad?.results ?? null;
 
   const race = raceResults ? { ...stripSessions(weekend), Results: raceResults } : null;
   const sprint = sprintResults ? { ...stripSessions(weekend), SprintResults: sprintResults } : null;
@@ -93,6 +101,21 @@ async function build(season: string, now: number): Promise<Provisional | null> {
     ...(sprintResults ?? sprints.find((x) => x.round === weekend.round)?.SprintResults ?? []),
   ];
   const wonRace = raceResults?.find((r) => r.position === '1')?.Driver.driverId ?? races.find((x) => x.round === weekend.round)?.Results?.find((r) => r.position === '1')?.Driver.driverId;
+  let driverTable = addDrivers(baseDrivers.standings, weekendResults, wonRace);
+  let teamTable = addTeams(baseTeams.standings, weekendResults, raceResults ?? races.find((x) => x.round === weekend.round)?.Results ?? []);
+  // OpenF1's own championship standings after the latest session, when it has them: its points and order (ties
+  // included) replace the sums above. Wins still come from the results.
+  const latest = raceLoad ?? sprintLoad!;
+  try {
+    const [champD, champT] = await Promise.all([
+      openf1<ChampionshipDriver>('championship_drivers', { session_key: latest.sessionKey }),
+      openf1<ChampionshipTeam>('championship_teams', { session_key: latest.sessionKey }),
+    ]);
+    driverTable = applyDriverChampionship(driverTable, champD, latest.drivers);
+    teamTable = applyTeamChampionship(teamTable, champT, latest.drivers, weekendResults);
+  } catch {
+    // Not available (or OpenF1 busy): the sums from the results stand.
+  }
   return {
     season,
     round,
@@ -100,9 +123,60 @@ async function build(season: string, now: number): Promise<Provisional | null> {
     sessions: [...(raceResults ? (['Race'] as const) : []), ...(sprintResults ? (['Sprint'] as const) : [])],
     race,
     sprint,
-    drivers: { round, standings: addDrivers(baseDrivers.standings, weekendResults, wonRace) },
-    constructors: { round, standings: addTeams(baseTeams.standings, weekendResults, raceResults ?? races.find((x) => x.round === weekend.round)?.Results ?? []) },
+    drivers: { round, standings: driverTable },
+    constructors: { round, standings: teamTable },
   };
+}
+
+export interface ChampionshipDriver {
+  driver_number: number;
+  position_current: number | null;
+  points_current: number | null;
+}
+
+export interface ChampionshipTeam {
+  team_name: string;
+  position_current: number | null;
+  points_current: number | null;
+}
+
+/** OpenF1's driver standings applied to ours: matched by car number (via the session's drivers, then permanent number). */
+export function applyDriverChampionship(table: DriverStanding[], champ: ChampionshipDriver[], drivers: OF1Driver[]): DriverStanding[] {
+  if (!champ.some((c) => c.position_current === 1)) return table;
+  const codeByNum = new Map(drivers.map((d) => [d.driver_number, d.name_acronym]));
+  const find = (n: number) => table.find((s) => (codeByNum.get(n) && s.Driver.code === codeByNum.get(n)) || s.Driver.permanentNumber === String(n));
+  const placed = new Set<DriverStanding>();
+  const out: DriverStanding[] = [];
+  for (const c of [...champ].sort((a, b) => (a.position_current ?? 999) - (b.position_current ?? 999))) {
+    const s = find(c.driver_number);
+    if (!s || placed.has(s) || c.points_current == null) continue;
+    placed.add(s);
+    out.push({ ...s, points: String(c.points_current) });
+  }
+  // Anyone OpenF1 does not list keeps their own sum, in points order.
+  for (const s of table) if (!placed.has(s)) out.push(s);
+  return out.map((s, i) => ({ ...s, position: String(i + 1), positionText: String(i + 1) }));
+}
+
+/** OpenF1's team standings applied to ours: team names matched through the drivers who raced for each team. */
+export function applyTeamChampionship(table: ConstructorStanding[], champ: ChampionshipTeam[], drivers: OF1Driver[], results: Result[]): ConstructorStanding[] {
+  if (!champ.some((c) => c.position_current === 1)) return table;
+  const idByCode = new Map(results.map((r) => [r.Driver.code ?? '', r.Constructor.constructorId]));
+  const idByTeam = new Map<string, string>();
+  for (const d of drivers) {
+    const id = idByCode.get(d.name_acronym);
+    if (d.team_name && id && !idByTeam.has(d.team_name)) idByTeam.set(d.team_name, id);
+  }
+  const placed = new Set<ConstructorStanding>();
+  const out: ConstructorStanding[] = [];
+  for (const c of [...champ].sort((a, b) => (a.position_current ?? 999) - (b.position_current ?? 999))) {
+    const s = table.find((t) => t.Constructor.constructorId === idByTeam.get(c.team_name));
+    if (!s || placed.has(s) || c.points_current == null) continue;
+    placed.add(s);
+    out.push({ ...s, points: String(c.points_current) });
+  }
+  for (const s of table) if (!placed.has(s)) out.push(s);
+  return out.map((s, i) => ({ ...s, position: String(i + 1), positionText: String(i + 1) }));
 }
 
 function stripSessions(r: Race): Race {
@@ -110,9 +184,18 @@ function stripSessions(r: Race): Race {
 }
 
 /** OpenF1's classification as Jolpica results, matched to Jolpica's drivers and teams by three-letter code. */
-export function toResults(results: SessionResult[], drivers: OF1Driver[], standings: DriverStanding[]): Result[] {
+export function toResults(results: SessionResult[], drivers: OF1Driver[], standings: DriverStanding[], grid?: Map<number, number>): Result[] {
   const byNum = new Map(drivers.map((d) => [d.driver_number, d]));
   const byCode = new Map(standings.map((s) => [s.Driver.code ?? '', s]));
+  // OpenF1 team name to Jolpica team, learnt from drivers who have driven for one team only. A driver who changed
+  // team during the season is then credited to the team OpenF1 lists for this session.
+  const teamOf = new Map<string, string>();
+  for (const d of drivers) {
+    const s = byCode.get(d.name_acronym);
+    if (d.team_name && s?.Constructors.length === 1) teamOf.set(d.team_name, s.Constructors[0].constructorId);
+  }
+  const constructorFor = (s: DriverStanding | undefined, d: OF1Driver | undefined) =>
+    s?.Constructors.find((c) => c.constructorId === teamOf.get(d?.team_name ?? '')) ?? s?.Constructors[s.Constructors.length - 1];
   const winner = results.find((r) => r.position === 1);
   const winnerLaps = winner?.number_of_laps ?? 0;
   const classified = [...results].sort((a, b) => (a.position ?? 999) - (b.position ?? 999) || (b.number_of_laps ?? 0) - (a.number_of_laps ?? 0));
@@ -129,7 +212,8 @@ export function toResults(results: SessionResult[], drivers: OF1Driver[], standi
       positionText: r.position != null ? String(r.position) : r.dsq ? 'D' : r.dns ? 'W' : 'R',
       points: String(r.points ?? 0),
       Driver: s?.Driver ?? { driverId: (d?.name_acronym ?? String(r.driver_number)).toLowerCase(), code: d?.name_acronym, givenName: d?.first_name ?? '', familyName: d?.last_name ?? d?.name_acronym ?? '' },
-      Constructor: s?.Constructors[s.Constructors.length - 1] ?? { constructorId: (d?.team_name ?? 'unknown').toLowerCase().replace(/\s+/g, '_'), name: d?.team_name ?? '' },
+      Constructor: constructorFor(s, d) ?? { constructorId: (d?.team_name ?? 'unknown').toLowerCase().replace(/\s+/g, '_'), name: d?.team_name ?? '' },
+      grid: grid?.has(r.driver_number) ? String(grid.get(r.driver_number)) : undefined,
       laps: String(laps),
       status,
       Time: time ? { time } : undefined,

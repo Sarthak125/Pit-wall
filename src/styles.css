@@ -657,6 +657,6 @@ html { zoom: 1.1; }
 .help-download span { font-size: 12px; font-weight: 500; opacity: 0.75; }
 
 /* Provisional results (official classification, before Jolpica publishes it) */
-.provisional-pill { text-transform: none; letter-spacing: 0; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: #33280a; color: var(--amber); font-size: 12px; font-weight: 600; white-space: nowrap; cursor: help; }
-.provisional-note { margin: 0 0 12px; padding: 10px 14px; border: 1px solid #5a4a12; background: #1d1b12; border-radius: 10px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.provisional-pill { text-transform: none; letter-spacing: 0; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: #14233a; color: var(--blue-soft); font-size: 12px; font-weight: 600; white-space: nowrap; cursor: help; }
+.provisional-note { margin: 0 0 12px; padding: 10px 14px; border: 1px solid #1f3b5a; background: #0f1a26; border-radius: 10px; color: var(--muted); font-size: 13px; line-height: 1.5; }
 .provisional-note .provisional-pill { cursor: default; margin-right: 4px; }

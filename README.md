@@ -12,7 +12,7 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 ### Latest
 
-- **Provisional results right after a race:** until Jolpica publishes a race (which can take hours), standings, the title chart, the last race card, the Calendar winner and the race page use the official classification from OpenF1, marked **Provisional**. Jolpica's confirmed results replace it automatically.
+- **Standings updated right after a race:** until Jolpica publishes a race (which can take hours), standings, the title chart, the last race card, the Calendar winner and the race page use Formula 1 timing data from OpenF1 (the race classification and OpenF1's championship standings), labelled **Updated after <race> · F1 timing**. Jolpica's confirmed results replace it automatically.
 - **Android app:** a free 1 MB app (Android 7 or newer) that opens Pit Wall full screen, downloadable from the How to use page. See [Use it on your Android tablet or phone](#use-it-on-your-android-tablet-or-phone).
 - **How to use page:** a guide inside the app (the **?** button next to Settings, or `#/help`): getting started, race day and the feed status pill, reading Live Timing (colours, tags, qualifying, long runs, charts), watching later, planning ahead and common questions.
 - **Qualifying knockout view:** Q1, Q2 and Q3 columns in the timing tower, the drop zone shaded with a line at the cut, the current part and cut-off time in the session bar, and OUT Q1 / OUT Q2 tags. See [Qualifying](#live-timing).
@@ -63,9 +63,9 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 - A **LIVE** banner at the top while any session is running, with how long it has been going; tap it to open Live Timing.
 - Next race card with a live countdown to lights out and the weekend schedule (practice, sprint, qualifying, race) marked Done, Live, Next or Upcoming, and an **Add to calendar** button for the weekend's sessions.
 - Next race circuit: track map with S1 / S2 / S3 colours and turn numbers, lap length, turns and race laps, with a link to the full circuit and race page. On laptops the map grows to match the height of the column beside it; on tablets it is sized to the card's width.
-- Weekend forecast for the next race (once it is within about 16 days), and the last race podium and fastest lap beside it. Right after a race, before Jolpica has published it, the podium comes from the official classification and is marked **Provisional** (see [Data sources](#data-sources)).
+- Weekend forecast for the next race (once it is within about 16 days), and the last race podium and fastest lap beside it. Right after a race, before Jolpica has published it, the podium comes from F1 timing data and is labelled **Updated after <race>** (see [Data sources](#data-sources)).
 - Track conditions from the latest session: air and track temperature, humidity, wind (km/h and direction), pressure, rain, and track status (green, yellow, safety car, red, chequered) while a session is live, with a compact **rain watch** underneath (see [Live Timing](#live-timing)).
-- Drivers' and Constructors' Championship tables, marked **Provisional · incl. <race>** while they include a race Jolpica has not published yet.
+- Drivers' and Constructors' Championship tables, labelled **Updated after <race> · F1 timing** while they include a race Jolpica has not published yet.
 - **Title fight chart:** cumulative points after each round for the top four, plus your favourite driver (drawn thicker). Team-mates share their team colour with the second car dashed, each line ends in a label with its points, and hovering or tapping a round shows the race, everyone's points and the gap to the leader. It is drawn at the card's real width, so text stays a normal size on any screen.
 - Season calendar strip.
 - "Your driver" and "Your team" strips when favourites are set.
@@ -214,7 +214,7 @@ While the app is open and a session is live, pop-up alerts tell you when your fa
 
 ### Standings, Calendar and Drivers
 
-- **Standings:** full Drivers' and Constructors' tables, with your favourites highlighted and the flag button to pick a team. Driver and team names open their pages (see below). In the hours after a race, before Jolpica publishes it, the tables add that race's points from the official classification and carry a **Provisional** label; hover over it for the details. Jolpica's confirmed standings replace them automatically.
+- **Standings:** full Drivers' and Constructors' tables, with your favourites highlighted and the flag button to pick a team. Driver and team names open their pages (see below). In the hours after a race, before Jolpica publishes it, the tables come from OpenF1's championship standings after that race and carry an **Updated after <race> · F1 timing** label; hover over it for the details. Jolpica's confirmed standings replace them automatically.
 - **Calendar:** every round with all session times in your time zone and the winner (and their team) of each finished race. Tap a race name for its race and circuit page (see above). An **Add remaining 2 races to calendar** button (the number follows the season) (or **Add season to calendar** before the season starts) downloads every session still to come.
 - **On phones:** the Drivers' table shows position, driver, gap and points (the colour bar still shows the team), and the Calendar shows round, race, date and winner. The full session times are on each race page. Wider tables can be swiped sideways.
 - **Drivers:** the current grid with photos, numbers, teams and championship position, and the star to pick your favourite. Tap a driver to open their page (see below).
@@ -330,7 +330,7 @@ Formula 1 has no public official API. This app uses free community APIs:
 How some values are worked out:
 
 - **FIA message types** come from the stewards' standard wording in each message. A message with unusual wording lands in "Other".
-- **Provisional results:** when the latest race or sprint should be over but Jolpica has no results for it yet, Pit Wall reads OpenF1's official classification (positions, status and points) and adds those points to Jolpica's standings after the previous round, adding a win for the race winner. Ties are ordered by wins and then the previous order, a simplified countback. Post-race penalties published later are not reflected until Jolpica's results arrive. If OpenF1 does not answer within 4 seconds, Jolpica's data is shown as it is and the provisional data appears at the next refresh.
+- **Results before Jolpica has them:** when the latest race or sprint should be over but Jolpica has no results for it yet, Pit Wall reads OpenF1's classification (positions, status and points) for the results, and OpenF1's championship standings (`championship_drivers`, `championship_teams`) for the points and order, ties included. Wins add one for the race winner to Jolpica's count after the previous round. If OpenF1's championship standings are not available, Pit Wall adds the session's points to Jolpica's standings after the previous round itself and orders ties by wins, then the previous order. Post-race penalties published later are not reflected until Jolpica's results arrive. If OpenF1 does not answer within 4 seconds, Jolpica's data is shown as it is and the provisional data appears at the next refresh.
 - **Finished rounds** are counted from the race results, because Jolpica's standings round can run ahead of the results.
 - **Title maths** assumes 25 points for a Grand Prix win and 8 for a sprint win (a one-two of 43 and 15 for a team), with no fastest-lap point. Ties decided by countback are not modelled.
 - **Overtakes** are as recorded by OpenF1 and only shown for races and sprints.
