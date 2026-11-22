@@ -51,14 +51,33 @@ export function Help() {
             one in Settings. Its drivers are tinted in the tables and Live Timing, and it gets a Team tab under Favourites.
           </Step>
           <Step n={3} title="Install it like an app">
-            In Chrome on Android, open the ⋮ menu and choose <b>Install app</b> (or <b>Add to Home screen</b>). On a laptop, Chrome and Edge
-            show an install button in the address bar. It then opens full screen and works offline with the last data it loaded.
+            In Chrome on Android, open the ⋮ menu and choose <b>Install app</b> (or <b>Add to Home screen</b>), or get the{' '}
+            <button type="button" className="link-btn" style={{ padding: 0 }} onClick={() => jump('android')}>Android app</button> below. On a laptop, Chrome and
+            Edge show an install button in the address bar. It then opens full screen and works offline with the last data it loaded.
           </Step>
           <Step n={4} title="Turn on alerts">
             While a session is live, pop-ups tell you when your favourite driver changes position, pits or gets an FIA decision. Device
             notifications can be switched on in Settings; they arrive while the app is open or in the background, not after it is closed.
           </Step>
         </Steps>
+        <div className="help-android" id="android">
+          <div>
+            <h3 className="help-h3" style={{ marginTop: 0 }}>Android app</h3>
+            <p>
+              Pit Wall is also a small Android app (about 1 MB, Android 7 or newer). It opens the same site full screen, so it always has the latest
+              features. It is not on the Play Store, so Android asks you to allow installs from your browser the first time.
+            </p>
+            <ol className="help-list">
+              <li>Tap <b>Download for Android</b> on your phone and open the file.</li>
+              <li>If asked, allow <b>Install unknown apps</b> for your browser, then tap <b>Install</b>.</li>
+              <li>Open <b>Pit Wall</b> from your home screen. It needs Chrome (or another browser that supports it) installed.</li>
+            </ol>
+          </div>
+          <a className="btn primary help-download" href={`${import.meta.env.BASE_URL}pit-wall.apk`} download="pit-wall.apk">
+            Download for Android
+            <span>APK · version 1.0.0</span>
+          </a>
+        </div>
       </Section>
 
       <Section id="raceday" title="On race day">
@@ -227,6 +246,11 @@ export function Help() {
           </dd>
           <dt>Where are my settings saved?</dt>
           <dd>Only on this device, in the browser. Each phone or laptop keeps its own favourites and settings.</dd>
+          <dt>Is the Android app safe to install?</dt>
+          <dd>
+            It is built from this project's own code and only opens this website. Android warns about any app from outside the Play Store; only
+            install it from this page.
+          </dd>
           <dt>Is this official?</dt>
           <dd>No. Pit Wall is an unofficial fan project, not affiliated with Formula 1, the FIA or any team.</dd>
         </dl>

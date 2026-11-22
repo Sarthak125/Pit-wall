@@ -26,3 +26,11 @@ dist-ssr
 test-results/
 playwright-report/
 !tests/fixtures/*.har.zip
+
+# Android signing keys never go in the repository.
+*.keystore
+*.jks
+android/project/local.properties
+android/project/.gradle/
+android/project/app/build/
+android/project/build/

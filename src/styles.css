@@ -651,3 +651,7 @@ html { zoom: 1.1; }
   .brand { gap: 6px; }
   .brand-name { font-size: 18px; }
 }
+.help-android { display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: center; justify-content: space-between; margin-top: 14px; padding: 16px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
+.help-android > div { flex: 1 1 420px; min-width: 0; }
+.help-download { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 56px; padding: 8px 22px; text-decoration: none; }
+.help-download span { font-size: 12px; font-weight: 500; opacity: 0.75; }

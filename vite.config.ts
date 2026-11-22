@@ -33,6 +33,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // The Android app download must reach the server, not be answered with the app page.
+        navigateFallbackDenylist: [/\.apk$/],
         runtimeCaching: [
           {
             // Standings and calendar: show the last saved copy when offline.

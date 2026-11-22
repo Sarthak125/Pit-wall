@@ -10,6 +10,7 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 ## Recently added
 
+- **Android app:** a free 1 MB app (Android 7 or newer) that opens Pit Wall full screen, downloadable from the How to use page. See [Use it on your Android tablet or phone](#use-it-on-your-android-tablet-or-phone).
 - **How to use page:** a guide inside the app (the **?** button next to Settings, or `#/help`): getting started, race day and the feed status pill, reading Live Timing (colours, tags, qualifying, long runs, charts), watching later, planning ahead and common questions.
 - **Qualifying knockout view:** Q1, Q2 and Q3 columns in the timing tower, the drop zone shaded with a line at the cut, the current part and cut-off time in the session bar, and OUT Q1 / OUT Q2 tags. See [Qualifying](#live-timing).
 - **TV delay:** hold live timing back by up to 2 minutes so overtakes and flags appear when you see them on TV or a stream.
@@ -353,6 +354,8 @@ Open the address it prints (http://localhost:3030).
 
 Open the live site above in Chrome, tap the three-dot menu, then **Install app** (or **Add to Home screen**). Pit Wall then opens from the home screen, full screen like a normal app.
 
+Or install the **Android app**: on the How to use page, tap **Download for Android** (or open https://sarthak125.github.io/Pit-wall/pit-wall.apk), open the file and allow installs from your browser when asked. It is a Trusted Web Activity: a 1 MB app (Android 7 or newer) that opens this site full screen in Chrome, so it always has the latest version. It is not on the Play Store. How it is built, signed and updated is in [`android/README.md`](android/README.md).
+
 Installing needs the site to be served over **HTTPS**, which GitHub Pages does. For a quick test without hosting, run `npm run dev` on the laptop and open `http://<laptop-ip>:3030` on the tablet or phone while both are on the same Wi-Fi. That works in the browser, but Android will not install it as an app over plain HTTP.
 
 ## Tests
@@ -400,6 +403,7 @@ src/components/  App shell, charts, live track map, live championship, gap chart
                  position chart, live driver and team views, team radio cards, FIA messages, strips, alerts, update
                  banner, feed status, tyre strategy, long-run pace, rain watch, add to calendar, spoiler cover,
                  TV delay picker, loading and error states
+android/         Android app (Trusted Web Activity) project, generator, Digital Asset Links file and build notes
 tests/           Unit tests (unit), browser tests (e2e) and recorded API responses and feed snapshot (fixtures)
 ```
 

@@ -154,3 +154,16 @@ test('when F1\'s feed drops, the last timing stays up and the status pill offers
   expect(sockets).toHaveLength(2);
   expect(errors).toEqual([]);
 });
+
+test('the Android app download serves the APK', async ({ page, request }) => {
+  const errors = await setUp(page);
+  await page.goto('#/help');
+  const link = page.getByRole('link', { name: /Download for Android/ });
+  await expect(link).toBeVisible();
+  const res = await request.get(new URL((await link.getAttribute('href'))!, page.url()).href);
+  expect(res.status()).toBe(200);
+  const body = await res.body();
+  expect(body.subarray(0, 2).toString()).toBe('PK');
+  expect(body.length).toBeGreaterThan(500_000);
+  expect(errors).toEqual([]);
+});
