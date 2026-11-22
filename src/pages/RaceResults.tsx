@@ -105,7 +105,8 @@ export function RaceResults() {
           {start ? ` · ${fmtDayMonth(start)}` : ''}
         </div>
         {finished && !hidden && <Podium results={results} />}
-        {!finished && <div style={{ marginTop: 12 }}><AddToCalendar races={[info]} /></div>}
+        {/* Only for races still to come (not while a past race's results are loading). */}
+        {!finished && !!start && start.getTime() > now && <div style={{ marginTop: 12 }}><AddToCalendar races={[info]} /></div>}
       </section>
 
       <CircuitOverview race={info} />

@@ -36,9 +36,11 @@ export function fmtDateRange(a: Date, b: Date): string {
 export const fmtClock = (d: Date) => clock.format(d);
 export const fmtShortClock = (d: Date) => shortClock.format(d);
 
+/** The device's time zone by its everyday name ("India Standard Time"), or its IANA id if that is not available. */
 export function timeZoneLabel(): string {
   try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const name = new Intl.DateTimeFormat(undefined, { timeZoneName: 'long' }).formatToParts(new Date()).find((x) => x.type === 'timeZoneName')?.value;
+    return name || Intl.DateTimeFormat().resolvedOptions().timeZone;
   } catch {
     return 'local time';
   }

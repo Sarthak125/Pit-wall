@@ -664,3 +664,8 @@ html { zoom: 1.1; }
 .sessions .when { display: flex; flex-direction: column; gap: 1px; line-height: 1.3; }
 .sessions .when-date { color: var(--muted); font-family: var(--body); font-size: 13px; }
 .sessions .when-time { color: var(--text); font-family: var(--mono); font-size: 14px; }
+/* Touch screens: stint bars big enough to tap (24px). */
+@media (pointer: coarse) {
+  .strategy-track { height: 28px; }
+  .strategy-stint { font-size: 11px; }
+}
