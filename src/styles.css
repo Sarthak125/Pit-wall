@@ -706,3 +706,15 @@ html { zoom: 1.1; }
 .review-battle-team { font-weight: 700; align-self: flex-start; }
 .review-battle-nums { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
 .review-battle-names { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; }
+
+/* Race story timeline */
+.story { list-style: none; margin: 0; padding: 0; }
+.story-item { display: grid; grid-template-columns: 44px 14px 1fr; gap: 10px; align-items: start; padding: 7px 0; }
+.story-item + .story-item { border-top: 1px solid var(--line-soft); }
+.story-lap { color: var(--muted); font-size: 12px; padding-top: 3px; text-align: right; }
+.story-rail { display: flex; justify-content: center; padding-top: 5px; }
+.story-rail i { width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); display: block; }
+.story-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-weight: 600; }
+.story-detail { font-size: 12px; margin-top: 2px; }
+.story-fav { background: color-mix(in srgb, var(--accent) 8%, transparent); border-radius: 6px; }
+.story-item[data-kind='finish'] .story-title > span:nth-child(2), .story-item[data-kind='start'] .story-title > span:nth-child(2) { font-size: 15px; }

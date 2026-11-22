@@ -42,7 +42,7 @@ export interface PositionTrace {
  * Lap-by-lap positions for a race. OpenF1 records a row only when a position changes, so each driver's
  * position at the end of a lap is the last change at or before the moment that lap finished.
  */
-export async function getRacePositions(meetingKey: number, sprint: boolean, signal?: AbortSignal): Promise<{ laps: number; traces: PositionTrace[] } | null> {
+export async function getRacePositions(meetingKey: number, sprint: boolean, signal?: AbortSignal): Promise<{ laps: number; traces: PositionTrace[]; lapRows: Lap[] } | null> {
   const sessions = await meetingSessions(meetingKey, signal);
   const race = sessions.find((s) => (sprint ? s.session_name === 'Sprint' : s.session_name === 'Race'));
   if (!race) return null;
@@ -83,5 +83,5 @@ export async function getRacePositions(meetingKey: number, sprint: boolean, sign
     }
     traces.push({ driver, positions });
   }
-  return { laps: total, traces };
+  return { laps: total, traces, lapRows: laps };
 }

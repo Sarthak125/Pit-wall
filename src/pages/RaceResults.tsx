@@ -2,6 +2,7 @@ import { ProvisionalNote } from '../components/ProvisionalNote';
 import { provisionalSoon, type ProvisionalTag } from '../hooks/useSeason';
 import { AddToCalendar } from '../components/AddToCalendar';
 import { RaceTyreStrategy } from '../components/TyreStrategy';
+import { RaceStory } from '../components/RaceStory';
 import { SpoilerCover } from '../components/SpoilerCover';
 import { useSpoilers } from '../hooks/useSpoilers';
 import { useState } from 'react';
@@ -150,6 +151,14 @@ export function RaceResults() {
           ) : (
             <ResultsTable rows={shownTab === 'sprint' ? sprint : results} showFastest={shownTab === 'race'} />
           )}
+        </section>
+      )}
+      {finished && !hidden && Number(info.season) >= 2023 && shownTab !== 'quali' && (
+        <section className="card" aria-labelledby="story">
+          <div className="card-head">
+            <h2 className="h2" id="story">Race story{shownTab === 'sprint' ? ': sprint' : ''}</h2>
+          </div>
+          <RaceStory key={shownTab} race={info} results={shownTab === 'sprint' ? sprint : results} sprint={shownTab === 'sprint'} />
         </section>
       )}
       {finished && !hidden && Number(info.season) >= 2023 && shownTab !== 'quali' && (
