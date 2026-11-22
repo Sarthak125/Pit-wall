@@ -1,3 +1,4 @@
+import { RaceTyreStrategy } from '../components/TyreStrategy';
 import { SpoilerCover } from '../components/SpoilerCover';
 import { useSpoilers } from '../hooks/useSpoilers';
 import { useState } from 'react';
@@ -132,6 +133,14 @@ export function RaceResults() {
             <h2 className="h2" id="positions">Positions lap by lap{shownTab === 'sprint' ? ': sprint' : ''}</h2>
           </div>
           <PositionChart key={shownTab} race={info} results={shownTab === 'sprint' ? sprint : results} sprint={shownTab === 'sprint'} />
+        </section>
+      )}
+      {finished && !hidden && Number(info.season) >= 2023 && shownTab !== 'quali' && (
+        <section className="card" aria-labelledby="strategy">
+          <div className="card-head">
+            <h2 className="h2" id="strategy">Tyre strategy{shownTab === 'sprint' ? ': sprint' : ''}</h2>
+          </div>
+          <RaceTyreStrategy key={shownTab} race={info} results={shownTab === 'sprint' ? sprint : results} sprint={shownTab === 'sprint'} />
         </section>
       )}
       <Footer />

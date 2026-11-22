@@ -39,6 +39,7 @@ import { ingestFavourite } from '../lib/alerts';
 import { useOpenF1Blocked } from '../lib/openf1Window';
 import { OpenF1BlockedNotice } from '../components/OpenF1Blocked';
 import { DelayPicker } from '../components/DelayPicker';
+import { TyreStrategy } from '../components/TyreStrategy';
 import { SpoilerCover } from '../components/SpoilerCover';
 import { useSpoilers } from '../hooks/useSpoilers';
 import { overtakeAid, type PitDetail } from '../api/openf1';
@@ -309,6 +310,21 @@ export function LiveTiming() {
             <h2 className="h2" id="positions">Positions lap by lap</h2>
           </div>
           <LivePositions session={session} live={live} sprint={isSprint} rows={t.rows} feed={t.positionTraces} distance={total ?? null} />
+        </section>
+      )}
+
+      {isRace && !upcoming && (
+        <section className="card tight" aria-labelledby="strategy">
+          <div className="card-head">
+            <h2 className="h2" id="strategy">Tyre strategy</h2>
+          </div>
+          <TyreStrategy
+            stints={t.stints}
+            drivers={t.rows.map((r) => ({ num: r.driver.driver_number, code: r.driver.name_acronym, colour: r.colour }))}
+            totalLaps={total ?? null}
+            currentLap={t.currentLap}
+            favNum={favNum}
+          />
         </section>
       )}
 
