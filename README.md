@@ -2,7 +2,7 @@
 
 An installable web app (PWA) for Formula 1: live timing with a moving track map, pit stop predictions and live championship standings, FIA race control and stewards' messages in plain English, team radio, standings, a calendar with a page for every race and circuit, driver and team pages, and a personal page for your favourite driver and team. One codebase runs in a laptop browser and installs on an Android tablet or phone like an app.
 
-Live site: https://sarthak125.github.io/Sarthak125/
+Live site: https://sarthak125.github.io/Pit-wall/
 
 Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
