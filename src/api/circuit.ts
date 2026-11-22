@@ -23,6 +23,8 @@ export interface Circuit {
   pitLoss?: { normal?: string; sc?: string; vsc?: string };
   corners: CircuitPoint[];
   marshalSectors: CircuitPoint[];
+  /** Drawn from cars' recorded positions because MultiViewer has no layout for the circuit (no turn numbers). */
+  recorded?: boolean;
 }
 
 /** Layout for a circuit, trying the session's year first, then the year before. */

@@ -1,3 +1,4 @@
+import { getCircuit, type Circuit } from '../api/circuit';
 import { meetingSessions, openf1, type CarLocation, type Lap, type Meeting } from '../api/openf1';
 
 /**
@@ -47,6 +48,53 @@ export async function getSectorLinesFor(meeting: Pick<Meeting, 'meeting_key' | '
     if (lines) return { lines, year: m.year };
   }
   return null;
+}
+
+/**
+ * A circuit's layout: MultiViewer's, or, for a circuit MultiViewer does not have yet (a new venue, or one F1 has not
+ * raced at for years), an outline drawn from where a car actually went on the fastest lap of the weekend.
+ */
+export async function getLayout(circuitKey: number, year: number, meetingKey: number | undefined, signal?: AbortSignal): Promise<Circuit> {
+  try {
+    return await getCircuit(circuitKey, year, signal);
+  } catch (err) {
+    const recorded = meetingKey ? await recordedLayout(meetingKey, signal).catch(() => null) : null;
+    if (recorded) return recorded;
+    throw err;
+  }
+}
+
+export async function recordedLayout(meetingKey: number, signal?: AbortSignal): Promise<Circuit | null> {
+  const sessions = (await meetingSessions(meetingKey, signal)).filter((s) => Date.parse(s.date_start) < Date.now());
+  const pick = sessions.find((s) => s.session_name === 'Qualifying') ?? sessions.find((s) => s.session_name === 'Race') ?? sessions[sessions.length - 1];
+  if (!pick) return null;
+  const laps = await openf1<Lap>('laps', { session_key: pick.session_key }, signal);
+  const ref = laps.filter((l) => l.date_start && l.lap_duration && !l.is_pit_out_lap).sort((a, b) => a.lap_duration! - b.lap_duration!)[0];
+  if (!ref) return null;
+  const t0 = Date.parse(ref.date_start!);
+  const rows = await openf1<CarLocation>(
+    'location',
+    { session_key: pick.session_key, driver_number: ref.driver_number, 'date>': new Date(t0).toISOString(), 'date<': new Date(t0 + ref.lap_duration! * 1000).toISOString() },
+    signal,
+  );
+  // Positions are in tenths of a metre; keep a point every 5 m or so.
+  const pts: { x: number; y: number }[] = [];
+  for (const r of rows) {
+    if (!r.x && !r.y) continue;
+    const last = pts[pts.length - 1];
+    if (!last || Math.hypot(r.x - last.x, r.y - last.y) >= 50) pts.push({ x: r.x, y: r.y });
+  }
+  if (pts.length < 50) return null;
+  return {
+    x: pts.map((p) => p.x),
+    y: pts.map((p) => p.y),
+    // North up: geometry() turns by rotation + 180 degrees before flipping y for SVG.
+    rotation: 180,
+    corners: [],
+    // The lap starts on the start/finish line, which the map marks at marshal sector 1.
+    marshalSectors: [{ number: 1, angle: 0, length: 0, trackPosition: pts[0] }],
+    recorded: true,
+  };
 }
 
 export interface PositionTrace {

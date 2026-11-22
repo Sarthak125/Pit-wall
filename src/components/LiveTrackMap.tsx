@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { getCircuit } from '../api/circuit';
+import { getLayout } from '../lib/sectorLines';
 import { geometry } from '../lib/trackGeometry';
 import { liveEvery, openf1, type CarLocation, type Lap, type OF1Driver, type Session } from '../api/openf1';
 import { driverHref } from '../lib/router';
@@ -37,7 +37,7 @@ export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, t
     queryKey: ['circuit', session.circuit_key, session.year],
     enabled: !!session.circuit_key,
     staleTime: Infinity,
-    queryFn: ({ signal }) => getCircuit(session.circuit_key, session.year, signal),
+    queryFn: ({ signal }) => getLayout(session.circuit_key, session.year, session.meeting_key, signal),
   });
 
   const start = Date.parse(session.date_start);

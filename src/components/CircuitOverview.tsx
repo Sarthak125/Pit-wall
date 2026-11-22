@@ -1,10 +1,9 @@
 import { ErrorBox } from './States';
 import { OpenF1BlockedError } from '../lib/openf1Window';
 import { useQuery } from '@tanstack/react-query';
-import { getCircuit } from '../api/circuit';
 import { getCircuitRecords, type Race, type RaceWithResults } from '../api/jolpica';
 import { findMeeting } from '../api/openf1';
-import { getSectorLinesFor } from '../lib/sectorLines';
+import { getLayout, getSectorLinesFor } from '../lib/sectorLines';
 import { useSchedule } from '../hooks/useSeason';
 import { driverHref, raceHref, teamHref } from '../lib/router';
 import { teamColour } from '../lib/teams';
@@ -65,7 +64,7 @@ export function CircuitOverview({ race }: { race: Race }) {
                   <span><i className="sw" style={{ background: 'var(--s3)' }} />S3</span>
                 </span>
               )}
-              Numbers are turns; the red arrow shows the direction of travel.{sectorLines.data ? (sectorLines.year != null && sectorLines.year !== meeting.data?.year ? ` Sector lines placed from the fastest lap of the ${sectorLines.year} weekend here, until this weekend's first session.` : ' Sector lines placed from the fastest lap of that weekend.') : ''} Layout: MultiViewer.
+              {layout.data.recorded ? 'Outline drawn from where a car went on the fastest lap of the weekend (MultiViewer has no layout for this circuit yet, so there are no turn numbers); the red arrow shows the direction of travel.' : 'Numbers are turns; the red arrow shows the direction of travel.'}{sectorLines.data ? (sectorLines.year != null && sectorLines.year !== meeting.data?.year ? ` Sector lines placed from the fastest lap of the ${sectorLines.year} weekend here, until this weekend's first session.` : ' Sector lines placed from the fastest lap of that weekend.') : ''}{layout.data.recorded ? ' Positions: OpenF1.' : ' Layout: MultiViewer.'}
             </div>
           )}
         </div>
@@ -73,7 +72,7 @@ export function CircuitOverview({ race }: { race: Race }) {
         <div className="w3" style={{ minWidth: 0 }}>
           <div className="circuit-facts">
             <Fact l="Lap length" v={length ? `≈ ${length.toFixed(2)} km` : '-'} note="Measured along the recorded track outline, so it can differ slightly from the official figure" />
-            <Fact l="Turns" v={c ? String(c.corners.length) : '-'} />
+            <Fact l="Turns" v={c && c.corners.length ? String(c.corners.length) : '-'} />
             <Fact l="Race laps" v={facts?.laps ? String(facts.laps) : '-'} note={facts?.lapsSeason ? `Laps run in the ${facts.lapsSeason} race` : undefined} />
             <Fact l="Race distance" v={facts?.laps && length ? `≈ ${(facts.laps * length).toFixed(0)} km` : '-'} note="Race laps × measured lap length" />
             <Fact l="Pit stop time loss" v={c?.pitLoss?.normal ? `${Number(c.pitLoss.normal).toFixed(1)} s` : '-'} note="Estimated time lost making a pit stop (MultiViewer). Under a safety car or virtual safety car the field is slower, so a stop costs less." sub={c?.pitLoss?.sc ? `SC ${Number(c.pitLoss.sc).toFixed(1)} s · VSC ${Number(c.pitLoss.vsc).toFixed(1)} s` : undefined} />
@@ -151,7 +150,7 @@ export function useCircuitLayout(race: Race) {
     queryKey: ['circuit', meeting.data?.circuit_key, meeting.data?.year],
     enabled: !!meeting.data,
     staleTime: Infinity,
-    queryFn: ({ signal }) => getCircuit(meeting.data!.circuit_key, meeting.data!.year, signal),
+    queryFn: ({ signal }) => getLayout(meeting.data!.circuit_key, meeting.data!.year, meeting.data!.meeting_key, signal),
   });
   const lines = useQuery<Awaited<ReturnType<typeof getSectorLinesFor>>>({
     queryKey: ['sector-lines', meeting.data?.meeting_key],

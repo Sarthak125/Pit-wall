@@ -65,7 +65,7 @@ export function NextRaceCircuit({ race }: { race: Race }) {
       )}
       <div className="circuit-facts" style={{ marginTop: 10 }}>
         <div className="stat inset" title="Measured along the recorded track outline"><div className="l">LAP LENGTH</div><div className="v" style={{ fontSize: 18 }}>{length ? `≈ ${length.toFixed(2)} km` : '-'}</div></div>
-        <div className="stat inset"><div className="l">TURNS</div><div className="v" style={{ fontSize: 18 }}>{c ? c.corners.length : '-'}</div></div>
+        <div className="stat inset"><div className="l">TURNS</div><div className="v" style={{ fontSize: 18 }}>{c && c.corners.length ? c.corners.length : '-'}</div></div>
         <div className="stat inset" title={laps.data ? `Laps run in the ${laps.data.season} race here` : undefined}><div className="l">RACE LAPS</div><div className="v" style={{ fontSize: 18 }}>{laps.data?.laps ?? '-'}</div></div>
       </div>
     </section>

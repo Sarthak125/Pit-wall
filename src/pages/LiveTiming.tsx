@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCircuitLaps } from '../api/jolpica';
-import { getCircuit } from '../api/circuit';
+import { getLayout } from '../lib/sectorLines';
 import { useSchedule } from '../hooks/useSeason';
 import { isSessionLive, liveEvery, type Lap, type OF1Driver, type Session } from '../api/openf1';
 import { Empty, ErrorBox, Loading } from '../components/States';
@@ -103,7 +103,7 @@ export function LiveTiming() {
     queryKey: ['circuit', session?.circuit_key, session?.year],
     enabled: !!session?.circuit_key,
     staleTime: Infinity,
-    queryFn: ({ signal }) => getCircuit(session!.circuit_key, session!.year, signal),
+    queryFn: ({ signal }) => getLayout(session!.circuit_key, session!.year, session!.meeting_key, signal),
   });
   const pitLoss = layout.data?.pitLoss;
   const planned = useQuery({
