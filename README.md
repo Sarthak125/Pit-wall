@@ -58,7 +58,7 @@ Pick any session of the current race weekend; live sessions update automatically
 - Pit stop time loss at the circuit, normally and under safety car and virtual safety car (MultiViewer's estimate).
 - Track and air temperature, humidity, wind speed and direction, rain, and track status.
 
-**During live sessions**
+#### During live sessions
 
 OpenF1 shares data only with paying supporters from 30 minutes before a session until 30 minutes after it ends (past sessions included). Without an OpenF1 token, the app handles that window like this:
 
