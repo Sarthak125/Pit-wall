@@ -38,7 +38,7 @@ import type React from 'react';
 import { ingestFavourite } from '../lib/alerts';
 import { useOpenF1Blocked } from '../lib/openf1Window';
 import { OpenF1BlockedNotice } from '../components/OpenF1Blocked';
-import { drsState, type PitDetail } from '../api/openf1';
+import { overtakeAid, type PitDetail } from '../api/openf1';
 import { PositionLines, type LineInfo } from '../components/PositionChart';
 import { getRacePositions } from '../lib/sectorLines';
 import { activeWindow } from '../lib/openf1Window';
@@ -238,7 +238,7 @@ export function LiveTiming() {
             </div>
           </div>
           {t.loading ? <Loading rows={12} /> : t.rows.length === 0 ? <Empty>No timing data for this session yet.</Empty> : (
-            <TimingTable rows={t.rows} isRace={isRace} live={live} upcoming={upcoming} fastest={t.fastest} favNum={favNum} team={favTeam} pitLoss={pitLoss} noCarData={t.source === 'f1'} neutral={status?.label === 'Safety car' ? 'sc' : status?.label === 'Virtual safety car' ? 'vsc' : null} />
+            <TimingTable rows={t.rows} isRace={isRace} live={live} upcoming={upcoming} fastest={t.fastest} favNum={favNum} team={favTeam} pitLoss={pitLoss} noCarData={t.source === 'f1'} year={session.year} neutral={status?.label === 'Safety car' ? 'sc' : status?.label === 'Virtual safety car' ? 'vsc' : null} />
           )}
         </section>
       </div>
@@ -311,7 +311,7 @@ function Segments({ segs }: { segs: (number | null)[] | null | undefined }) {
   );
 }
 
-function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitLoss, neutral, noCarData = false }: { rows: TimingRow[]; isRace: boolean; live: boolean; upcoming: boolean; fastest: number | null; favNum: number | null; team: FavouriteTeam | null; pitLoss?: { normal?: string; sc?: string; vsc?: string }; neutral: 'sc' | 'vsc' | null; noCarData?: boolean }) {
+function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitLoss, neutral, noCarData = false, year }: { rows: TimingRow[]; year: number; isRace: boolean; live: boolean; upcoming: boolean; fastest: number | null; favNum: number | null; team: FavouriteTeam | null; pitLoss?: { normal?: string; sc?: string; vsc?: string }; neutral: 'sc' | 'vsc' | null; noCarData?: boolean }) {
   // Where each car would rejoin if it pitted now: its gap to the leader plus the pit loss, placed among the other
   // cars' gaps. Under a safety car or VSC the field is slower, so the smaller neutralised loss applies.
   const loss = Number((neutral === 'sc' ? pitLoss?.sc : neutral === 'vsc' ? pitLoss?.vsc : pitLoss?.normal) ?? NaN);
@@ -445,7 +445,10 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitL
                 )}
                 {!noCarData && (
                   <td className="r mono">
-                    {drsState(tel) && <span className={`drs ${drsState(tel)}`} title={drsState(tel) === 'open' ? 'DRS open' : 'DRS available in this zone'}>DRS</span>}
+                    {(() => {
+                      const aid = overtakeAid(tel, year);
+                      return aid && <span className={`drs ${aid.state}`} title={aid.title}>{aid.label}</span>;
+                    })()}
                     {speed}<span className="faint" style={{ fontSize: 11 }}> km/h</span>
                   </td>
                 )}

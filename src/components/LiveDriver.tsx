@@ -1,7 +1,7 @@
 import { FiaText, FiaWhen } from './FiaText';
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getStartingGrid, liveEvery, openf1, type OF1Driver, type Overtake, type Position, type Session, type TeamRadio, drsState } from '../api/openf1';
+import { getStartingGrid, liveEvery, openf1, type OF1Driver, type Overtake, type Position, type Session, type TeamRadio, overtakeAid } from '../api/openf1';
 import { useLiveTiming } from '../hooks/useLiveTiming';
 import { usePoll } from '../hooks/usePoll';
 import { ingestFavourite } from '../lib/alerts';
@@ -164,7 +164,10 @@ export function LiveDriver({ session, code, alerts = true }: { session: Session;
                 <div><div className="muted" style={{ fontSize: 11 }}>SPEED</div><div className="mono" style={{ fontSize: 22 }}>{t.car.speed}</div></div>
                 <div><div className="muted" style={{ fontSize: 11 }}>GEAR</div><div className="mono" style={{ fontSize: 22 }}>{t.car.n_gear}</div></div>
                 <div><div className="muted" style={{ fontSize: 11 }}>RPM</div><div className="mono" style={{ fontSize: 22 }}>{(t.car.rpm / 1000).toFixed(1)}k</div></div>
-                {drsState(t.car) && <div><div className="muted" style={{ fontSize: 11 }}>DRS</div><div className={`drs ${drsState(t.car)}`} style={{ marginTop: 4 }}>{drsState(t.car) === 'open' ? 'Open' : 'Eligible'}</div></div>}
+                {(() => {
+                  const aid = overtakeAid(t.car, session.year);
+                  return aid && <div><div className="muted" style={{ fontSize: 11 }}>{aid.label}</div><div className={`drs ${aid.state}`} style={{ marginTop: 4 }} title={aid.title}>{aid.label === 'DRS' ? (aid.state === 'open' ? 'Open' : 'Eligible') : aid.state === 'open' ? 'In use' : 'Available'}</div></div>;
+                })()}
               </div>
               <Bar label="Throttle" v={t.car.throttle} c="var(--green)" />
               <Bar label="Brake" v={t.car.brake} c="#F87171" />

@@ -197,17 +197,28 @@ export interface CarData {
   rpm: number;
   throttle: number;
   brake: number;
-  /** DRS status (FastF1's mapping): 10, 12 or 14 open; 8 eligible in an activation zone. Not used under the 2026 rules. */
+  /** DRS status up to 2025 (see overtakeAid); the field keeps this name in 2026, when DRS was replaced by overtake mode. */
   drs?: number | null;
 }
 
-/** DRS state from a car data sample, or null when DRS is closed or not reported. */
-export function drsState(c: Pick<CarData, 'drs'> | null | undefined): 'open' | 'eligible' | null {
+/**
+ * The overtaking aid shown next to a car's speed, from OpenF1's `drs` car data field (FastF1's mapping: 10, 12 or 14
+ * open; 8 eligible in an activation zone). Up to 2025 that is DRS. From 2026 DRS no longer exists and the aid is
+ * overtake mode; until it is confirmed that the field reports overtake mode in 2026 data, nothing is shown for 2026
+ * onward rather than a label that might be wrong.
+ */
+export const OVERTAKE_MODE_CONFIRMED = false;
+
+export function overtakeAid(c: Pick<CarData, 'drs'> | null | undefined, year: number): { state: 'open' | 'eligible'; label: string; title: string } | null {
   const v = c?.drs ?? null;
   if (v == null) return null;
-  if (v >= 10) return 'open';
-  if (v === 8) return 'eligible';
-  return null;
+  const state = v >= 10 ? 'open' : v === 8 ? 'eligible' : null;
+  if (!state) return null;
+  if (year >= 2026) {
+    if (!OVERTAKE_MODE_CONFIRMED) return null;
+    return { state, label: 'OVERTAKE', title: state === 'open' ? 'Overtake mode in use' : 'Overtake mode available' };
+  }
+  return { state, label: 'DRS', title: state === 'open' ? 'DRS open' : 'DRS available in this zone' };
 }
 
 /** A session counts as live from its start until 15 minutes after its scheduled end. */
