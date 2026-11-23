@@ -9,7 +9,8 @@ export function ProvisionalNote({ data, block = false }: { data?: ProvisionalTag
   if (!p) return null;
   const what = p.sessions.length === 2 ? 'sprint and race' : p.sessions[0] === 'Sprint' ? 'sprint' : 'race';
   const name = p.raceName.replace(/ Grand Prix$/, '');
-  const detail = `Updated after the ${p.raceName} ${what} with Formula 1 timing data from OpenF1. Jolpica, Pit Wall's source for confirmed results, has not published it yet and replaces this automatically when it does. Stewards' decisions after the race can still change it.`;
+  const earlier = p.earlier?.length ? ` and the ${p.earlier.join(', ')}` : '';
+  const detail = `Updated after the ${p.raceName} ${what}${earlier} with Formula 1 timing data from OpenF1. Jolpica, Pit Wall's source for confirmed results, has not published ${earlier ? 'them' : 'it'} yet and replaces this automatically when it does. Stewards' decisions after a race can still change it.`;
   if (block) {
     return (
       <div className="provisional-note" role="note">

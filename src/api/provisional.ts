@@ -1,5 +1,6 @@
 /**
- * Provisional results for the latest race weekend, between the chequered flag and Jolpica publishing it.
+ * Provisional results for the latest race weekend, between the chequered flag and Jolpica publishing it (and for
+ * every weekend Jolpica is missing, up to four, when it has been down for longer).
  *
  * Jolpica (results and standings) can take hours to add a race, and in the meantime its standings for the new round
  * are a copy of the previous one. OpenF1 has the official classification, with points, shortly after the session.
@@ -26,17 +27,29 @@ const MIN = 60_000;
 const RACE_AFTER = 2 * 60 * MIN;
 const SPRINT_AFTER = 50 * MIN;
 
-export interface Provisional {
-  season: string;
+export interface ProvisionalWeekend {
   round: number;
   raceName: string;
   /** Sessions filled in from OpenF1, for the note shown with them. */
   sessions: ('Race' | 'Sprint')[];
   race: RaceWithResults | null;
   sprint: RaceWithResults | null;
+}
+
+/** The latest weekend filled in from OpenF1 (its fields at the top level), any missing ones before it, and the standings after it. */
+export interface Provisional extends ProvisionalWeekend {
+  season: string;
+  /** Earlier weekends Jolpica is also missing (when it has been down for more than one race), oldest first. */
+  earlier: ProvisionalWeekend[];
   drivers: { round: number; standings: DriverStanding[] };
   constructors: { round: number; standings: ConstructorStanding[] };
 }
+
+/** Every weekend in a provisional set, oldest first. */
+export const provisionalWeekends = (p: Provisional): ProvisionalWeekend[] => [...p.earlier, p];
+
+/** At most this many weekends are filled in (OpenF1 requests add up; Jolpica is rarely behind by more). */
+const MAX_WEEKENDS = 4;
 
 const at = (t?: { date: string; time?: string }) => (t?.date && t.time ? Date.parse(`${t.date}T${t.time}`) : NaN);
 
@@ -56,75 +69,94 @@ export function getProvisional(season: string): Promise<Provisional | null> {
 
 async function build(season: string, now: number): Promise<Provisional | null> {
   const [schedule, races, sprints] = await Promise.all([getSchedule(season), getRaceResults(season), getSprintResults(season)]);
-  // The latest weekend whose race or sprint should be over.
-  const weekend = [...schedule]
-    .reverse()
-    .find((r) => now - at({ date: r.date, time: r.time }) > RACE_AFTER || now - at(r.Sprint) > SPRINT_AFTER);
-  if (!weekend) return null;
-  const has = (list: RaceWithResults[], key: 'Results' | 'SprintResults') => list.some((x) => x.round === weekend.round && (x[key]?.length ?? 0) > 0);
-  const needRace = now - at({ date: weekend.date, time: weekend.time }) > RACE_AFTER && !has(races, 'Results');
-  const needSprint = now - at(weekend.Sprint) > SPRINT_AFTER && !has(sprints, 'SprintResults');
-  if (!needRace && !needSprint) return null;
+  const has = (list: RaceWithResults[], key: 'Results' | 'SprintResults', round: string) => list.some((x) => x.round === round && (x[key]?.length ?? 0) > 0);
+  // Weekends whose race or sprint should be over but that Jolpica does not have, newest back to the last complete
+  // one (usually just the latest weekend; more when Jolpica has been down for a while).
+  const missing: { weekend: Race; needRace: boolean; needSprint: boolean }[] = [];
+  for (const weekend of [...schedule].reverse()) {
+    const raceDone = now - at({ date: weekend.date, time: weekend.time }) > RACE_AFTER;
+    const sprintDone = now - at(weekend.Sprint) > SPRINT_AFTER;
+    if (!raceDone && !sprintDone) continue;
+    const needRace = raceDone && !has(races, 'Results', weekend.round);
+    const needSprint = sprintDone && !has(sprints, 'SprintResults', weekend.round);
+    if (!needRace && !needSprint) break;
+    missing.unshift({ weekend, needRace, needSprint });
+    if (missing.length >= MAX_WEEKENDS) break;
+  }
+  if (!missing.length) return null;
 
-  const meeting = await findMeeting([weekend.date]);
-  if (!meeting) return null;
-  const sessions = await meetingSessions(meeting.meeting_key);
-  const round = Number(weekend.round);
-  // Standings after the previous round: the base the new points are added to.
-  const [baseDrivers, baseTeams] = await Promise.all([getDriverStandingsAt(season, round - 1), getConstructorStandingsAt(season, round - 1)]);
+  // Standings before the first missing weekend: the base each weekend's points are added to in turn.
+  const first = Number(missing[0].weekend.round);
+  const [baseDrivers, baseTeams] = await Promise.all([getDriverStandingsAt(season, first - 1), getConstructorStandingsAt(season, first - 1)]);
+  let driverTable = baseDrivers.standings;
+  let teamTable = baseTeams.standings;
+  const weekends: ProvisionalWeekend[] = [];
+  let latest: { sessionKey: number; drivers: OF1Driver[]; weekendResults: Result[] } | null = null;
 
-  const load = async (name: 'Race' | 'Sprint') => {
-    const s = sessions.find((x) => x.session_name === name);
-    if (!s) return null;
-    // The grid comes from the qualifying session that set it (OpenF1 files the starting grid under it).
-    const quali = sessions.find((x) => (name === 'Race' ? x.session_name === 'Qualifying' : /Sprint (Qualifying|Shootout)/.test(x.session_name)));
-    const [results, drivers, grid] = await Promise.all([
-      openf1<SessionResult>('session_result', { session_key: s.session_key }),
-      openf1<OF1Driver>('drivers', { session_key: s.session_key }),
-      quali ? openf1<{ driver_number: number; position: number }>('starting_grid', { session_key: quali.session_key }).catch(() => []) : Promise.resolve([]),
-    ]);
-    // Only a complete classification with points counts.
-    if (!results.length || !results.some((r) => r.position === 1 && typeof r.points === 'number')) return null;
-    return { results: toResults(results, drivers, baseDrivers.standings, new Map(grid.map((g) => [g.driver_number, g.position]))), drivers, sessionKey: s.session_key };
-  };
-  const raceLoad = needRace ? await load('Race') : null;
-  const sprintLoad = needSprint ? await load('Sprint') : null;
-  if (!raceLoad && !sprintLoad) return null;
-  const raceResults = raceLoad?.results ?? null;
-  const sprintResults = sprintLoad?.results ?? null;
+  for (const { weekend, needRace, needSprint } of missing) {
+    const meeting = await findMeeting([weekend.date]);
+    if (!meeting) break;
+    const sessions = await meetingSessions(meeting.meeting_key);
+    const load = async (name: 'Race' | 'Sprint') => {
+      const s = sessions.find((x) => x.session_name === name);
+      if (!s) return null;
+      // The grid comes from the qualifying session that set it (OpenF1 files the starting grid under it).
+      const quali = sessions.find((x) => (name === 'Race' ? x.session_name === 'Qualifying' : /Sprint (Qualifying|Shootout)/.test(x.session_name)));
+      const [results, drivers, grid] = await Promise.all([
+        openf1<SessionResult>('session_result', { session_key: s.session_key }),
+        openf1<OF1Driver>('drivers', { session_key: s.session_key }),
+        quali ? openf1<{ driver_number: number; position: number }>('starting_grid', { session_key: quali.session_key }).catch(() => []) : Promise.resolve([]),
+      ]);
+      // Only a complete classification with points counts.
+      if (!results.length || !results.some((r) => r.position === 1 && typeof r.points === 'number')) return null;
+      return { results: toResults(results, drivers, driverTable, new Map(grid.map((g) => [g.driver_number, g.position]))), drivers, sessionKey: s.session_key };
+    };
+    const sprintLoad = needSprint ? await load('Sprint') : null;
+    const raceLoad = needRace ? await load('Race') : null;
+    // A weekend OpenF1 cannot fill in stops the chain, since later standings would be built on a gap. Only the latest
+    // weekend may be partly filled in (its sprint before the race has been classified).
+    const complete = (!needRace || !!raceLoad) && (!needSprint || !!sprintLoad);
+    const isLatest = weekend === missing[missing.length - 1].weekend;
+    if ((!raceLoad && !sprintLoad) || (!complete && !isLatest)) break;
+    const raceResults = raceLoad?.results ?? null;
+    const sprintResults = sprintLoad?.results ?? null;
+    // Everything this weekend scored: sessions filled in here plus any Jolpica already has (e.g. the sprint).
+    const jolpicaRace = races.find((x) => x.round === weekend.round)?.Results ?? [];
+    const weekendResults = [...(raceResults ?? jolpicaRace), ...(sprintResults ?? sprints.find((x) => x.round === weekend.round)?.SprintResults ?? [])];
+    const wonRace = (raceResults ?? jolpicaRace).find((r) => r.position === '1')?.Driver.driverId;
+    driverTable = addDrivers(driverTable, weekendResults, wonRace);
+    teamTable = addTeams(teamTable, weekendResults, raceResults ?? jolpicaRace);
+    weekends.push({
+      round: Number(weekend.round),
+      raceName: weekend.raceName,
+      sessions: [...(raceResults ? (['Race'] as const) : []), ...(sprintResults ? (['Sprint'] as const) : [])],
+      race: raceResults ? { ...stripSessions(weekend), Results: raceResults } : null,
+      sprint: sprintResults ? { ...stripSessions(weekend), SprintResults: sprintResults } : null,
+    });
+    const last = raceLoad ?? sprintLoad!;
+    latest = { sessionKey: last.sessionKey, drivers: last.drivers, weekendResults };
+  }
+  if (!weekends.length || !latest) return null;
 
-  const race = raceResults ? { ...stripSessions(weekend), Results: raceResults } : null;
-  const sprint = sprintResults ? { ...stripSessions(weekend), SprintResults: sprintResults } : null;
-  // Everything this weekend has scored: provisional sessions plus any Jolpica already has (e.g. the sprint).
-  const weekendResults = [
-    ...(raceResults ?? races.find((x) => x.round === weekend.round)?.Results ?? []),
-    ...(sprintResults ?? sprints.find((x) => x.round === weekend.round)?.SprintResults ?? []),
-  ];
-  const wonRace = raceResults?.find((r) => r.position === '1')?.Driver.driverId ?? races.find((x) => x.round === weekend.round)?.Results?.find((r) => r.position === '1')?.Driver.driverId;
-  let driverTable = addDrivers(baseDrivers.standings, weekendResults, wonRace);
-  let teamTable = addTeams(baseTeams.standings, weekendResults, raceResults ?? races.find((x) => x.round === weekend.round)?.Results ?? []);
   // OpenF1's own championship standings after the latest session, when it has them: its points and order (ties
   // included) replace the sums above. Wins still come from the results.
-  const latest = raceLoad ?? sprintLoad!;
   try {
     const [champD, champT] = await Promise.all([
       openf1<ChampionshipDriver>('championship_drivers', { session_key: latest.sessionKey }),
       openf1<ChampionshipTeam>('championship_teams', { session_key: latest.sessionKey }),
     ]);
     driverTable = applyDriverChampionship(driverTable, champD, latest.drivers);
-    teamTable = applyTeamChampionship(teamTable, champT, latest.drivers, weekendResults);
+    teamTable = applyTeamChampionship(teamTable, champT, latest.drivers, latest.weekendResults);
   } catch {
     // Not available (or OpenF1 busy): the sums from the results stand.
   }
+  const last = weekends[weekends.length - 1];
   return {
     season,
-    round,
-    raceName: weekend.raceName,
-    sessions: [...(raceResults ? (['Race'] as const) : []), ...(sprintResults ? (['Sprint'] as const) : [])],
-    race,
-    sprint,
-    drivers: { round, standings: driverTable },
-    constructors: { round, standings: teamTable },
+    ...last,
+    earlier: weekends.slice(0, -1),
+    drivers: { round: last.round, standings: driverTable },
+    constructors: { round: last.round, standings: teamTable },
   };
 }
 

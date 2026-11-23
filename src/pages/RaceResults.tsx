@@ -1,5 +1,6 @@
 import { ProvisionalNote } from '../components/ProvisionalNote';
 import { provisionalSoon, type ProvisionalTag } from '../hooks/useSeason';
+import { provisionalWeekends } from '../api/provisional';
 import { AddToCalendar } from '../components/AddToCalendar';
 import { RaceTyreStrategy } from '../components/TyreStrategy';
 import { RaceStory } from '../components/RaceStory';
@@ -43,12 +44,13 @@ export function RaceResults() {
     queryFn: async () => {
       const [d, p] = await Promise.all([getRound(season, round), provisionalSoon(season, () => qc.invalidateQueries({ queryKey: ['round', season, round] }))]);
       // The latest weekend, before Jolpica has it: the official classification from OpenF1, marked provisional.
-      if (!p || String(p.round) !== round) return d as RoundData & ProvisionalTag;
+      const w = p ? provisionalWeekends(p).find((x) => String(x.round) === round) : undefined;
+      if (!w) return d as RoundData & ProvisionalTag;
       return {
         ...d,
-        race: d.race?.Results?.length ? d.race : (p.race ?? d.race),
-        sprint: d.sprint?.SprintResults?.length ? d.sprint : (p.sprint ?? d.sprint),
-        provisional: { raceName: p.raceName, sessions: p.sessions },
+        race: d.race?.Results?.length ? d.race : (w.race ?? d.race),
+        sprint: d.sprint?.SprintResults?.length ? d.sprint : (w.sprint ?? d.sprint),
+        provisional: { raceName: w.raceName, sessions: w.sessions },
       } as RoundData & ProvisionalTag;
     },
   });

@@ -63,7 +63,7 @@ export function Standings() {
                     return (
                       <tr key={d.Driver.driverId} {...rowProps(d.Driver.code, fav?.code, favTeam)}>
                         <td className="mono muted">{d.position ?? d.positionText}</td>
-                        <td>
+                        <td className="wrap">
                           <div className="who">
                             <span className="team-bar" style={{ background: teamColour(team?.constructorId ?? team?.name) }} />
                             {d.Driver.code ? (
@@ -76,7 +76,7 @@ export function Standings() {
                             <span className="faint mono hide-sm" style={{ fontSize: 12 }}>{d.Driver.permanentNumber}</span>
                           </div>
                         </td>
-                        <td className="muted hide-sm">{d.Constructors.map((c) => c.name).join(' / ')}</td>
+                        <td className="muted hide-sm wrap">{d.Constructors.map((c) => c.name).join(' / ')}</td>
                         <td className="r mono hide-sm">{d.wins}</td>
                         <td className="r mono muted">{i === 0 ? 'Leader' : `-${leader - Number(d.points)}`}</td>
                         <td className="r mono" style={{ fontWeight: 600 }}>{d.points}</td>
@@ -113,7 +113,7 @@ export function Standings() {
                 {teams.data.standings.map((t, i) => (
                   <tr key={t.Constructor.constructorId} className={favTeam?.id === t.Constructor.constructorId ? 'team' : undefined} style={{ '--team': teamColour(t.Constructor.constructorId) } as React.CSSProperties}>
                     <td className="mono muted">{t.position ?? t.positionText}</td>
-                    <td>
+                    <td className="wrap">
                       <div className="who">
                         <span className="team-bar" style={{ background: teamColour(t.Constructor.constructorId) }} />
                         <a className="name-link" href={teamHref(t.Constructor.constructorId)}>{t.Constructor.name}</a>

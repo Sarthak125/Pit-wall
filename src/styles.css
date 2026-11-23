@@ -866,3 +866,7 @@ html { zoom: 1.1; }
 /* Saved data shown while a server is slow */
 .slow-note { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border: 1px solid var(--amber-line); background: var(--amber-bg-2); color: var(--text-2); border-radius: 10px; font-size: 13px; line-height: 1.5; }
 .slow-note .dot { flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: var(--amber); animation: pulse 1.4s ease-in-out infinite; }
+
+/* Table cells that may wrap (names with a Champion tag) so the numbers stay in view */
+.tbl td.wrap { white-space: normal; }
+.tbl td.wrap .who { flex-wrap: wrap; row-gap: 4px; }

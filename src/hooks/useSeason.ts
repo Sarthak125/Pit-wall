@@ -9,7 +9,7 @@ import {
   type RaceWithResults,
 } from '../api/jolpica';
 import { openf1, type Session } from '../api/openf1';
-import { getProvisional, type Provisional } from '../api/provisional';
+import { getProvisional, provisionalWeekends, type Provisional } from '../api/provisional';
 
 const MIN = 60_000;
 
@@ -19,9 +19,9 @@ export function useSchedule(season: string, enabled = true) {
 
 /** Which race weekend the data includes provisionally (from OpenF1's classification), if any. */
 export interface ProvisionalTag {
-  provisional?: { raceName: string; sessions: Provisional['sessions'] };
+  provisional?: { raceName: string; sessions: Provisional['sessions']; earlier?: string[] };
 }
-const tag = (p: Provisional): ProvisionalTag => ({ provisional: { raceName: p.raceName, sessions: p.sessions } });
+const tag = (p: Provisional): ProvisionalTag => ({ provisional: { raceName: p.raceName, sessions: p.sessions, earlier: p.earlier.map((w) => w.raceName) } });
 
 /**
  * The provisional lookup, but never holding up Jolpica's data for more than a few seconds (OpenF1 can be slow, down,
@@ -125,7 +125,9 @@ export function useResults(season: string) {
       // The provisional sessions replace any empty entry Jolpica has for the round.
       const merge = (list: RaceWithResults[], add: RaceWithResults | null) =>
         add ? [...list.filter((r) => r.round !== add.round), add].sort((a, b) => Number(a.round) - Number(b.round)) : list;
-      return { races: merge(races, p.race), sprints: merge(sprints, p.sprint), ...tag(p) } as Out;
+      // Every weekend filled in from OpenF1 (more than one when Jolpica has been behind for several races).
+      const weekends = provisionalWeekends(p);
+      return { races: weekends.reduce((l, w) => merge(l, w.race), races), sprints: weekends.reduce((l, w) => merge(l, w.sprint), sprints), ...tag(p) } as Out;
     },
     staleTime: 15 * MIN,
   });
