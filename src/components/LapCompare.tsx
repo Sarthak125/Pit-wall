@@ -6,6 +6,13 @@ import { useFavourite } from '../hooks/useFavourite';
 import { fmtLap } from '../lib/format';
 import { driverLaps, paceGap, representative, timeRange, type LapPoint } from '../lib/lapCompare';
 import { teamColour, tyre } from '../lib/teams';
+import { SpeedTrace } from './SpeedTrace';
+
+/** Team colours for the two drivers; team-mates share one, so the second then shows in the text colour. */
+function traceColours(a: OF1Driver, b: OF1Driver): [string, string] {
+  const ca = teamColour(a.team_name, a.team_colour), cb = teamColour(b.team_name, b.team_colour);
+  return [ca, ca === cb || a.team_name === b.team_name ? 'var(--text)' : cb];
+}
 
 const H = 350, L = 64, R = 16, T = 14, B = 50;
 const SESSION_ORDER = ['Practice 1', 'Practice 2', 'Practice 3', 'Sprint Qualifying', 'Sprint Shootout', 'Sprint', 'Qualifying', 'Race'];
@@ -66,6 +73,7 @@ export function LapCompare({ race, now }: { race: Race; now: number }) {
   }, [data.data, session?.session_name]);
 
   const [choice, setChoice] = useState<[number | null, number | null]>([null, null]);
+  const [view, setView] = useState<'laps' | 'trace'>('laps');
   const favNum = drivers.find((d) => d.name_acronym === fav?.code)?.driver_number ?? null;
   const a = drivers.find((d) => d.driver_number === choice[0])?.driver_number ?? favNum ?? drivers[0]?.driver_number ?? null;
   const b = drivers.find((d) => d.driver_number === choice[1] && d.driver_number !== a)?.driver_number ?? drivers.find((d) => d.driver_number !== a)?.driver_number ?? null;
@@ -94,7 +102,17 @@ export function LapCompare({ race, now }: { race: Race; now: number }) {
       ) : !data.data || drivers.length < 2 || a == null || b == null ? (
         <div className="empty">No lap times for this session yet.</div>
       ) : (
-        <LapChart race={/^(Race|Sprint)$/.test(session?.session_name ?? '')} data={data.data} a={drivers.find((d) => d.driver_number === a)!} b={drivers.find((d) => d.driver_number === b)!} />
+        <>
+          <div className="tabs" role="tablist" aria-label="View" style={{ marginTop: 12, marginBottom: 0 }}>
+            <button role="tab" className="tab" aria-selected={view === 'laps'} onClick={() => setView('laps')}>Lap by lap</button>
+            <button role="tab" className="tab" aria-selected={view === 'trace'} onClick={() => setView('trace')}>Fastest laps: speed and gap</button>
+          </div>
+          {view === 'laps' ? (
+            <LapChart race={/^(Race|Sprint)$/.test(session?.session_name ?? '')} data={data.data} a={drivers.find((d) => d.driver_number === a)!} b={drivers.find((d) => d.driver_number === b)!} />
+          ) : (
+            <SpeedTrace session={session!} laps={data.data.laps} a={drivers.find((d) => d.driver_number === a)!} b={drivers.find((d) => d.driver_number === b)!} colours={traceColours(drivers.find((d) => d.driver_number === a)!, drivers.find((d) => d.driver_number === b)!)} />
+          )}
+        </>
       )}
     </div>
   );

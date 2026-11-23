@@ -845,3 +845,20 @@ html { zoom: 1.1; }
 .lapcmp-chart { position: relative; margin-top: 8px; }
 .lapcmp-tip { position: absolute; top: 8px; transform: translateX(-50%); min-width: 170px; padding: 8px 10px; background: var(--bar); border: 1px solid var(--line-strong); border-radius: 8px; pointer-events: none; font-size: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35); }
 .lapcmp-tip-row { display: grid; grid-template-columns: 10px 36px 1fr auto; align-items: center; gap: 6px; margin-top: 3px; }
+
+/* Fastest laps compared: map beside the charts, stacked on narrow screens */
+.trace-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 16px; align-items: start; margin-top: 8px; }
+@media (max-width: 899px) { .trace-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Race pace table */
+.pace-stints { display: flex; flex-wrap: wrap; gap: 6px; }
+.pace-stints .chip { gap: 6px; }
+.pace-stints .chip i { width: 8px; height: 8px; border-radius: 50%; }
+
+/* About cards from Wikipedia */
+.wiki { display: flex; gap: 18px; align-items: flex-start; }
+.wiki-photo { margin: 0; flex: none; width: 180px; }
+.wiki-photo img { width: 180px; height: auto; max-height: 240px; object-fit: cover; border-radius: 10px; display: block; background: var(--inset); }
+.wiki-photo figcaption { font-size: 11px; margin-top: 4px; }
+.wiki-text { margin: 0; line-height: 1.65; color: var(--text-2); }
+@media (max-width: 599px) { .wiki { flex-direction: column; } .wiki-photo, .wiki-photo img { width: 100%; max-height: 260px; } }

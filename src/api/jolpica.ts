@@ -27,6 +27,8 @@ export interface Race {
   Circuit: {
     circuitId: string;
     circuitName: string;
+    /** English Wikipedia article. */
+    url?: string;
     Location: { locality: string; country: string; lat?: string; long?: string };
   };
   FirstPractice?: SessionTime;
@@ -45,12 +47,16 @@ export interface Driver {
   givenName: string;
   familyName: string;
   nationality?: string;
+  /** English Wikipedia article. */
+  url?: string;
 }
 
 export interface Constructor {
   constructorId: string;
   name: string;
   nationality?: string;
+  /** English Wikipedia article. */
+  url?: string;
 }
 
 export interface DriverStanding {

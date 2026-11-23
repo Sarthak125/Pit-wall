@@ -17,6 +17,8 @@ import { raceStart } from '../lib/format';
 import { href, raceHref, useRouteParam } from '../lib/router';
 import { setFavoriteTeam, useSettings } from '../lib/settings';
 import { teamColour } from '../lib/teams';
+import { WikiAbout } from '../components/WikiAbout';
+import { useSpoilers } from '../hooks/useSpoilers';
 import { Compare } from './MyDriver';
 
 const lighter = (c: string) => `color-mix(in srgb, ${c} 45%, white)`;
@@ -81,6 +83,8 @@ function TeamProfile({ team, season, isFav = true }: { team: FavouriteTeam; seas
   const schedule = useSchedule(season);
   const quali = useQuery({ queryKey: ['quali-all', season], queryFn: () => getQualifying(season), staleTime: 15 * 60_000 });
   const liveSession = useLiveSession();
+  // Wikipedia text can mention the latest results, so it follows the standings in spoiler-free mode.
+  const spoilers = useSpoilers();
   const liveDrivers = useQuery({
     queryKey: ['drv', liveSession?.session_key],
     enabled: !!liveSession,
@@ -181,6 +185,7 @@ function TeamProfile({ team, season, isFav = true }: { team: FavouriteTeam; seas
           <FlagIcon filled={isFav} />
         </button>
       </section>
+      {me?.Constructor.url && !spoilers.standingsHidden && <WikiAbout url={me.Constructor.url} heading={`About ${me.Constructor.name}`} />}
 
       {inLive && liveSession && <LiveTeam session={liveSession} team={team} />}
 

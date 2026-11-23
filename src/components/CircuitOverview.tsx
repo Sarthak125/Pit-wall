@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getCircuitRecords, type Race, type RaceWithResults } from '../api/jolpica';
 import { findMeeting } from '../api/openf1';
 import { getLayout, getSectorLinesFor } from '../lib/sectorLines';
+import { WikiAbout } from './WikiAbout';
 import { useSchedule } from '../hooks/useSeason';
 import { driverHref, raceHref, teamHref } from '../lib/router';
 import { teamColour } from '../lib/teams';
@@ -129,6 +130,7 @@ export function CircuitOverview({ race }: { race: Race }) {
           </div>
         </div>
       )}
+      <WikiAbout url={race.Circuit.url} heading="About: {title}" photo={false} bare />
       <div className="faint" style={{ fontSize: 12, marginTop: 10 }}>History from Jolpica-F1 (all Grands Prix held here); circuit type from OpenF1.</div>
     </section>
   );

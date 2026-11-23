@@ -20,7 +20,7 @@ export interface LongRun {
 }
 
 /** Laps that count: not the out-lap or in-lap, timed, and within 107% of the stint's best (traffic and cool-down laps out). */
-function representative(laps: Lap[], stint: Stint): Lap[] {
+export function representative(laps: Lap[], stint: Stint): Lap[] {
   const start = stint.lap_start ?? 1;
   const end = stint.lap_end ?? Math.max(start, ...laps.map((l) => l.lap_number));
   const inStint = laps
@@ -47,11 +47,7 @@ export function longRuns(laps: Lap[], stints: Stint[], minLaps = 5): LongRun[] {
     const times = pick.laps.map((l) => l.lap_duration!);
     const n = times.length;
     const avg = times.reduce((a, b) => a + b, 0) / n;
-    // Least-squares slope of lap time against lap number: tyre wear (offset by fuel burning off).
     const xs = pick.laps.map((l) => l.lap_number);
-    const mx = xs.reduce((a, b) => a + b, 0) / n;
-    const num = xs.reduce((a, x, i) => a + (x - mx) * (times[i] - avg), 0);
-    const den = xs.reduce((a, x) => a + (x - mx) ** 2, 0) || 1;
     out.push({
       driver,
       compound: pick.s.compound,
@@ -59,11 +55,22 @@ export function longRuns(laps: Lap[], stints: Stint[], minLaps = 5): LongRun[] {
       laps: n,
       avg,
       best: Math.min(...times),
-      deg: num / den,
+      deg: slope(pick.laps),
       firstLap: xs[0],
       lastLap: xs[n - 1],
       tyreAgeAtStart: pick.s.tyre_age_at_start ?? 0,
     });
   }
   return out.sort((a, b) => a.avg - b.avg);
+}
+
+/** Least-squares slope of lap time against lap number, in seconds per lap: tyre wear, offset by fuel burning off. */
+export function slope(laps: Lap[]): number {
+  const n = laps.length;
+  if (n < 2) return 0;
+  const xs = laps.map((l) => l.lap_number), ys = laps.map((l) => l.lap_duration!);
+  const mx = xs.reduce((a, b) => a + b, 0) / n, my = ys.reduce((a, b) => a + b, 0) / n;
+  const num = xs.reduce((a, x, i) => a + (x - mx) * (ys[i] - my), 0);
+  const den = xs.reduce((a, x) => a + (x - mx) ** 2, 0) || 1;
+  return num / den;
 }

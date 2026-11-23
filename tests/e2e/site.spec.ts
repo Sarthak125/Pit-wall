@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 const HAR = 'tests/fixtures/api.har.zip';
 const PRACTICE_HAR = 'tests/fixtures/practice.har.zip';
@@ -252,5 +252,54 @@ test('the light theme can be picked in Settings and is kept', async ({ page }) =
   expect(await page.locator('html').getAttribute('data-resolved-theme')).toBe('light');
   await page.getByRole('radio', { name: 'Auto' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'auto');
+  expect(errors).toEqual([]);
+});
+
+/** Responses the recording does not have: car data and positions for both fastest laps, and a Wikipedia summary. */
+async function extraFixtures(page: Page) {
+  await page.route(/api\.openf1\.org\/v1\/(car_data|location)\?/, (r) => {
+    const u = new URL(r.request().url());
+    const file = `tests/fixtures/extra/${u.pathname.split('/').pop()}-${u.searchParams.get('driver_number')}.json`;
+    // Other car data and positions (such as the sector lines' lap) come from the recording.
+    return existsSync(file) && u.searchParams.get('session_key') === '11420' ? r.fulfill({ path: file, headers: { 'access-control-allow-origin': '*' } }) : r.fallback();
+  });
+  await page.route(/en\.wikipedia\.org\/api\/rest_v1\/page\/summary\//, (r) =>
+    /Max_Verstappen/.test(r.request().url()) ? r.fulfill({ path: 'tests/fixtures/extra/wiki-Max_Verstappen.json', headers: { 'access-control-allow-origin': '*' } }) : r.fulfill({ status: 404, body: '{}' }),
+  );
+  await page.route(/upload\.wikimedia\.org/, (r) => r.abort());
+}
+
+test('fastest laps of two drivers can be compared point by point', async ({ page }) => {
+  const errors = await setUp(page);
+  await extraFixtures(page);
+  await page.goto('#/race/21');
+  const card = page.locator('section:has(#lapcmp)');
+  await card.getByRole('tab', { name: /Fastest laps/ }).click({ timeout: 60_000 });
+  await expect(card).toContainText('NOR 0.268 s quicker', { timeout: 60_000 });
+  await expect(card.locator('.trace-grid svg')).toHaveCount(2);
+  await expect(card.locator('.legend')).toContainText('VER quicker');
+  await noSidewaysScroll(page);
+  expect(errors).toEqual([]);
+});
+
+test('a race page ranks race pace with each stint and its tyre wear', async ({ page }) => {
+  const errors = await setUp(page);
+  await page.goto('#/race/21');
+  const card = page.locator('section:has(#pace)');
+  await expect(card.locator('tbody tr').first()).toContainText('PIA', { timeout: 60_000 });
+  await expect(card.locator('tbody tr').first()).toContainText('Best');
+  await expect(card.locator('tbody tr')).toHaveCount(10);
+  await card.getByRole('button', { name: /Show all/ }).click();
+  expect(await card.locator('tbody tr').count()).toBeGreaterThan(10);
+  expect(errors).toEqual([]);
+});
+
+test('driver pages show a short biography from Wikipedia, with credit', async ({ page }) => {
+  const errors = await setUp(page);
+  await extraFixtures(page);
+  await page.goto('#/driver/VER');
+  const about = page.locator('section:has(.wiki)');
+  await expect(about).toContainText('Max Emilian Verstappen', { timeout: 60_000 });
+  await expect(about.getByRole('link', { name: /Wikipedia/ })).toHaveAttribute('href', /wikipedia\.org\/wiki\/Max_Verstappen/);
   expect(errors).toEqual([]);
 });

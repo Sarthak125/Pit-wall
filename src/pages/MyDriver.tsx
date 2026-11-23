@@ -17,6 +17,8 @@ import { href, raceHref, useRouteParam } from '../lib/router';
 import { niceName } from '../lib/format';
 import { setFavorite, useSettings } from '../lib/settings';
 import { teamColour } from '../lib/teams';
+import { WikiAbout } from '../components/WikiAbout';
+import { useSpoilers } from '../hooks/useSpoilers';
 
 export function MyDriver() {
   const fav = useFavourite();
@@ -70,6 +72,8 @@ function Profile({ code, name: givenName, season, isFav }: { code: string; name:
   const quali = useQuery({ queryKey: ['quali-all', season], queryFn: () => getQualifying(season), staleTime: 15 * 60_000 });
   const latestDrivers = useQuery({ queryKey: ['of1-drivers-latest'], queryFn: () => openf1<OF1Driver>('drivers', { session_key: 'latest' }), staleTime: 30 * 60_000 });
   const liveSession = useLiveSession();
+  // Wikipedia text can mention the latest results, so it follows the standings in spoiler-free mode.
+  const spoilers = useSpoilers();
   const liveDriverIn = useQuery({
     queryKey: ['drv', liveSession?.session_key],
     enabled: !!liveSession,
@@ -142,6 +146,7 @@ function Profile({ code, name: givenName, season, isFav }: { code: string; name:
           <StarIcon filled={isFav} />
         </button>
       </section>
+      {me?.Driver.url && !spoilers.standingsHidden && <WikiAbout url={me.Driver.url} heading={`About ${me.Driver.givenName} ${me.Driver.familyName}`} />}
 
       {inLive && liveSession && <LiveDriver session={liveSession} code={code} alerts={isFav} />}
 
