@@ -198,7 +198,7 @@ export function LiveTiming() {
           {pastMeetings.length > 1 && (
             <label className="field">
               <span className="sr-only">Weekend</span>
-              <select className="select" value={otherWeekend ? meetingKey! : (latestKey ?? '')} onChange={(e) => pickWeekend(Number(e.target.value))}>
+              <select className="select" aria-label="Weekend" value={otherWeekend ? meetingKey! : (latestKey ?? '')} onChange={(e) => pickWeekend(Number(e.target.value))}>
                 {[...pastMeetings].reverse().map((m) => (
                   <option key={m.meeting_key} value={m.meeting_key}>
                     {m.meeting_name.replace(/ Grand Prix$/, ' GP')}
@@ -210,7 +210,7 @@ export function LiveTiming() {
           )}
           <label className="field">
             <span className="sr-only">Session</span>
-            <select className="select" value={session.session_key} onChange={(e) => setPicked(Number(e.target.value))}>
+            <select className="select" aria-label="Session" value={session.session_key} onChange={(e) => setPicked(Number(e.target.value))}>
               {list.map((s: Session) => (
                 <option key={s.session_key} value={s.session_key}>
                   {s.session_name} · {fmtShortClock(new Date(s.date_start))}

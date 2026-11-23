@@ -28,7 +28,7 @@ async function noSidewaysScroll(page: Page) {
 }
 
 async function pickSession(page: Page, name: string) {
-  const sel = page.locator('.session-bar').getByLabel('Session', { exact: true });
+  const sel = page.locator('.session-bar select[aria-label="Session"]');
   const value = await sel.locator('option').evaluateAll((os, n) => os.find((o) => (o.textContent ?? '').startsWith(n))!.getAttribute('value'), name);
   await sel.selectOption(value!);
 }
