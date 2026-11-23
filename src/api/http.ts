@@ -87,6 +87,43 @@ const CACHE_PREFIX = 'pitwall:cache:';
  */
 const inFlight = new Map<string, Promise<unknown>>();
 
+/** How long to wait for a server before showing a saved copy instead (when there is one). */
+export const STALE_AFTER_MS = 5_000;
+
+/* ---------- Saved copies shown while a server is slow ---------- */
+
+const slowHosts = new Set<string>();
+const slowListeners = new Set<() => void>();
+const lateListeners = new Set<() => void>();
+const host = (url: string) => {
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+};
+/** A saved copy from this server is on screen (it was slow or failed); cleared when it next answers. */
+function markSlow(url: string, on: boolean) {
+  const h = host(url);
+  if (on === slowHosts.has(h)) return;
+  if (on) slowHosts.add(h);
+  else slowHosts.delete(h);
+  slowListeners.forEach((f) => f());
+}
+/** Hosts whose saved copy is on screen while the request is still running (for the "slow to respond" note). */
+export function slowServers(): string[] {
+  return [...slowHosts.keys()];
+}
+export function onSlowChange(f: () => void): () => void {
+  slowListeners.add(f);
+  return () => slowListeners.delete(f);
+}
+/** Called when a request that was answered from a saved copy finally gets fresh data (to redraw the page). */
+export function onLateData(f: () => void): () => void {
+  lateListeners.add(f);
+  return () => lateListeners.delete(f);
+}
+
 export async function fetchJson<T>(url: string, opts: FetchOptions): Promise<T> {
   if (opts.cacheTtlMs) {
     const hit = readCache<T>(url, opts.cacheTtlMs);
@@ -96,12 +133,26 @@ export async function fetchJson<T>(url: string, opts: FetchOptions): Promise<T> 
     const kept = readCache<T>(url, opts.stableTtlMs);
     if (kept !== undefined && opts.stable(kept)) return kept;
   }
-  if (opts.signal) return load<T>(url, opts);
-  const pending = inFlight.get(url);
-  if (pending) return pending as Promise<T>;
-  const p = load<T>(url, opts).finally(() => inFlight.delete(url));
-  inFlight.set(url, p);
-  return p;
+  let p: Promise<T>;
+  if (opts.signal) p = load<T>(url, opts);
+  else {
+    const pending = inFlight.get(url);
+    if (pending) p = pending as Promise<T>;
+    else {
+      p = load<T>(url, opts).finally(() => inFlight.delete(url));
+      inFlight.set(url, p);
+    }
+  }
+  // A saved copy (of any age) answers if the server is slow, so a page is never stuck loading for minutes while the
+  // server times out. The request carries on and the page redraws with fresh data when it arrives.
+  const saved = opts.cacheTtlMs ? readCache<T>(url, Infinity) : undefined;
+  if (saved === undefined) return p;
+  const SLOW = Symbol('slow'), FAILED = Symbol('failed');
+  const first = await Promise.race([p.catch(() => FAILED), sleep(STALE_AFTER_MS).then(() => SLOW)]);
+  if (first !== SLOW && first !== FAILED) return first as T;
+  markSlow(url, true);
+  if (first === SLOW) p.then(() => lateListeners.forEach((f) => f()), () => {});
+  return saved;
 }
 
 async function load<T>(url: string, opts: FetchOptions): Promise<T> {
@@ -116,7 +167,10 @@ async function load<T>(url: string, opts: FetchOptions): Promise<T> {
     } catch (err) {
       if (opts.signal?.aborted || attempt >= retries) {
         const stale = opts.cacheTtlMs ? readCache<T>(url, Infinity) : undefined;
-        if (stale !== undefined) return stale;
+        if (stale !== undefined) {
+          markSlow(url, true);
+          return stale;
+        }
         throw err;
       }
       // A network error is often a rate-limit reply the browser could not read; wait it out.
@@ -126,14 +180,19 @@ async function load<T>(url: string, opts: FetchOptions): Promise<T> {
 
     if (res.ok) {
       const data = (await res.json()) as T;
+      markSlow(url, false);
       if (opts.cacheTtlMs) writeCache(url, data);
       return data;
     }
 
-    const retryable = res.status === 429 || res.status >= 500;
+    // A gateway timeout means the server already spent a minute or so failing; trying again straight away rarely helps.
+    const retryable = res.status === 429 || (res.status >= 500 && res.status !== 504);
     if (!retryable || attempt >= retries) {
       const stale = opts.cacheTtlMs ? readCache<T>(url, Infinity) : undefined;
-      if (stale !== undefined) return stale;
+      if (stale !== undefined) {
+        markSlow(url, true);
+        return stale;
+      }
       throw new HttpError(res.status, url);
     }
     const retryAfter = Number(res.headers.get('Retry-After'));

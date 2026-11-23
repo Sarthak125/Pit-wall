@@ -7,6 +7,7 @@ import { useLatestSessions } from './hooks/useSeason';
 import { Dashboard } from './pages/Dashboard';
 import { Toasts } from './components/Toasts';
 import { UpdateBanner } from './components/UpdateBanner';
+import { SlowNotice } from './components/SlowNotice';
 import { useAlertWatcher } from './hooks/useFavourite';
 import { useRoute, useRouteParam } from './lib/router';
 import { useResolvedTheme } from './lib/theme';
@@ -43,6 +44,7 @@ export default function App() {
 
   return (
     <Shell route={route} live={live}>
+      <SlowNotice />
       {/* One boundary keyed by page, so a page still loading never leaves the previous one on screen. */}
       <Suspense fallback={<Loading rows={8} />} key={`${route}:${theme}`}>
       {route === 'dashboard' && <Dashboard />}

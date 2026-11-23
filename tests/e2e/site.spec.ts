@@ -303,3 +303,29 @@ test('driver pages show a short biography from Wikipedia, with credit', async ({
   await expect(about.getByRole('link', { name: /Wikipedia/ })).toHaveAttribute('href', /wikipedia\.org\/wiki\/Max_Verstappen/);
   expect(errors).toEqual([]);
 });
+
+test('when Jolpica is slow, a page shows the saved data within seconds and says so', async ({ page }) => {
+  const errors = await setUp(page);
+  await page.goto('#/driver/VER');
+  await expect(page.locator('.profile-head')).toContainText('Max Verstappen', { timeout: 60_000 });
+  // Let the first visit finish saving everything it loaded.
+  await page.waitForLoadState('networkidle');
+  // 20 minutes later the saved standings are out of date and Jolpica takes 45 seconds to answer.
+  await page.clock.fastForward('20:00');
+  let slow = true;
+  await page.route(/api\.jolpi\.ca/, async (r) => {
+    if (!slow) return r.fallback();
+    await new Promise((f) => setTimeout(f, 45_000));
+    return r.fulfill({ status: 504, body: 'Gateway Timeout' }).catch(() => {});
+  });
+  const t = Date.now();
+  await page.reload();
+  await expect(page.locator('.profile-head')).toContainText('Max Verstappen', { timeout: 15_000 });
+  expect(Date.now() - t).toBeLessThan(15_000);
+  await expect(page.locator('.slow-note')).toContainText('Jolpica');
+  // Once Jolpica answers again, the note goes away.
+  slow = false;
+  await page.getByRole('button', { name: /Refresh/i }).first().click().catch(() => {});
+  await expect(page.locator('.slow-note')).toHaveCount(0, { timeout: 30_000 });
+  expect(errors).toEqual([]);
+});
