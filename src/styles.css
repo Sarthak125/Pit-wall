@@ -870,3 +870,6 @@ html { zoom: 1.1; }
 /* Table cells that may wrap (names with a Champion tag) so the numbers stay in view */
 .tbl td.wrap { white-space: normal; }
 .tbl td.wrap .who { flex-wrap: wrap; row-gap: 4px; }
+
+/* Live Timing: weekend and session pickers side by side */
+.session-pickers { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }

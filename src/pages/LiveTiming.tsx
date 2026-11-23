@@ -51,7 +51,8 @@ import { activeWindow } from '../lib/openf1Window';
 import { useF1Feed } from '../api/f1live';
 import { FeedStatus } from '../components/FeedStatus';
 import { feedSession } from '../lib/f1adapter';
-import { getSettings } from '../lib/settings';
+import { getSettings, useSettings } from '../lib/settings';
+import type { Meeting } from '../api/openf1';
 
 export function LiveTiming() {
   const sessions = useLatestSessions();
@@ -68,7 +69,31 @@ export function LiveTiming() {
   const feedSess = feedSession(feed);
   const spoilers = useSpoilers();
 
-  const list = sessions.data?.length ? sessions.data : feedSess ? [feedSess] : [];
+  // Any earlier weekend of the season in the header can be opened too (OpenF1 has every session from 2023).
+  const { season } = useSettings();
+  const year = season === 'current' ? new Date(now).getFullYear() : Number(season);
+  const [meetingKey, setMeetingKey] = useState<number | null>(null);
+  const meetings = useQuery({
+    queryKey: ['of1-meetings', year],
+    enabled: year >= 2023,
+    staleTime: 30 * 60_000,
+    queryFn: async () => (await openf1<Meeting>('meetings', { year })).sort((a, b) => a.date_start.localeCompare(b.date_start)),
+  });
+  const latestKey = sessions.data?.[0]?.meeting_key ?? null;
+  const pastMeetings = (meetings.data ?? []).filter((m) => Date.parse(m.date_start) <= now && !/testing/i.test(m.meeting_name));
+  const otherWeekend = meetingKey != null && meetingKey !== latestKey;
+  const weekendSessions = useQuery({
+    queryKey: ['of1-sessions', meetingKey],
+    enabled: otherWeekend,
+    staleTime: 30 * 60_000,
+    queryFn: async () => (await openf1<Session>('sessions', { meeting_key: meetingKey! })).sort((a, b) => a.date_start.localeCompare(b.date_start)),
+  });
+  const pickWeekend = (key: number) => {
+    setMeetingKey(key === latestKey ? null : key);
+    setPicked(null);
+  };
+
+  const list = otherWeekend ? (weekendSessions.data ?? []) : sessions.data?.length ? sessions.data : feedSess ? [feedSess] : [];
   const defaultSession = list.find((s) => isSessionLive(s, now)) ?? [...list].reverse().find((s) => Date.parse(s.date_start) <= now) ?? list[0];
   const session = list.find((s) => s.session_key === picked) ?? defaultSession;
   const live = session ? isSessionLive(session, now) : false;
@@ -124,6 +149,7 @@ export function LiveTiming() {
   }
   if (sessions.error && !feedSess) return <ErrorBox error={sessions.error} what="the session list" />;
   if (sessions.isLoading && !feedSess) return <Loading rows={10} />;
+  if (otherWeekend && weekendSessions.isLoading) return <Loading rows={10} />;
   if (!session) return <Empty>No sessions found on OpenF1 yet.</Empty>;
 
   const qBar = !isRace ? qualiLayout(t.rows, t.quali) : null;
@@ -168,7 +194,21 @@ export function LiveTiming() {
           <h1>
             {session.location} · {session.session_name}
           </h1>
-          <label className="field" style={{ marginTop: 6 }}>
+          <div className="session-pickers">
+          {pastMeetings.length > 1 && (
+            <label className="field">
+              <span className="sr-only">Weekend</span>
+              <select className="select" value={otherWeekend ? meetingKey! : (latestKey ?? '')} onChange={(e) => pickWeekend(Number(e.target.value))}>
+                {[...pastMeetings].reverse().map((m) => (
+                  <option key={m.meeting_key} value={m.meeting_key}>
+                    {m.meeting_name.replace(/ Grand Prix$/, ' GP')}
+                    {m.meeting_key === latestKey ? ' (latest)' : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <label className="field">
             <span className="sr-only">Session</span>
             <select className="select" value={session.session_key} onChange={(e) => setPicked(Number(e.target.value))}>
               {list.map((s: Session) => (
@@ -179,6 +219,7 @@ export function LiveTiming() {
               ))}
             </select>
           </label>
+          </div>
         </div>
         <div className="metrics">
           {qBar && (
