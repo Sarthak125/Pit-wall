@@ -26,8 +26,16 @@ const sleep = (ms) => new Promise((f) => setTimeout(f, ms));
 const keys = new Map();
 let fetched = 0, reused = 0, missing = 0, lastCall = 0;
 
+/**
+ * Jolpica requires every client to name itself with an app name and version
+ * (https://github.com/jolpica/jolpica-f1/blob/main/docs/README.md#custom-user-agent); requests with Node's default
+ * user agent are refused. Bump the version when this script's behaviour changes, so Jolpica could block one bad
+ * version rather than the whole app.
+ */
+const USER_AGENT = 'PitWall/1.0';
+
 async function getJson(url, timeout = TIMEOUT_MS) {
-  const res = await fetch(url, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(timeout) });
+  const res = await fetch(url, { headers: { Accept: 'application/json', 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(timeout) });
   if (!res.ok) throw new Error(`${res.status} ${url}`);
   return res.json();
 }
@@ -41,7 +49,7 @@ async function fromJolpica(pq) {
       return await getJson(`${API}/${pq}`);
     } catch (err) {
       // A gateway timeout already took a minute: Jolpica is down, so stop asking it for this run.
-      if (/^504 /.test(err.message) || err.name === 'TimeoutError') throw err;
+      if (/^(403|504) /.test(err.message) || err.name === 'TimeoutError') throw err;
       if (attempt) throw err;
       await sleep(3_000);
     }
@@ -77,7 +85,8 @@ async function get(pq, { reuseOnly = false } = {}) {
       return store(pq, data);
     } catch (err) {
       console.log(`Jolpica: ${err.message}`);
-      if (/^504 /.test(err.message) || err.name === 'TimeoutError' || /fetch failed/.test(err.message)) jolpicaDown = true;
+      // Refused, timed out or unreachable: stop asking Jolpica for this run and keep the earlier copy instead.
+      if (/^(403|504) /.test(err.message) || err.name === 'TimeoutError' || /fetch failed/.test(err.message)) jolpicaDown = true;
     }
   }
   const old = await previousCopy(mirrorKey(pq));
@@ -171,6 +180,9 @@ try {
   const prevDone = previous?.complete?.includes(prevYear);
   const prev = await season(prevYear, { reuseOnly: !!prevDone });
   const manifest = {
+    // Jolpica's data is shared under CC BY-NC-SA 4.0: this copy is credited to Jolpica-F1, non-commercial and under the same licence.
+    source: 'Jolpica-F1 (https://github.com/jolpica/jolpica-f1)',
+    licence: 'CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0/)',
     generatedAt: new Date().toISOString(),
     current: cur.year,
     complete: [cur.complete && cur.year, prev?.complete && prevYear].filter(Boolean),
