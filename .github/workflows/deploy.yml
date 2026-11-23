@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Every 3 hours: refresh Pit Wall's copy of the Jolpica data (calendar, results, standings) and republish.
+  schedule:
+    - cron: '23 */3 * * *'
 
 permissions:
   contents: read
@@ -17,7 +20,9 @@ concurrency:
 jobs:
   # The site only deploys if these pass: unit tests, then browser tests at laptop and phone width
   # against recorded API responses (so they don't depend on the live APIs or their rate limits).
+  # Scheduled runs only refresh the data copy (the code on main was tested when it was pushed).
   test:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -33,6 +38,7 @@ jobs:
       - run: npm run test:e2e
   build:
     needs: test
+    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -44,11 +50,18 @@ jobs:
       - run: npm run build
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
+      # Pit Wall's own copy of the Jolpica data, published under data/jolpica/. When Jolpica cannot be reached, the
+      # copy already on the live site is kept. This step never stops a deploy.
+      - name: Copy Jolpica data
+        continue-on-error: true
+        timeout-minutes: 15
+        run: node scripts/mirror-jolpica.mjs dist/data/jolpica https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
   deploy:
     needs: build
+    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages

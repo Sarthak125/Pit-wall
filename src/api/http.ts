@@ -63,7 +63,7 @@ export class HttpError extends Error {
   }
 }
 
-interface FetchOptions {
+export interface FetchOptions {
   limiter: RateLimiter;
   headers?: Record<string, string>;
   signal?: AbortSignal;

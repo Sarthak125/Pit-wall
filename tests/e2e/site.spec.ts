@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { existsSync, readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 
 const HAR = 'tests/fixtures/api.har.zip';
 const PRACTICE_HAR = 'tests/fixtures/practice.har.zip';
@@ -327,5 +328,36 @@ test('when Jolpica is slow, a page shows the saved data within seconds and says 
   slow = false;
   await page.getByRole('button', { name: /Refresh/i }).first().click().catch(() => {});
   await expect(page.locator('.slow-note')).toHaveCount(0, { timeout: 30_000 });
+  expect(errors).toEqual([]);
+});
+
+/** Pit Wall's own copy of the Jolpica data, made by scripts/mirror-jolpica.mjs from the same recording. */
+const MIRROR = JSON.parse(gunzipSync(readFileSync('tests/fixtures/mirror.json.gz')).toString()) as { manifest: unknown; files: Record<string, unknown> };
+async function serveMirror(page: Page) {
+  await page.route(/\/data\/jolpica\//, (r) => {
+    const key = decodeURIComponent(new URL(r.request().url()).pathname.split('/data/jolpica/')[1]);
+    const body = key === 'manifest.json' ? MIRROR.manifest : MIRROR.files[key];
+    return body === undefined ? r.fulfill({ status: 404, body: 'Not found' }) : r.fulfill({ json: body });
+  });
+}
+
+test('with Jolpica down, pages load from Pit Wall\'s own copy of its data', async ({ page }) => {
+  const errors = await setUp(page);
+  await serveMirror(page);
+  const asked: string[] = [];
+  await page.route(/api\.jolpi\.ca/, (r) => {
+    asked.push(r.request().url());
+    return r.abort();
+  });
+  await page.goto('#/standings');
+  await expect(page.locator('main table').first().locator('tbody tr').first()).toContainText('Antonelli', { timeout: 20_000 });
+  await page.goto('#/calendar');
+  await expect(page.locator('main tbody')).toContainText('Verstappen', { timeout: 20_000 });
+  await page.goto('#/race/21');
+  await expect(page.locator('main')).toContainText('Max Verstappen', { timeout: 20_000 });
+  await page.goto('#/');
+  await expect(page.locator('.champions')).toContainText('Antonelli', { timeout: 20_000 });
+  // Only data the copy does not hold (such as circuit history) went to Jolpica.
+  expect(asked.filter((u) => /\/(current|2026)\/(races|results|sprint|qualifying|driverstandings|constructorstandings)\//.test(u))).toEqual([]);
   expect(errors).toEqual([]);
 });

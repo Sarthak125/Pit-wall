@@ -3,6 +3,7 @@
  * Docs: https://github.com/jolpica/jolpica-f1
  */
 import { fetchJson, RateLimiter } from './http';
+import { jolpicaGet } from './mirror';
 
 const BASE = (import.meta.env.VITE_JOLPICA_BASE as string | undefined) ?? 'https://api.jolpi.ca/ergast/f1';
 
@@ -100,7 +101,7 @@ interface MR<T> {
 }
 
 export async function getSchedule(season: string): Promise<Race[]> {
-  const data = await fetchJson<MR<{ RaceTable: { Races: Race[] } }>>(`${BASE}/${season}/races/?limit=100`, {
+  const data = await jolpicaGet<MR<{ RaceTable: { Races: Race[] } }>>(BASE, `${season}/races/?limit=100`, {
     limiter,
     cacheTtlMs: 30 * MIN,
   });
@@ -108,17 +109,17 @@ export async function getSchedule(season: string): Promise<Race[]> {
 }
 
 export async function getDriverStandings(season: string) {
-  const data = await fetchJson<
+  const data = await jolpicaGet<
     MR<{ StandingsTable: { season?: string; StandingsLists: { round: string; season?: string; DriverStandings: DriverStanding[] }[] } }>
-  >(`${BASE}/${season}/driverstandings/?limit=100`, { limiter, cacheTtlMs: 10 * MIN });
+  >(BASE, `${season}/driverstandings/?limit=100`, { limiter, cacheTtlMs: 10 * MIN });
   const list = data.MRData.StandingsTable.StandingsLists[0];
   return { round: list ? Number(list.round) : 0, standings: list?.DriverStandings ?? [], season: list?.season ?? data.MRData.StandingsTable.season ?? '' };
 }
 
 export async function getConstructorStandings(season: string) {
-  const data = await fetchJson<
+  const data = await jolpicaGet<
     MR<{ StandingsTable: { season?: string; StandingsLists: { round: string; season?: string; ConstructorStandings: ConstructorStanding[] }[] } }>
-  >(`${BASE}/${season}/constructorstandings/?limit=100`, { limiter, cacheTtlMs: 10 * MIN });
+  >(BASE, `${season}/constructorstandings/?limit=100`, { limiter, cacheTtlMs: 10 * MIN });
   const list = data.MRData.StandingsTable.StandingsLists[0];
   return { round: list ? Number(list.round) : 0, standings: list?.ConstructorStandings ?? [], season: list?.season ?? data.MRData.StandingsTable.season ?? '' };
 }
@@ -126,9 +127,9 @@ export async function getConstructorStandings(season: string) {
 /** Driver standings after a given round (round 0: before the season, empty). */
 export async function getDriverStandingsAt(season: string, round: number) {
   if (round < 1) return { round: 0, standings: [] as DriverStanding[] };
-  const data = await fetchJson<
+  const data = await jolpicaGet<
     MR<{ StandingsTable: { StandingsLists: { round: string; DriverStandings: DriverStanding[] }[] } }>
-  >(`${BASE}/${season}/${round}/driverstandings/?limit=100`, { limiter, cacheTtlMs: 60 * MIN });
+  >(BASE, `${season}/${round}/driverstandings/?limit=100`, { limiter, cacheTtlMs: 60 * MIN });
   const list = data.MRData.StandingsTable.StandingsLists[0];
   return { round, standings: list?.DriverStandings ?? [] };
 }
@@ -136,9 +137,9 @@ export async function getDriverStandingsAt(season: string, round: number) {
 /** Constructor standings after a given round. */
 export async function getConstructorStandingsAt(season: string, round: number) {
   if (round < 1) return { round: 0, standings: [] as ConstructorStanding[] };
-  const data = await fetchJson<
+  const data = await jolpicaGet<
     MR<{ StandingsTable: { StandingsLists: { round: string; ConstructorStandings: ConstructorStanding[] }[] } }>
-  >(`${BASE}/${season}/${round}/constructorstandings/?limit=100`, { limiter, cacheTtlMs: 60 * MIN });
+  >(BASE, `${season}/${round}/constructorstandings/?limit=100`, { limiter, cacheTtlMs: 60 * MIN });
   const list = data.MRData.StandingsTable.StandingsLists[0];
   return { round, standings: list?.ConstructorStandings ?? [] };
 }
@@ -168,8 +169,8 @@ const sameSeason = (a: RowsPage, b: RowsPage) => !a.MRData.RaceTable.season || a
 async function getAllResults(season: string, kind: 'results' | 'sprint'): Promise<RaceWithResults[]> {
   const key = kind === 'results' ? 'Results' : 'SprintResults';
   type Page = MR<{ RaceTable: { Races: RaceWithResults[] } }>;
-  const url = (offset: number) => `${BASE}/${season}/${kind}/?limit=100&offset=${offset}`;
-  const page = (offset: number) => fetchJson<Page>(url(offset), { limiter, ...pageCache(season, offset) });
+  const url = (offset: number) => `${season}/${kind}/?limit=100&offset=${offset}`;
+  const page = (offset: number) => jolpicaGet<Page>(BASE, url(offset), { limiter, ...pageCache(season, offset) });
   // The first page says how many rows there are; the rest are requested together rather than one after another.
   const first = await page(0);
   const limit = Number(first.MRData.limit) || 100;
@@ -177,7 +178,7 @@ async function getAllResults(season: string, kind: 'results' | 'sprint'): Promis
   const rest = await Promise.all(
     Array.from({ length: Math.max(0, Math.ceil(total / limit) - 1) }, async (_, i) => {
       const d = await page((i + 1) * limit);
-      return sameSeason(d, first) ? d : fetchJson<Page>(url((i + 1) * limit), { limiter });
+      return sameSeason(d, first) ? d : jolpicaGet<Page>(BASE, url((i + 1) * limit), { limiter });
     }),
   );
   const byRound = new Map<string, RaceWithResults>();
@@ -229,15 +230,15 @@ export async function getQualifying(season: string, driverId?: string): Promise<
   const path = driverId ? `${season}/drivers/${driverId}/qualifying` : `${season}/qualifying`;
   const races: RaceWithQualifying[] = [];
   type Page = MR<{ RaceTable: { Races: RaceWithQualifying[] } }>;
-  const url = (offset: number) => `${BASE}/${path}/?limit=100&offset=${offset}`;
-  const page = (offset: number) => fetchJson<Page>(url(offset), { limiter, ...pageCache(season, offset) });
+  const url = (offset: number) => `${path}/?limit=100&offset=${offset}`;
+  const page = (offset: number) => jolpicaGet<Page>(BASE, url(offset), { limiter, ...pageCache(season, offset) });
   const first = await page(0);
   const limit = Number(first.MRData.limit) || 100;
   const total = Math.min(Number(first.MRData.total) || 0, 20 * limit);
   const rest = await Promise.all(
     Array.from({ length: Math.max(0, Math.ceil(total / limit) - 1) }, async (_, i) => {
       const d = await page((i + 1) * limit);
-      return sameSeason(d, first) ? d : fetchJson<Page>(url((i + 1) * limit), { limiter });
+      return sameSeason(d, first) ? d : jolpicaGet<Page>(BASE, url((i + 1) * limit), { limiter });
     }),
   );
   for (const data of [first, ...rest]) {
@@ -361,9 +362,9 @@ export async function getRound(season: string, round: string): Promise<RoundData
   type T = MR<{ RaceTable: { Races: (RaceWithResults & RaceWithQualifying)[] } }>;
   const opts = { limiter, cacheTtlMs: 10 * MIN };
   const [r, s, q] = await Promise.all([
-    fetchJson<T>(`${BASE}/${season}/${round}/results/?limit=100`, opts),
-    fetchJson<T>(`${BASE}/${season}/${round}/sprint/?limit=100`, opts),
-    fetchJson<T>(`${BASE}/${season}/${round}/qualifying/?limit=100`, opts),
+    jolpicaGet<T>(BASE, `${season}/${round}/results/?limit=100`, opts),
+    jolpicaGet<T>(BASE, `${season}/${round}/sprint/?limit=100`, opts),
+    jolpicaGet<T>(BASE, `${season}/${round}/qualifying/?limit=100`, opts),
   ]);
   return { race: r.MRData.RaceTable.Races[0], sprint: s.MRData.RaceTable.Races[0], quali: q.MRData.RaceTable.Races[0] };
 }
