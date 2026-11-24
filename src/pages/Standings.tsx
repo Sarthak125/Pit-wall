@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { SeasonPitStops } from '../components/PitStops';
 import { OffseasonNote } from '../components/OffseasonNote';
 import { ChampionTag } from '../components/Champions';
 import { titleDecisions } from '../lib/titles';
@@ -26,6 +28,7 @@ export function Standings() {
   const fav = useFavourite();
   const favTeam = useFavouriteTeam();
   const results = useResults(season);
+  const [showPits, setShowPits] = useState(false);
   // The calendar of the season the results are from (last season's before a new season's first race).
   const schedule = useSchedule(results.data?.offseason?.shown ?? season);
   const titles = schedule.data && results.data ? titleDecisions(schedule.data, results.data.races, results.data.sprints) : null;
@@ -141,6 +144,19 @@ export function Standings() {
           )}
         </section>
       </div>
+      {!hidden && results.data && Number(results.data.races.find((r) => r.Results?.length)?.season ?? 0) >= 2023 && (
+        <section className="card" aria-labelledby="season-pits">
+          <div className="card-head">
+            <h2 className="h2" id="season-pits">Pit stops by team</h2>
+          </div>
+          {showPits ? <SeasonPitStops races={results.data.races} /> : (
+            <>
+              <p className="muted" style={{ marginTop: 0 }}>Each team's typical and fastest stop this season. It reads every race's pit data, so it loads when you ask for it.</p>
+              <button className="btn" onClick={() => setShowPits(true)}>Show pit stops by team</button>
+            </>
+          )}
+        </section>
+      )}
       <Footer />
     </>
   );

@@ -6,6 +6,7 @@ import { RaceTyreStrategy } from '../components/TyreStrategy';
 import { RaceStory } from '../components/RaceStory';
 import { LapCompare } from '../components/LapCompare';
 import { RacePace } from '../components/RacePace';
+import { RacePitStops } from '../components/PitStops';
 import { SpoilerCover } from '../components/SpoilerCover';
 import { useSpoilers } from '../hooks/useSpoilers';
 import { useState } from 'react';
@@ -190,6 +191,14 @@ export function RaceResults() {
             <h2 className="h2" id="pace">Race pace and tyre wear{shownTab === 'sprint' ? ': sprint' : ''}</h2>
           </div>
           <RacePace key={shownTab} race={info} results={shownTab === 'sprint' ? sprint : results} sprint={shownTab === 'sprint'} />
+        </section>
+      )}
+      {finished && !hidden && Number(info.season) >= 2023 && shownTab !== 'quali' && (
+        <section className="card" aria-labelledby="pits">
+          <div className="card-head">
+            <h2 className="h2" id="pits">Pit stops{shownTab === 'sprint' ? ': sprint' : ''}</h2>
+          </div>
+          <RacePitStops key={shownTab} race={info} results={shownTab === 'sprint' ? sprint : results} sprint={shownTab === 'sprint'} />
         </section>
       )}
       {weekendStarted && !hidden && Number(info.season) >= 2023 && (

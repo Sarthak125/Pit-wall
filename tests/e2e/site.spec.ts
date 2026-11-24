@@ -424,7 +424,7 @@ test('with OpenF1 refusing the race\'s data, the race page loads from Pit Wall\'
     return body === undefined ? r.fulfill({ status: 404, body: 'Not found' }) : r.fulfill({ json: body });
   });
   const asked: string[] = [];
-  await page.route(/api\.openf1\.org\/v1\/(drivers|laps|stints|pit|race_control|session_result)\?session_key=11416$/, (r) => {
+  await page.route(/api\.openf1\.org\/v1\/(drivers|laps|stints|pit|race_control|session_result)\?session_key=11420$/, (r) => {
     asked.push(r.request().url());
     return r.fulfill({ status: 401, body: 'refused' });
   });
@@ -432,5 +432,79 @@ test('with OpenF1 refusing the race\'s data, the race page loads from Pit Wall\'
   await expect(page.locator('.story')).toContainText('Max Verstappen wins', { timeout: 60_000 });
   await expect(page.locator('section:has(#lapcmp) svg[role=img]')).toBeVisible({ timeout: 60_000 });
   expect(asked).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test('a race page ranks pit stops by stationary time, fastest first', async ({ page }) => {
+  const errors = await setUp(page);
+  await page.goto('#/race/21');
+  const card = page.locator('section[aria-labelledby="pits"]');
+  await expect(card.locator('tbody tr').first()).toBeVisible({ timeout: 60_000 });
+  await expect(card).toContainText('Fastest stop:');
+  await expect(card.locator('thead')).toContainText('Stationary');
+  const times = (await card.locator('tbody tr td:last-child').allTextContents()).map((t) => parseFloat(t));
+  expect(times.length).toBe(10);
+  expect([...times].sort((a, b) => a - b)).toEqual(times);
+  await card.getByRole('button', { name: /Show all \d+ stops/ }).click();
+  expect(await card.locator('tbody tr').count()).toBeGreaterThan(10);
+  expect(errors).toEqual([]);
+});
+
+test('without stationary times, pit stops are ranked by pit lane time and the card says so', async ({ page }) => {
+  const errors = await setUp(page);
+  const recorded = OF1_MIRROR.files['pit/session_key-11420.json'] as { stop_duration: number | null }[];
+  await page.route(/api\.openf1\.org\/v1\/pit\?session_key=11420$/, (r) => r.fulfill({ json: recorded.map((x) => ({ ...x, stop_duration: null })) }));
+  await page.goto('#/race/21');
+  const card = page.locator('section[aria-labelledby="pits"]');
+  await expect(card).toContainText('Fastest pit lane time', { timeout: 60_000 });
+  await expect(card.locator('thead')).toContainText('Pit lane');
+  await expect(card).toContainText('no stationary times');
+  expect(errors).toEqual([]);
+});
+
+test('a race page with stationary times ranks the stops and marks slow ones', async ({ page }) => {
+  const errors = await setUp(page);
+  const recorded = OF1_MIRROR.files['pit/session_key-11420.json'] as { stop_duration: number | null; pit_duration: number | null }[];
+  // Give every stop a stationary time between 2.0 and 3.0 s, and one a repair of 12.3 s.
+  const timed = recorded.map((x, i) => (x.pit_duration ? { ...x, stop_duration: i === 3 ? 12.3 : 2 + (i % 10) / 10 } : x));
+  await page.route(/api\.openf1\.org\/v1\/pit\?session_key=11420$/, (r) => r.fulfill({ json: timed }));
+  await page.goto('#/race/21');
+  const card = page.locator('section[aria-labelledby="pits"]');
+  await expect(card).toContainText('Fastest stop', { timeout: 60_000 });
+  await expect(card.locator('thead')).toContainText('Stationary');
+  await expect(card).toContainText('2.0 s');
+  await card.getByRole('button', { name: /Show all \d+ stops/ }).click();
+  await expect(card.locator('tbody tr td:last-child').filter({ hasText: '12.3 s slow' })).toHaveCount(1);
+  expect(errors).toEqual([]);
+});
+
+test('Standings can show pit stops by team, loading only when asked', async ({ page }) => {
+  const errors = await setUp(page);
+  const asked: string[] = [];
+  const races = (MIRROR.files['current/races/limit-100.json'] as { MRData: { RaceTable: { Races: { round: string; date: string }[] } } }).MRData.RaceTable.Races;
+  await page.route(/api\.openf1\.org\/v1\/sessions\?year=2026&session_name=Race$/, (r) =>
+    r.fulfill({ json: races.map((x) => ({ session_key: 9000 + Number(x.round), session_name: 'Race', date_start: `${x.date}T13:00:00+00:00`, year: 2026 })) }));
+  await page.route(/api\.openf1\.org\/v1\/pit\?session_key=90\d\d$/, (r) => {
+    asked.push(r.request().url());
+    const round = Number(new URL(r.request().url()).searchParams.get('session_key')) - 9000;
+    const results = (MIRROR.files[`current/${round}/results/limit-100.json`] as { MRData: { RaceTable: { Races: { Results: { number: string }[] }[] } } }).MRData.RaceTable.Races[0]?.Results ?? [];
+    // The first three finishers stop twice: 2.0 s, 2.5 s and 3.0 s; the winner's team also had one 9.5 s stop in round 1.
+    const rows = results.slice(0, 3).flatMap((x, i) => [0, 1].map((n) => ({ date: `2026-01-01T00:0${n}:00+00:00`, driver_number: Number(x.number), lap_number: 10 + n, stop_duration: 2 + i / 2, lane_duration: 22, pit_duration: 22 })));
+    if (round === 1 && results[0]) rows.push({ date: '2026-01-01T00:05:00+00:00', driver_number: Number(results[0].number), lap_number: 30, stop_duration: 9.5, lane_duration: 30, pit_duration: 30 });
+    return r.fulfill({ json: rows });
+  });
+  await page.goto('#/standings');
+  const card = page.locator('section[aria-labelledby="season-pits"]');
+  await expect(card.getByRole('button', { name: 'Show pit stops by team' })).toBeVisible({ timeout: 30_000 });
+  expect(asked).toEqual([]);
+  await card.getByRole('button', { name: 'Show pit stops by team' }).click();
+  await expect(card.locator('tbody tr').first()).toBeVisible({ timeout: 60_000 });
+  await expect(card).toContainText(/All \d+ races/, { timeout: 60_000 });
+  await expect(card.locator('thead')).toContainText('Typical stop');
+  expect(await card.locator('tbody tr').count()).toBeGreaterThan(1);
+  expect(asked.length).toBeGreaterThan(5);
+  // Teams are listed with the quickest typical stop first.
+  const typical = (await card.locator('tbody tr td:nth-child(3)').allTextContents()).map((t) => parseFloat(t));
+  expect([...typical].sort((a, b) => a - b)).toEqual(typical);
   expect(errors).toEqual([]);
 });
