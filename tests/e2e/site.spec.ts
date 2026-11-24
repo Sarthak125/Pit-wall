@@ -412,3 +412,25 @@ test('Settings says so when there is no data copy', async ({ page }) => {
   await expect(page.locator('section[aria-labelledby="data-copy"]')).toContainText('No copy is available', { timeout: 20_000 });
   expect(errors).toEqual([]);
 });
+
+/** Pit Wall's copy of finished-session OpenF1 data, made by scripts/mirror-openf1.mjs (here from the same recording). */
+const OF1_MIRROR = JSON.parse(gunzipSync(readFileSync('tests/fixtures/openf1mirror.json.gz')).toString()) as { manifest: unknown; files: Record<string, unknown> };
+
+test('with OpenF1 refusing the race\'s data, the race page loads from Pit Wall\'s own copy', async ({ page }) => {
+  const errors = await setUp(page);
+  await page.route(/\/data\/openf1\//, (r) => {
+    const key = decodeURIComponent(new URL(r.request().url()).pathname.split('/data/openf1/')[1]);
+    const body = key === 'manifest.json' ? OF1_MIRROR.manifest : OF1_MIRROR.files[key];
+    return body === undefined ? r.fulfill({ status: 404, body: 'Not found' }) : r.fulfill({ json: body });
+  });
+  const asked: string[] = [];
+  await page.route(/api\.openf1\.org\/v1\/(drivers|laps|stints|pit|race_control|session_result)\?session_key=11416$/, (r) => {
+    asked.push(r.request().url());
+    return r.fulfill({ status: 401, body: 'refused' });
+  });
+  await page.goto('#/race/21');
+  await expect(page.locator('.story')).toContainText('Max Verstappen wins', { timeout: 60_000 });
+  await expect(page.locator('section:has(#lapcmp) svg[role=img]')).toBeVisible({ timeout: 60_000 });
+  expect(asked).toEqual([]);
+  expect(errors).toEqual([]);
+});

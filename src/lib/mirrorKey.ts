@@ -10,3 +10,17 @@ export function mirrorKey(pathAndQuery: string): string {
   const name = query ? query.replace(/=/g, '-').replace(/&/g, '_').replace(/[^A-Za-z0-9._-]/g, '') : 'index';
   return `${dir}/${name}.json`;
 }
+
+/**
+ * File name of an OpenF1 request in Pit Wall's copy of finished-session data (see scripts/mirror-openf1.mjs), or null
+ * when the request is not one the copy can hold. Only requests for a whole session (or a weekend's session list) by
+ * number are kept: "laps?session_key=9999" becomes "laps/session_key-9999.json". Anything else (live polling, time
+ * windows, "latest") always goes to OpenF1.
+ */
+export function openf1Key(endpoint: string, params: Record<string, string | number | undefined>): string | null {
+  const given = Object.entries(params).filter(([, v]) => v !== undefined && v !== '');
+  if (given.length !== 1) return null;
+  const [name, value] = given[0];
+  if (!/^[a-z_]+$/.test(endpoint) || !['session_key', 'meeting_key'].includes(name) || !/^\d+$/.test(String(value))) return null;
+  return `${endpoint}/${name}-${value}.json`;
+}

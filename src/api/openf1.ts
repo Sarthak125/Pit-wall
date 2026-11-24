@@ -8,6 +8,7 @@
  */
 import { fetchJson, HttpError, RateLimiter } from './http';
 import { getSettings } from '../lib/settings';
+import { openf1FromCopy } from './openf1Mirror';
 import { activeWindow, getBlocked, OpenF1BlockedError, setBlocked } from '../lib/openf1Window';
 
 const BASE = (import.meta.env.VITE_OPENF1_BASE as string | undefined) ?? 'https://api.openf1.org/v1';
@@ -51,6 +52,9 @@ let nextProbe = 0;
 const PROBE_MS = 2 * 60_000;
 
 export async function openf1<T>(endpoint: string, params: Params, signal?: AbortSignal): Promise<T[]> {
+  // Finished sessions are answered from Pit Wall's own copy when it has them (no request to OpenF1, even in a live window).
+  const copy = await openf1FromCopy<T>(endpoint, params, signal);
+  if (copy) return copy;
   const { openf1Token, openf1PerMinute } = getSettings();
   openf1Limiter.setLimits(perSecondFor(openf1PerMinute), openf1PerMinute);
   const headers: Record<string, string> = {};

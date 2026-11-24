@@ -56,6 +56,13 @@ jobs:
         continue-on-error: true
         timeout-minutes: 15
         run: node scripts/mirror-jolpica.mjs dist/data/jolpica https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+      # The same for finished sessions of OpenF1 (laps, stints, pit stops, race control, results): race pages then open at
+      # once and still work while OpenF1 is slow or refusing requests. Stops when OpenF1 refuses or after 14 minutes
+      # (its limit is 30 requests a minute); the next run carries on. This step never stops a deploy either.
+      - name: Copy OpenF1 data
+        continue-on-error: true
+        timeout-minutes: 20
+        run: node scripts/mirror-openf1.mjs dist/data/openf1 https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
