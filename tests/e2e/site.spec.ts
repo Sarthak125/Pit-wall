@@ -542,3 +542,77 @@ test('a driver whose title is decided has no what-if', async ({ page }) => {
   await expect(page.getByRole('group', { name: 'Title scenario' })).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+/** The driver card tests give Hamilton a photo, as Pit Wall's own photo copy would (tests/fixtures/extra/photo-hamilton.jpg). */
+async function servePhotos(page: Page) {
+  await page.route(/\/data\/photos\/manifest\.json/, (r) => r.fulfill({
+    json: { photos: { hamilton: { file: 'hamilton.jpg', title: 'Example.jpg', artist: 'An Example Photographer', licence: 'CC BY-SA 4.0', page: 'https://commons.wikimedia.org/wiki/File:Example.jpg' } } },
+  }));
+  await page.route(/\/data\/photos\/hamilton\.jpg/, (r) => r.fulfill({ path: 'tests/fixtures/extra/photo-hamilton.jpg', contentType: 'image/jpeg' }));
+}
+
+test('a driver page shows the driver card: overall rating, six stat ratings and a photo with its credit', async ({ page }) => {
+  const errors = await setUp(page);
+  await servePhotos(page);
+  await page.goto('#/driver/HAM');
+  const card = page.locator('section[aria-labelledby="driver-card"]');
+  const face = card.getByTestId('driver-card');
+  await expect(face).toBeVisible({ timeout: 40_000 });
+  await expect(face.locator('.dc-front .dc-ovr b')).toHaveText(/^\d{2}$/);
+  const ratings = await face.locator('.dc-front .dc-cell .dc-r').allTextContents();
+  expect(ratings).toHaveLength(6);
+  for (const r of ratings) expect(Number(r)).toBeGreaterThanOrEqual(1);
+  for (const r of ratings) expect(Number(r)).toBeLessThanOrEqual(99);
+  await expect(face.locator('.dc-front .dc-cell .dc-l')).toHaveText(['Points / race', 'Qualifying', 'Race finish', 'Points finishes', 'Finish rate', 'Team-mate duel']);
+  await expect(face.locator('.dc-photo img')).toBeVisible();
+  // The back holds the season trend, results, the team-mate comparison and the photo credit.
+  await face.getByRole('button', { name: /card over/ }).first().click();
+  await expect(face.locator('.dc-back')).toContainText('Championship position');
+  await expect(face.locator('.dc-back')).toContainText(/Against \w+/);
+  await expect(face.locator('.dc-back .dc-credit')).toContainText('An Example Photographer');
+  await expect(face.locator('.dc-back .dc-credit a')).toHaveAttribute('href', 'https://commons.wikimedia.org/wiki/File:Example.jpg');
+  await noSidewaysScroll(page);
+  expect(errors).toEqual([]);
+});
+
+test('a driver without a freely licensed photo gets a silhouette', async ({ page }) => {
+  const errors = await setUp(page);
+  await servePhotos(page);
+  await page.goto('#/driver/VER');
+  const face = page.locator('section[aria-labelledby="driver-card"]').getByTestId('driver-card');
+  await expect(face).toBeVisible({ timeout: 40_000 });
+  await expect(face.locator('.dc-photo img')).toHaveCount(0);
+  await expect(face.locator('.dc-photo .dc-silhouette')).toBeVisible();
+  await face.getByRole('button', { name: /card over/ }).first().click();
+  await expect(face.locator('.dc-back .dc-credit')).toContainText('silhouette');
+  expect(errors).toEqual([]);
+});
+
+test('the Drivers page has a Cards view that can be sorted and filtered by team', async ({ page }) => {
+  const errors = await setUp(page);
+  await servePhotos(page);
+  await page.goto('#/drivers');
+  await page.getByRole('tab', { name: 'Cards' }).click();
+  const cards = page.getByTestId('driver-card');
+  await expect(cards.first()).toBeVisible({ timeout: 40_000 });
+  expect(await cards.count()).toBeGreaterThanOrEqual(20);
+  // By standing the leader is first; by team, only that team's two cars remain.
+  await expect(cards.first().locator('.dc-front .dc-meta')).toContainText('P1 ·');
+  await page.getByLabel('Show team').selectOption('Mercedes');
+  await expect(cards).toHaveCount(2);
+  await page.getByLabel('Show team').selectOption('all');
+  await page.getByLabel('Sort cards by').selectOption({ label: 'Qualifying (highest first)' });
+  const first = await cards.first().locator('.dc-front .dc-cell .dc-r').nth(1).textContent();
+  expect(Number(first)).toBe(99);
+  await noSidewaysScroll(page);
+  expect(errors).toEqual([]);
+});
+
+test('spoiler-free mode covers the driver cards until the weekend is revealed', async ({ page }) => {
+  const errors = await setUp(page, AFTER_RACE, { spoilerFree: true });
+  await page.goto('#/drivers');
+  await page.getByRole('tab', { name: 'Cards' }).click();
+  await expect(page.getByText('The driver cards')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('driver-card')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

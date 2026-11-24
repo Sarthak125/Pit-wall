@@ -18,6 +18,7 @@ import { niceName } from '../lib/format';
 import { setFavorite, useSettings } from '../lib/settings';
 import { teamColour } from '../lib/teams';
 import { WikiAbout } from '../components/WikiAbout';
+import { DriverCardSection } from '../components/DriverCard';
 import { TitleScenario } from '../components/TitleScenario';
 import { useSpoilers } from '../hooks/useSpoilers';
 
@@ -147,6 +148,7 @@ function Profile({ code, name: givenName, season, isFav }: { code: string; name:
           <StarIcon filled={isFav} />
         </button>
       </section>
+      {me && !(season === 'current' && spoilers.standingsHidden) && <DriverCardSection season={season} driverId={me.Driver.driverId} />}
       {me?.Driver.url && !spoilers.standingsHidden && <WikiAbout url={me.Driver.url} heading={`About ${me.Driver.givenName} ${me.Driver.familyName}`} />}
 
       {inLive && liveSession && <LiveDriver session={liveSession} code={code} alerts={isFav} />}

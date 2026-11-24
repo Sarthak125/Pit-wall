@@ -63,6 +63,13 @@ jobs:
         continue-on-error: true
         timeout-minutes: 20
         run: node scripts/mirror-openf1.mjs dist/data/openf1 https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+      # Driver photos for the driver cards: each driver's lead Wikipedia photo when it is a freely licensed image on
+      # Wikimedia Commons, saved with its author and licence. Reuses the live site's files, so a normal run only looks
+      # for new drivers. This step never stops a deploy either.
+      - name: Copy driver photos
+        continue-on-error: true
+        timeout-minutes: 10
+        run: node scripts/mirror-photos.mjs dist/data/photos https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/ dist/data/jolpica
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
