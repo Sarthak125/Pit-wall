@@ -18,6 +18,7 @@ import { niceName } from '../lib/format';
 import { setFavorite, useSettings } from '../lib/settings';
 import { teamColour } from '../lib/teams';
 import { WikiAbout } from '../components/WikiAbout';
+import { TitleScenario } from '../components/TitleScenario';
 import { useSpoilers } from '../hooks/useSpoilers';
 
 export function MyDriver() {
@@ -346,6 +347,9 @@ function TitleMaths({ me, list, schedule, doneRound, sprintsDone }: { me: Driver
       <div className="faint" style={{ fontSize: 11, marginTop: 8 }}>
         Assumes 25 points for a Grand Prix win and 8 for a sprint win, with no fastest-lap point. Ties are decided by countback, which this does not model.
       </div>
+      {remaining.length > 0 && (isLeader ? myPts - second <= available : leaderPts - myPts <= available) && (
+        <TitleScenario key={me.Driver.driverId} me={me} list={list} gps={remaining.length} sprints={sprints} />
+      )}
     </section>
   );
 }

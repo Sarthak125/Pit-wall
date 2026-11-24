@@ -510,3 +510,35 @@ test('Standings can show pit stops by team, loading only when asked', async ({ p
   expect([...typical].sort((a, b) => a - b)).toEqual(typical);
   expect(errors).toEqual([]);
 });
+
+test('a driver whose title is still open gets a what-if for the rest of the season', async ({ page }) => {
+  const errors = await setUp(page);
+  // Make the championship close: the leader's points are cut so Verstappen is 26 points behind with two races left.
+  const standings = JSON.parse(JSON.stringify(MIRROR.files['current/driverstandings/limit-100.json']));
+  const list = standings.MRData.StandingsTable.StandingsLists[0].DriverStandings as { points: string; Driver: { code?: string } }[];
+  list[0].points = '330';
+  await page.route(/\/data\/jolpica\//, (r) => {
+    const key = decodeURIComponent(new URL(r.request().url()).pathname.split('/data/jolpica/')[1]);
+    const body = key === 'manifest.json' ? MIRROR.manifest : key === 'current/driverstandings/limit-100.json' ? standings : MIRROR.files[key];
+    return body === undefined ? r.fulfill({ status: 404, body: 'Not found' }) : r.fulfill({ json: body });
+  });
+  await page.goto('#/driver/VER');
+  const box = page.locator('section[aria-labelledby="maths"]');
+  await expect(box).toContainText('Can still win', { timeout: 30_000 });
+  const what = box.getByRole('group', { name: 'Title scenario' });
+  await expect(what).toBeVisible();
+  // Two Grands Prix left (and any sprint): winning both beats a rival who is second in both.
+  await expect(what.getByRole('status')).toContainText('would be champion');
+  await what.getByLabel(/Verstappen finishes/).selectOption('0');
+  await expect(what.getByRole('status')).toContainText(/\w+ would be champion/);
+  await expect(what.getByRole('status')).not.toContainText('Verstappen would be champion');
+  expect(errors).toEqual([]);
+});
+
+test('a driver whose title is decided has no what-if', async ({ page }) => {
+  const errors = await setUp(page);
+  await page.goto('#/driver/VER');
+  await expect(page.locator('section[aria-labelledby="maths"]')).toContainText('Can no longer win the title', { timeout: 30_000 });
+  await expect(page.getByRole('group', { name: 'Title scenario' })).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
