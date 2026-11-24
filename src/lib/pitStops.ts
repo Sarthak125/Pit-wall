@@ -19,8 +19,8 @@ export interface Stop {
   to: string | null;
 }
 
-/** A stop slower than this (a repair, a penalty served, a problem) is shown but kept out of crew comparisons. */
-export const SLOW_STOP = 6;
+/** A stop this long or longer is shown but kept out of typical times, so one unusually long stop does not decide a figure. OpenF1 does not record why a stop was long. */
+export const LONG_STOP = 6;
 
 /** A race's stops with the tyres taken off and fitted, in the order they happened. */
 export function raceStops(pits: PitDetail[], stints: Stint[]): Stop[] {
@@ -66,13 +66,11 @@ export function median(values: number[]): number | null {
 
 export interface TeamPits {
   team: string;
-  /** Stops with a stationary time, including slow ones. */
+  /** Stops with a stationary time, including long ones. */
   stops: number;
   fastest: number;
-  /** Middle time of the stops under SLOW_STOP seconds. */
+  /** Middle time of the stops under LONG_STOP seconds. */
   typical: number | null;
-  /** Stops of SLOW_STOP seconds or more. */
-  slow: number;
 }
 
 /** A season's stops per team, from stops tagged with their team. Fastest typical stop first. */
@@ -84,8 +82,8 @@ export function teamPitSummary(stops: { team: string; stop: number | null }[]): 
   }
   return [...byTeam.entries()]
     .map(([team, times]) => {
-      const ok = times.filter((t) => t < SLOW_STOP);
-      return { team, stops: times.length, fastest: Math.min(...times), typical: median(ok), slow: times.length - ok.length };
+      const ok = times.filter((t) => t < LONG_STOP);
+      return { team, stops: times.length, fastest: Math.min(...times), typical: median(ok) };
     })
     .sort((a, b) => (a.typical ?? 99) - (b.typical ?? 99));
 }

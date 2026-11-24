@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import type { Race, RaceWithResults, Result } from '../api/jolpica';
 import { findMeeting, meetingSessions, openf1, type PitDetail, type Session, type Stint } from '../api/openf1';
 import { useFavourite } from '../hooks/useFavourite';
-import { median, rankStops, raceStops, SLOW_STOP, teamPitSummary } from '../lib/pitStops';
+import { median, rankStops, raceStops, LONG_STOP, teamPitSummary } from '../lib/pitStops';
 import { teamColour, tyre } from '../lib/teams';
 
 async function raceSession(race: Race, sprint: boolean, signal?: AbortSignal): Promise<Session | null> {
@@ -17,7 +17,7 @@ const seconds = (v: number) => `${v.toFixed(1)} s`;
 
 /**
  * A race's pit stops (OpenF1, 2023 onward), fastest first: how long each car stood still, the lap and the tyres taken
- * off and fitted. Stops that took 6 seconds or more (repairs, problems) are shown but left out of the typical time.
+ * off and fitted. Stops that took 6 seconds or more are shown as long but left out of the typical time.
  */
 export function RacePitStops({ race, results, sprint }: { race: Race; results: Result[]; sprint: boolean }) {
   const fav = useFavourite();
@@ -42,8 +42,8 @@ export function RacePitStops({ race, results, sprint }: { race: Race; results: R
     const ranked = rankStops(stops);
     if (!ranked.length) return null;
     const kind = ranked[0].kind;
-    const ok = ranked.filter((x) => x.time < (kind === 'stop' ? SLOW_STOP : Infinity)).map((x) => x.time);
-    return { ranked, kind, typical: median(ok), slow: ranked.length - ok.length, untimed: stops.length - ranked.length, stops: stops.length };
+    const ok = ranked.filter((x) => x.time < (kind === 'stop' ? LONG_STOP : Infinity)).map((x) => x.time);
+    return { ranked, kind, typical: median(ok), long: ranked.length - ok.length, untimed: stops.length - ranked.length, stops: stops.length };
   }, [data.data, byNum]);
 
   if (data.isLoading) return <div className="empty">Loading pit stops…</div>;
@@ -57,7 +57,7 @@ export function RacePitStops({ race, results, sprint }: { race: Race; results: R
     <>
       <p style={{ margin: '0 0 10px' }}>
         Fastest {view.kind === 'stop' ? 'stop' : 'pit lane time'}: <b>{bestDriver.Driver.code ?? bestDriver.Driver.familyName}</b> in <b className="mono">{seconds(best.time)}</b> on lap {best.stop.lap}.
-        {view.typical != null && <> Typical {view.kind === 'stop' ? 'stop' : 'pit lane time'}: <b className="mono">{seconds(view.typical)}</b> across {view.ranked.length - view.slow} stops.</>}
+        {view.typical != null && <> Typical {view.kind === 'stop' ? 'stop' : 'pit lane time'}: <b className="mono">{seconds(view.typical)}</b> across {view.ranked.length - view.long} stops.</>}
       </p>
       <div className="scroll-x">
         <table className="tbl pit-tbl">
@@ -94,7 +94,7 @@ export function RacePitStops({ race, results, sprint }: { race: Race; results: R
                   </td>
                   <td className="r mono">
                     {seconds(x.time)}
-                    {view.kind === 'stop' && x.time >= SLOW_STOP && <span className="muted"> slow</span>}
+                    {view.kind === 'stop' && x.time >= LONG_STOP && <span className="muted" title="OpenF1 does not record why a stop was long"> long</span>}
                   </td>
                 </tr>
               );
@@ -107,7 +107,7 @@ export function RacePitStops({ race, results, sprint }: { race: Race; results: R
       )}
       <p className="muted" style={{ fontSize: 12, marginBottom: 0 }}>
         {view.kind === 'stop'
-          ? `Stationary time is how long the car stood still, from OpenF1. Stops of ${SLOW_STOP} seconds or more (repairs, problems, a penalty served) are marked slow and left out of the typical time.`
+          ? `Stationary time is how long the car stood still, from OpenF1. Stops of ${LONG_STOP} seconds or more are marked long and left out of the typical time, so one unusually long stop does not decide it. OpenF1 does not record why a stop was long.`
           : 'OpenF1 has no stationary times for this race, so stops are ranked by time in the pit lane, which includes the drive through the lane and depends on the circuit.'}
         {view.untimed > 0 && ` ${view.untimed} ${view.untimed === 1 ? 'stop has' : 'stops have'} no time recorded and ${view.untimed === 1 ? 'is' : 'are'} not listed.`}
       </p>
@@ -116,7 +116,7 @@ export function RacePitStops({ race, results, sprint }: { race: Race; results: R
 }
 
 /**
- * A season's pit stops per team: fastest stop, typical stop (the middle time, without slow stops) and the number of
+ * A season's pit stops per team: fastest stop, typical stop (the middle time, without stops of 6 seconds or more) and the number of
  * stops, from every finished race. Loads one request per race, so it fills in as the races arrive.
  */
 export function SeasonPitStops({ races }: { races: RaceWithResults[] }) {
@@ -177,7 +177,7 @@ export function SeasonPitStops({ races }: { races: RaceWithResults[] }) {
               <th>Team</th>
               <th className="r" title="The middle stationary time of the team's stops, without stops of 6 seconds or more">Typical</th>
               <th className="r">Fastest</th>
-              <th className="r" title="Stops with a time, and how many of them took 6 seconds or more">Stops (slow)</th>
+              <th className="r" title="Stops with a recorded stationary time">Stops</th>
             </tr>
           </thead>
           <tbody>
@@ -192,7 +192,7 @@ export function SeasonPitStops({ races }: { races: RaceWithResults[] }) {
                 </td>
                 <td className="r mono">{t.typical == null ? '-' : seconds(t.typical)}</td>
                 <td className="r mono" style={t.fastest === fastest ? { fontWeight: 700 } : undefined} title={t.fastest === fastest ? 'Fastest stop of the season' : undefined}>{seconds(t.fastest)}</td>
-                <td className="r mono">{t.stops}<span className="muted"> ({t.slow})</span></td>
+                <td className="r mono">{t.stops}</td>
               </tr>
             ))}
           </tbody>
@@ -200,7 +200,7 @@ export function SeasonPitStops({ races }: { races: RaceWithResults[] }) {
       </div>
       <p className="muted" style={{ fontSize: 12, marginBottom: 0 }}>
         {loaded < expected ? `Loaded ${loaded} of ${expected} races so far. ` : `All ${expected} races. `}
-        Stationary times from OpenF1 (how long the car stood still), for races only, not sprints. The fastest stop of the season is in bold. Teams are ordered by their typical stop; stops of {SLOW_STOP} seconds or more are counted as slow and left out of it. Stops with no recorded time are not counted. Season totals include only what OpenF1 recorded, so a few stops may be missing.
+        Stationary times from OpenF1 (how long the car stood still), for races only, not sprints. The fastest stop of the season is in bold. Teams are ordered by their typical stop, the middle time. It leaves out stops of {LONG_STOP} seconds or more, so one unusually long stop does not decide a team's figure; OpenF1 does not record why a stop took that long. Stops with no recorded time are not counted. Season totals include only what OpenF1 recorded, so a few stops may be missing.
       </p>
     </>
   );

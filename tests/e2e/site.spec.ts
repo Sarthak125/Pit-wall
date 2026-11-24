@@ -464,7 +464,7 @@ test('without stationary times, pit stops are ranked by pit lane time and the ca
   expect(errors).toEqual([]);
 });
 
-test('a race page with stationary times ranks the stops and marks slow ones', async ({ page }) => {
+test('a race page with stationary times ranks the stops and marks long ones', async ({ page }) => {
   const errors = await setUp(page);
   const recorded = OF1_MIRROR.files['pit/session_key-11420.json'] as { stop_duration: number | null; pit_duration: number | null }[];
   // Give every stop a stationary time between 2.0 and 3.0 s, and one a repair of 12.3 s.
@@ -476,7 +476,7 @@ test('a race page with stationary times ranks the stops and marks slow ones', as
   await expect(card.locator('thead')).toContainText('Stationary');
   await expect(card).toContainText('2.0 s');
   await card.getByRole('button', { name: /Show all \d+ stops/ }).click();
-  await expect(card.locator('tbody tr td:last-child').filter({ hasText: '12.3 s slow' })).toHaveCount(1);
+  await expect(card.locator('tbody tr td:last-child').filter({ hasText: '12.3 s long' })).toHaveCount(1);
   expect(errors).toEqual([]);
 });
 
