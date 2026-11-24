@@ -2,8 +2,11 @@ import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'r
 import type { DriverPhoto } from '../api/photos';
 import { useDriverPhotos } from '../api/photos';
 import { useDriverCards } from '../hooks/useDriverCards';
+import { useDriverStandings } from '../hooks/useSeason';
+import { StarIcon } from './Icons';
 import { compareRows, ratingTier, shortRace, STAT_LABELS, statFigure, type CardData, type CardSnapshot } from '../lib/driverCards';
-import { useSettings } from '../lib/settings';
+import { driverHref } from '../lib/router';
+import { setFavorite, useSettings } from '../lib/settings';
 import { teamColour } from '../lib/teams';
 import { Empty, ErrorBox, Loading } from './States';
 
@@ -250,6 +253,38 @@ export function DriverCardSection({ season, driverId }: { season: string; driver
   );
 }
 
+/** Under a card: a link to the driver's page and the star to make them the favourite driver. */
+function CardActions({ code, given, family }: { code: string; given: string; family: string }) {
+  const { favoriteDriver } = useSettings();
+  const fav = favoriteDriver === code;
+  const name = `${given} ${family}`;
+  return (
+    <div className="dc-actions">
+      <a className="dc-profile" href={driverHref(code)}>Open {family} profile <span aria-hidden="true">→</span></a>
+      <button className="star-btn" aria-pressed={fav} aria-label={fav ? `Remove ${name} as favourite` : `Make ${name} your favourite`} onClick={() => setFavorite(code, name)}>
+        <StarIcon filled={fav} />
+      </button>
+    </div>
+  );
+}
+
+/** The drivers' names only, with the page link and the star, for when the results behind the cards are hidden. */
+export function DriverNameList({ season }: { season: string }): ReactNode {
+  const standings = useDriverStandings(season);
+  const drivers = [...(standings.data?.standings ?? [])].sort((a, b) => a.Driver.familyName.localeCompare(b.Driver.familyName));
+  if (!drivers.length) return null;
+  return (
+    <ul className="dc-names" aria-label="Drivers">
+      {drivers.map((s) => (
+        <li key={s.Driver.driverId}>
+          <span><b>{s.Driver.givenName} {s.Driver.familyName}</b> <span className="muted">{s.Constructors[s.Constructors.length - 1]?.name}</span></span>
+          <CardActions code={s.Driver.code ?? s.Driver.familyName.slice(0, 3).toUpperCase()} given={s.Driver.givenName} family={s.Driver.familyName} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 type SortKey = 'standing' | 'overall' | number;
 
 /** Every driver's card, sortable by standing, overall rating or any stat, and filtered by team. */
@@ -285,7 +320,12 @@ export function DriverCardGrid({ season }: { season: string }): ReactNode {
         <span className="muted" style={{ fontSize: 12 }}>After round {last.round}. Click a card to turn it over.</span>
       </div>
       <div className="dc-collection">
-        {shown.map((c) => <DriverCard key={c.driverId} card={c} prev={prev?.cards[c.driverId]} trend={trend(c.driverId)} photo={photos[c.driverId]} />)}
+        {shown.map((c) => (
+          <div className="dc-item" key={c.driverId}>
+            <DriverCard card={c} prev={prev?.cards[c.driverId]} trend={trend(c.driverId)} photo={photos[c.driverId]} />
+            <CardActions code={c.code} given={c.given} family={c.family} />
+          </div>
+        ))}
       </div>
     </>
   );

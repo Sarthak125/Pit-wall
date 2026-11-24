@@ -588,11 +588,10 @@ test('a driver without a freely licensed photo gets a silhouette', async ({ page
   expect(errors).toEqual([]);
 });
 
-test('the Drivers page has a Cards view that can be sorted and filtered by team', async ({ page }) => {
+test('the Drivers page is a grid of cards that can be sorted and filtered by team, each with a profile link and a favourite star', async ({ page }) => {
   const errors = await setUp(page);
   await servePhotos(page);
   await page.goto('#/drivers');
-  await page.getByRole('tab', { name: 'Cards' }).click();
   const cards = page.getByTestId('driver-card');
   await expect(cards.first()).toBeVisible({ timeout: 40_000 });
   expect(await cards.count()).toBeGreaterThanOrEqual(20);
@@ -604,16 +603,33 @@ test('the Drivers page has a Cards view that can be sorted and filtered by team'
   await page.getByLabel('Sort cards by').selectOption({ label: 'Qualifying (highest first)' });
   const first = await cards.first().locator('.dc-front .dc-cell .dc-r').nth(1).textContent();
   expect(Number(first)).toBe(99);
+  await page.getByLabel('Sort cards by').selectOption('standing');
+  // Under the first card: a link to the driver's page, and the star that makes them the favourite.
+  const item = page.locator('.dc-item').first();
+  const link = item.getByRole('link', { name: /^Open .+ profile/ });
+  await expect(link).toHaveAttribute('href', /#\/driver\/[A-Z]{3}$/);
+  const star = item.getByRole('button', { name: /your favourite$/ });
+  await expect(star).toHaveAttribute('aria-pressed', 'false');
+  await star.click();
+  await expect(item.getByRole('button', { name: /as favourite$/ })).toHaveAttribute('aria-pressed', 'true');
+  const code = (await link.getAttribute('href'))!.split('/').pop();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('pitwall:settings') ?? '{}').favoriteDriver)).toBe(code);
+  // The link opens that driver's page, which has the same card.
+  await link.click();
+  await expect(page.locator('section[aria-labelledby="driver-card"]').getByTestId('driver-card')).toBeVisible({ timeout: 40_000 });
   await noSidewaysScroll(page);
   expect(errors).toEqual([]);
 });
 
-test('spoiler-free mode covers the driver cards until the weekend is revealed', async ({ page }) => {
+test('spoiler-free mode covers the driver cards and lists only the names, with their links and stars', async ({ page }) => {
   const errors = await setUp(page, AFTER_RACE, { spoilerFree: true });
   await page.goto('#/drivers');
-  await page.getByRole('tab', { name: 'Cards' }).click();
   await expect(page.getByText('The driver cards')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId('driver-card')).toHaveCount(0);
+  const names = page.getByRole('list', { name: 'Drivers' });
+  await expect(names.getByRole('link', { name: /^Open Verstappen profile/ })).toBeVisible();
+  // No results leak through the names: no points, positions or ratings.
+  await expect(names).not.toContainText(/pts|OVR|P\d/);
   expect(errors).toEqual([]);
 });
 
