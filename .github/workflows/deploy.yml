@@ -77,7 +77,8 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v5
   # After each run, look at the live copy. If it is older than 12 hours (four refreshes missed) or missing, open an
-  # issue (or add a comment to the open one); when it is fresh again, close the issue. Needs no extra settings.
+  # issue (or add a comment to the open one); when it is fresh again, close the issue. With Issues switched off for the
+  # repository, a stale copy makes this job fail instead.
   copy-health:
     needs: deploy
     if: ${{ !cancelled() }}
@@ -100,6 +101,13 @@ jobs:
           OUTCOME: ${{ steps.check.outcome }}
         run: |
           verdict=$(cat verdict.txt 2>/dev/null || echo "Jolpica copy could not be checked.")
+          # Issues switched off for the repository: no issue to open, so a stale copy turns this job red instead
+          # (GitHub emails the failure to whoever pushed or last edited the workflow).
+          if [ "$(gh api "repos/$GITHUB_REPOSITORY" --jq .has_issues)" != "true" ]; then
+            if [ "$OUTCOME" = "success" ]; then echo "$verdict"; exit 0; fi
+            echo "::error::$verdict The scheduled refresh of the Jolpica data copy has not succeeded for about 12 hours."
+            exit 1
+          fi
           existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search 'in:title "Jolpica data copy is out of date"' --json number --jq '.[0].number // empty')
           run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           if [ "$OUTCOME" = "success" ]; then
