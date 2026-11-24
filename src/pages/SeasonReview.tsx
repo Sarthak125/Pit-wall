@@ -112,7 +112,7 @@ export function SeasonReview() {
 
           <section className="card" aria-labelledby="battles">
             <h2 className="h2 sm" id="battles" style={{ marginBottom: 4 }}>Team-mate battles</h2>
-            <p className="muted" style={{ margin: '0 0 14px', fontSize: 13 }}>Who finished ahead in Grands Prix they both started, and who qualified ahead.</p>
+            <p className="muted" style={{ margin: '0 0 14px', fontSize: 13 }}>Who finished ahead in Grands Prix they both started, who qualified ahead, and the typical gap between their qualifying laps (in the last session both reached).</p>
             <div className="review-battles">
               {review.battles.map((b) => (
                 <div className="review-battle" key={b.teamId} style={{ '--team': teamColour(b.teamId) } as React.CSSProperties}>
@@ -130,6 +130,13 @@ export function SeasonReview() {
                       </div>
                     </div>
                   ))}
+                  {b.gap && (
+                    <p className="muted review-battle-gap" style={{ margin: '8px 0 0', fontSize: 12 }}>
+                      Typical qualifying gap: <b>{(b.gap.pct >= 0 ? b.a : b.b).code}</b> quicker by{' '}
+                      <b style={{ whiteSpace: 'nowrap' }}>{Math.abs(b.gap.pct).toFixed(2)}%</b>{' '}
+                      <span style={{ whiteSpace: 'nowrap' }}>({Math.abs(b.gap.seconds).toFixed(3)} s)</span>, over {b.gap.rounds} {b.gap.rounds === 1 ? 'round' : 'rounds'}
+                    </p>
+                  )}
                   <div className="review-battle-names">
                     <a className="name-link" href={driverHref(b.a.code)}>{b.a.code}</a>
                     <a className="name-link" href={driverHref(b.b.code)}>{b.b.code}</a>

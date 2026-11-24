@@ -2,6 +2,7 @@
  * A season in numbers, from Jolpica's results, sprint results, qualifying and standings: per-driver and per-team
  * stats, team-mate battles and a few highlights. Works for a season in progress ("so far") as well as a finished one.
  */
+import { qualiGap, type QualiGap } from './qualiGap';
 import type { ConstructorStanding, DriverStanding, RaceWithQualifying, RaceWithResults, Result } from '../api/jolpica';
 import { headToHead, isClassified } from './driverStats';
 
@@ -45,6 +46,8 @@ export interface TeamBattle {
   b: DriverSeason;
   races: [number, number];
   quali: [number, number];
+  /** Typical qualifying lap-time gap between the pair (see lib/qualiGap), when both set times. */
+  gap: QualiGap | null;
 }
 
 export interface Highlight {
@@ -133,7 +136,7 @@ export function seasonReview(
       .map((x) => x.d);
     if (pair.length < 2) continue;
     const h = headToHead(run, quali, pair[0].code, pair[1].code);
-    battles.push({ teamId: t.teamId, teamName: t.name, a: pair[0], b: pair[1], races: [h.racesA, h.racesB], quali: [h.qualiA, h.qualiB] });
+    battles.push({ teamId: t.teamId, teamName: t.name, a: pair[0], b: pair[1], races: [h.racesA, h.racesB], quali: [h.qualiA, h.qualiB], gap: qualiGap(quali, pair[0].code, pair[1].code) });
   }
 
   const highlights: Highlight[] = [];

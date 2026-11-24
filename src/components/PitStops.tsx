@@ -60,7 +60,7 @@ export function RacePitStops({ race, results, sprint }: { race: Race; results: R
         {view.typical != null && <> Typical {view.kind === 'stop' ? 'stop' : 'pit lane time'}: <b className="mono">{seconds(view.typical)}</b> across {view.ranked.length - view.slow} stops.</>}
       </p>
       <div className="scroll-x">
-        <table className="tbl" style={{ minWidth: 520 }}>
+        <table className="tbl pit-tbl">
           <thead>
             <tr>
               <th>#</th>
@@ -88,7 +88,7 @@ export function RacePitStops({ race, results, sprint }: { race: Race; results: R
                   <td>
                     <span className="pace-stints">
                       {x.stop.from && <span className="chip"><i style={{ background: tyre(x.stop.from).colour }} />{tyre(x.stop.from).letter}</span>}
-                      {x.stop.from && x.stop.to && <span className="muted" aria-label="to">to</span>}
+                      {x.stop.from && x.stop.to && <span className="muted" role="img" aria-label="to">→</span>}
                       {x.stop.to && <span className="chip"><i style={{ background: tyre(x.stop.to).colour }} />{tyre(x.stop.to).letter}</span>}
                     </span>
                   </td>
@@ -170,15 +170,14 @@ export function SeasonPitStops({ races }: { races: RaceWithResults[] }) {
   return (
     <>
       <div className="scroll-x">
-        <table className="tbl" style={{ minWidth: 520 }}>
+        <table className="tbl pit-tbl">
           <thead>
             <tr>
               <th>#</th>
               <th>Team</th>
-              <th className="r" title="The middle stationary time of the team's stops, without stops of 6 seconds or more">Typical stop</th>
-              <th className="r">Fastest stop</th>
-              <th className="r">Stops</th>
-              <th className="r" title="Stops of 6 seconds or more">Slow</th>
+              <th className="r" title="The middle stationary time of the team's stops, without stops of 6 seconds or more">Typical</th>
+              <th className="r">Fastest</th>
+              <th className="r" title="Stops with a time, and how many of them took 6 seconds or more">Stops (slow)</th>
             </tr>
           </thead>
           <tbody>
@@ -192,9 +191,8 @@ export function SeasonPitStops({ races }: { races: RaceWithResults[] }) {
                   </div>
                 </td>
                 <td className="r mono">{t.typical == null ? '-' : seconds(t.typical)}</td>
-                <td className="r mono">{seconds(t.fastest)}{t.fastest === fastest && <span className="muted"> best</span>}</td>
-                <td className="r mono">{t.stops}</td>
-                <td className="r mono muted">{t.slow}</td>
+                <td className="r mono" style={t.fastest === fastest ? { fontWeight: 700 } : undefined} title={t.fastest === fastest ? 'Fastest stop of the season' : undefined}>{seconds(t.fastest)}</td>
+                <td className="r mono">{t.stops}<span className="muted"> ({t.slow})</span></td>
               </tr>
             ))}
           </tbody>
@@ -202,7 +200,7 @@ export function SeasonPitStops({ races }: { races: RaceWithResults[] }) {
       </div>
       <p className="muted" style={{ fontSize: 12, marginBottom: 0 }}>
         {loaded < expected ? `Loaded ${loaded} of ${expected} races so far. ` : `All ${expected} races. `}
-        Stationary times from OpenF1 (how long the car stood still), for races only, not sprints. Teams are ordered by their typical stop; stops of {SLOW_STOP} seconds or more are counted as slow and left out of it. Stops with no recorded time are not counted. Season totals include only what OpenF1 recorded, so a few stops may be missing.
+        Stationary times from OpenF1 (how long the car stood still), for races only, not sprints. The fastest stop of the season is in bold. Teams are ordered by their typical stop; stops of {SLOW_STOP} seconds or more are counted as slow and left out of it. Stops with no recorded time are not counted. Season totals include only what OpenF1 recorded, so a few stops may be missing.
       </p>
     </>
   );

@@ -194,6 +194,8 @@ test('the season review shows highlights, drivers, team-mate battles and teams',
   await expect(page.locator('.review-tiles')).toContainText('Different winners');
   await expect(page.locator('.review-tbl').first().locator('tbody tr')).toHaveCount(25, { timeout: 30_000 });
   await expect(page.locator('.review-battle')).toHaveCount(11);
+  // Each pair with qualifying times shows their typical lap-time gap.
+  await expect(page.locator('.review-battle-gap').first()).toContainText(/Typical qualifying gap: \w{3} quicker by \d\.\d\d% \(\d\.\d{3} s\), over \d+ rounds?/);
   expect(errors).toEqual([]);
 });
 
@@ -500,7 +502,7 @@ test('Standings can show pit stops by team, loading only when asked', async ({ p
   await card.getByRole('button', { name: 'Show pit stops by team' }).click();
   await expect(card.locator('tbody tr').first()).toBeVisible({ timeout: 60_000 });
   await expect(card).toContainText(/All \d+ races/, { timeout: 60_000 });
-  await expect(card.locator('thead')).toContainText('Typical stop');
+  await expect(card.locator('thead')).toContainText('Typical');
   expect(await card.locator('tbody tr').count()).toBeGreaterThan(1);
   expect(asked.length).toBeGreaterThan(5);
   // Teams are listed with the quickest typical stop first.

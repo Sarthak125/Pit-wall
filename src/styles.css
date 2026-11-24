@@ -879,3 +879,11 @@ html { zoom: 1.1; }
 
 /* Live Timing: weekend and session pickers side by side */
 .session-pickers { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+
+/* Pit stop tables fit a phone without sideways scrolling: tight cells, wrapping team names. */
+.pit-tbl { width: 100%; }
+.pit-tbl .pace-stints { display: inline-flex; align-items: center; gap: 4px; flex-wrap: nowrap; white-space: nowrap; }
+@media (max-width: 599px) {
+  .pit-tbl th, .pit-tbl td { padding-left: 4px; padding-right: 4px; }
+  .pit-tbl .chip { padding: 2px 5px; }
+}
