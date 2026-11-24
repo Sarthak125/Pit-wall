@@ -397,7 +397,7 @@ Newer boards, added as features arrived (laptop unless marked phone):
 - **Data copy status and alerts:** the Settings card in its three states, the OpenF1 copy and the freshness check.
 - **Team-mate qualifying gap:** the Season review battle cards with the new gap line.
 
-Several of the newest boards (Pit stops, Team-mate qualifying gap, Data copy, and the race analysis boards) use real values read from the app on 2026 data (the Las Vegas Grand Prix and the season to 24 November) instead of the sample data used elsewhere; each board says so in its header tag. Photos on the About boards are placeholders.
+Several of the newest boards (Pit stops, Team-mate qualifying gap, Data copy, and the race analysis boards) use real values read from the app on 2026 data (the Las Vegas Grand Prix and the season to 24 November) instead of the sample data used elsewhere (the Data copy board labels which of its example times are made up). Photos on the About boards are placeholders.
 
 The tablet boards show one screen (800 × 1280) with the bottom menu (Dashboard, Live Timing, Favourites, Standings, Calendar, Drivers). The app's tablet layout is a single scrolling column with the same sections, so some boards note what sits further down the page. Every page also has a phone board (390 × 844, titled "(phone)") in a row below the others: Dashboard, Live Timing, Favourites (Driver and Team tabs), Standings, Calendar, Drivers, Settings, Race results, the driver page, Live Timing in qualifying, and How to use. They use the compact header, the short bottom menu labels and the trimmed tables described under [Works everywhere](#works-everywhere), and their menus link to each other.
 
