@@ -616,3 +616,45 @@ test('spoiler-free mode covers the driver cards until the weekend is revealed', 
   await expect(page.getByTestId('driver-card')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test('the Drivers page can compare two drivers side by side', async ({ page }) => {
+  const errors = await setUp(page);
+  await servePhotos(page);
+  await page.goto('#/drivers');
+  await page.getByRole('tab', { name: 'Compare' }).click();
+  const cards = page.getByTestId('driver-card');
+  await expect(cards).toHaveCount(2, { timeout: 40_000 });
+  const table = page.getByRole('table', { name: /compared with/ });
+  await expect(table.locator('tbody tr')).toHaveCount(7);
+  await expect(table.locator('tbody th')).toHaveText(['Overall rating', 'Points / race', 'Qualifying', 'Race finish', 'Points finishes', 'Finish rate', 'Team-mate duel']);
+  // Every line with two ratings marks exactly one driver as ahead (gold), unless the ratings are level.
+  const rows = table.locator('tbody tr');
+  for (let i = 0; i < 7; i++) {
+    const a = Number(await rows.nth(i).locator('td').first().locator('b').textContent());
+    const b = Number(await rows.nth(i).locator('td').last().locator('b').textContent());
+    expect(await rows.nth(i).locator('td[data-better="true"]').count()).toBe(a === b ? 0 : 1);
+    if (a !== b) expect(await rows.nth(i).locator(a > b ? 'td.l' : 'td.r').getAttribute('data-better')).toBe('true');
+  }
+  // Choosing another driver swaps the card and the table heading.
+  await page.getByLabel('Second driver').selectOption({ label: 'Lewis Hamilton' });
+  await expect(cards.last().locator('.dc-front .dc-name b')).toHaveText('Hamilton');
+  await expect(table.locator('thead th').last()).toHaveText('Hamilton');
+  await expect(cards.last().locator('.dc-photo img')).toBeVisible();
+  await noSidewaysScroll(page);
+  expect(errors).toEqual([]);
+});
+
+test('the back of a card draws the position chart with its axis labels clear of the line', async ({ page }) => {
+  const errors = await setUp(page);
+  await page.goto('#/driver/HAM');
+  const face = page.locator('section[aria-labelledby="driver-card"]').getByTestId('driver-card');
+  await expect(face).toBeVisible({ timeout: 40_000 });
+  await face.getByRole('button', { name: /card over/ }).first().click();
+  const chart = face.locator('.dc-back svg.dc-trend');
+  await expect(chart).toBeVisible();
+  // The lines start to the right of the axis labels, so a label never sits on the data.
+  const labelRight = await chart.locator('text').first().evaluate((t) => (t as SVGTextElement).getBBox().x + (t as SVGTextElement).getBBox().width);
+  const firstX = await chart.locator('path').nth(0).evaluate((p) => (p as SVGPathElement).getBBox().x);
+  expect(labelRight).toBeLessThan(firstX);
+  expect(errors).toEqual([]);
+});

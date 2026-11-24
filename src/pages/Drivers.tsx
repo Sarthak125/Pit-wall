@@ -10,14 +10,14 @@ import { niceName } from '../lib/format';
 import { driverHref } from '../lib/router';
 import { setFavorite } from '../lib/settings';
 import { StarIcon } from '../components/Icons';
-import { DriverCardGrid } from '../components/DriverCard';
+import { DriverCardGrid, DriverCompare } from '../components/DriverCard';
 import { SpoilerCover } from '../components/SpoilerCover';
 import { useSpoilers } from '../hooks/useSpoilers';
 
 export function Drivers() {
   const { season, favoriteDriver } = useSettings();
   const standings = useDriverStandings(season);
-  const [view, setView] = useState<'list' | 'cards'>('list');
+  const [view, setView] = useState<'list' | 'cards' | 'compare'>('list');
   const spoilers = useSpoilers();
   const grid = useQuery({
     queryKey: ['of1-drivers-latest'],
@@ -32,14 +32,15 @@ export function Drivers() {
       <section className="card" aria-labelledby="drv">
         <div className="card-head">
           <h1 className="h2" id="drv">Drivers</h1>
-          <span className="muted">{view === 'list' ? 'Tap a driver for full stats, or the star to pick your favourite' : 'Ratings from this season so far'}</span>
+          <span className="muted">{view === 'list' ? 'Tap a driver for full stats, or the star to pick your favourite' : view === 'cards' ? 'Ratings from this season so far' : 'Two drivers side by side'}</span>
           <div className="tabs" role="tablist" aria-label="View" style={{ marginBottom: 0, marginLeft: 'auto' }}>
             <button role="tab" className="tab" aria-selected={view === 'list'} onClick={() => setView('list')}>List</button>
             <button role="tab" className="tab" aria-selected={view === 'cards'} onClick={() => setView('cards')}>Cards</button>
+            <button role="tab" className="tab" aria-selected={view === 'compare'} onClick={() => setView('compare')}>Compare</button>
           </div>
         </div>
-        {view === 'cards' ? (
-          season === 'current' && spoilers.standingsHidden ? <SpoilerCover what="The driver cards" /> : <DriverCardGrid season={season} />
+        {view !== 'list' ? (
+          season === 'current' && spoilers.standingsHidden ? <SpoilerCover what="The driver cards" /> : view === 'cards' ? <DriverCardGrid season={season} /> : <DriverCompare season={season} />
         ) : grid.error ? <ErrorBox error={grid.error} what="drivers" /> : grid.isLoading ? <Loading rows={8} /> : drivers.length === 0 ? <Empty>No driver data yet.</Empty> : (
           <div className="driver-grid">
             {drivers.map((d) => {

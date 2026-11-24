@@ -2,7 +2,8 @@ import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'r
 import type { DriverPhoto } from '../api/photos';
 import { useDriverPhotos } from '../api/photos';
 import { useDriverCards } from '../hooks/useDriverCards';
-import { ratingTier, shortRace, STAT_LABELS, type CardData, type CardSnapshot } from '../lib/driverCards';
+import { compareRows, ratingTier, shortRace, STAT_LABELS, statFigure, type CardData, type CardSnapshot } from '../lib/driverCards';
+import { useSettings } from '../lib/settings';
 import { teamColour } from '../lib/teams';
 import { Empty, ErrorBox, Loading } from './States';
 
@@ -11,19 +12,6 @@ const NATIONS: Record<string, string> = {
   Italian: 'ITA', Dutch: 'NED', British: 'GBR', Monegasque: 'MON', Spanish: 'ESP', Australian: 'AUS', French: 'FRA', Thai: 'THA', German: 'GER', Canadian: 'CAN',
   Japanese: 'JPN', Mexican: 'MEX', Finnish: 'FIN', Brazilian: 'BRA', Argentine: 'ARG', Chinese: 'CHN', American: 'USA', Danish: 'DEN', 'New Zealander': 'NZL',
 };
-
-/** The real figure under a stat label, short enough for a card. */
-function figure(k: number, c: CardData): string {
-  const r = c.raw;
-  switch (k) {
-    case 0: return r.pointsPerRace == null ? '-' : r.pointsPerRace.toFixed(1);
-    case 1: return r.qualifying == null ? '-' : `P${r.qualifying.toFixed(1)}`;
-    case 2: return r.finish == null ? '-' : `P${r.finish.toFixed(1)}`;
-    case 3: return r.pointsFinishes == null ? '-' : `${r.pointsFinishes}%`;
-    case 4: return r.finishRate == null ? '-' : `${r.finishRate}%`;
-    default: return r.duel[1] ? `${r.duel[0]} of ${r.duel[1]}` : '-';
-  }
-}
 
 function Silhouette() {
   return (
@@ -40,7 +28,7 @@ function Trend({ points, colour }: { points: [number, number][]; colour: string 
   const W = 260, H = 96;
   const maxPos = Math.max(6, ...points.map((p) => p[1]));
   const x0 = points[0][0], x1 = points[points.length - 1][0];
-  const X = (r: number) => 8 + (x1 === x0 ? 0 : ((r - x0) / (x1 - x0)) * (W - 16));
+  const X = (r: number) => 32 + (x1 === x0 ? 0 : ((r - x0) / (x1 - x0)) * (W - 32 - 10));
   const Y = (v: number) => 14 + ((v - 1) / (maxPos - 1)) * (H - 38);
   const d = points.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join(' ');
   const last = points[points.length - 1];
@@ -48,15 +36,15 @@ function Trend({ points, colour }: { points: [number, number][]; colour: string 
     <svg className="dc-trend" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Championship position after each round, ending P${last[1]}`}>
       {[1, Math.ceil(maxPos / 2), maxPos].map((g) => (
         <g key={g}>
-          <line x1="8" x2={W - 8} y1={Y(g)} y2={Y(g)} stroke="rgba(255,255,255,.1)" />
-          <text x="8" y={Y(g) - 2} fontSize="11" fill="#8B95A5" fontFamily="JetBrains Mono, monospace">P{g}</text>
+          <line x1="30" x2={W - 8} y1={Y(g)} y2={Y(g)} stroke="rgba(255,255,255,.1)" />
+          <text x="2" y={Y(g) + 4} fontSize="11" fill="#8B95A5" fontFamily="JetBrains Mono, monospace">P{g}</text>
         </g>
       ))}
       <path d={d} fill="none" stroke={colour} strokeWidth="2.6" strokeLinejoin="round" strokeLinecap="round" />
       {points.map((p) => <circle key={p[0]} cx={X(p[0])} cy={Y(p[1])} r="2.4" fill={colour} />)}
       <circle cx={X(last[0])} cy={Y(last[1])} r="5" fill={colour} stroke="#0A0C10" strokeWidth="2" />
-      <text x="8" y={H - 3} fontSize="11" fill="#9AA4B2" fontFamily="JetBrains Mono, monospace">R{x0}</text>
-      <text x={W - 8} y={H - 3} fontSize="11" fill="#9AA4B2" textAnchor="end" fontFamily="JetBrains Mono, monospace">R{x1}</text>
+      <text x="32" y={H - 3} fontSize="11" fill="#9AA4B2" fontFamily="JetBrains Mono, monospace">R{x0}</text>
+       <text x={W - 8} y={H - 3} fontSize="11" fill="#9AA4B2" textAnchor="end" fontFamily="JetBrains Mono, monospace">R{x1}</text>
     </svg>
   );
 }
@@ -121,7 +109,7 @@ export function DriverCard({ card, prev, trend, photo }: CardProps) {
         <div className="dc-m">
           <span className="dc-l">{label}</span>
           <span className="dc-v">
-            <span>{building ? '' : figure(k, card)}</span>
+            <span>{building ? '' : statFigure(k, card)}</span>
             {d !== 0 && <em className={`dc-ar ${d > 0 ? 'dc-up' : 'dc-down'}`} title={`${d > 0 ? 'Up' : 'Down'} ${Math.abs(d)} rating points since the previous round`}>{d > 0 ? '▲' : '▼'}{Math.abs(d)}</em>}
           </span>
           <i className="dc-bar"><u style={{ width: `${v ?? 0}%` }} /></i>
@@ -304,3 +292,50 @@ export function DriverCardGrid({ season }: { season: string }): ReactNode {
 }
 
 
+
+/** Two drivers side by side: their cards, then each rating and real figure line by line. */
+export function DriverCompare({ season }: { season: string }): ReactNode {
+  const { snapshots, isLoading, error } = useDriverCards(season);
+  const photos = useDriverPhotos();
+  const { favoriteDriver } = useSettings();
+  const { last, prev, trend } = useMemo(() => pick(snapshots), [snapshots]);
+  const [chosen, setChosen] = useState<[string | null, string | null]>([null, null]);
+  if (error) return <ErrorBox error={error} what="driver cards" />;
+  if (isLoading) return <Loading rows={6} />;
+  if (!last) return <Empty>Cards appear after the first race.</Empty>;
+  const cards = Object.values(last.cards).sort((x, y) => x.pos - y.pos);
+  const byId = last.cards;
+  // By default the favourite driver (or the leader) against the closest other driver at the top.
+  const first = (chosen[0] && byId[chosen[0]] ? chosen[0] : cards.find((c) => c.code === favoriteDriver)?.driverId) ?? cards[0].driverId;
+  const second = (chosen[1] && byId[chosen[1]] && chosen[1] !== first ? chosen[1] : cards.find((c) => c.driverId !== first)?.driverId) ?? first;
+  const a = byId[first], b = byId[second];
+  const rows = compareRows(a, b);
+  const options = cards.map((c) => <option key={c.driverId} value={c.driverId}>{c.given} {c.family}</option>);
+  return (
+    <>
+      <div className="dc-toolbar">
+        <label>First driver<select value={first} onChange={(e) => setChosen([e.target.value, second])} aria-label="First driver">{options}</select></label>
+        <label>Second driver<select value={second} onChange={(e) => setChosen([first, e.target.value])} aria-label="Second driver">{options}</select></label>
+        <span className="muted" style={{ fontSize: 12 }}>After round {last.round}.</span>
+      </div>
+      <div className="dc-compare-cards">
+        {[a, b].map((c) => <DriverCard key={c.driverId} card={c} prev={prev?.cards[c.driverId]} trend={trend(c.driverId)} photo={photos[c.driverId]} />)}
+      </div>
+      <div className="scroll-x">
+        <table className="dc-vs" aria-label={`${a.family} compared with ${b.family}`}>
+          <thead><tr><th scope="col" className="l">{a.family}</th><th scope="col" /><th scope="col" className="r">{b.family}</th></tr></thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.label}>
+                <td className={`l${r.better === 'a' ? ' dc-win' : ''}`} data-better={r.better === 'a' ? 'true' : undefined}>{r.a.rating != null && <b>{r.a.rating}</b>} <span>{r.a.figure}</span></td>
+                <th scope="row" className="lab">{r.label}</th>
+                <td className={`r${r.better === 'b' ? ' dc-win' : ''}`} data-better={r.better === 'b' ? 'true' : undefined}><span>{r.b.figure}</span> {r.b.rating != null && <b>{r.b.rating}</b>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="muted" style={{ fontSize: 12, margin: '10px 0 0' }}>Each line shows the 1 to 99 rating in bold and the real figure beside it. Gold marks the higher rating. Ratings need three races.</p>
+    </>
+  );
+}

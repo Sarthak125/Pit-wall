@@ -243,3 +243,35 @@ export function driverCardSnapshots(
   });
   return snapshots;
 }
+
+/** The real figure behind stat `k` of a card: short for the card itself, with units for the compare table. */
+export function statFigure(k: number, c: CardData, long = false): string {
+  const r = c.raw;
+  switch (k) {
+    case 0: return r.pointsPerRace == null ? '-' : `${r.pointsPerRace.toFixed(1)}${long ? ' pts' : ''}`;
+    case 1: return r.qualifying == null ? '-' : `P${r.qualifying.toFixed(1)}`;
+    case 2: return r.finish == null ? '-' : `P${r.finish.toFixed(1)}`;
+    case 3: return r.pointsFinishes == null ? '-' : `${r.pointsFinishes}%${long ? ' in the points' : ''}`;
+    case 4: return r.finishRate == null ? '-' : `${r.finishRate}%${long ? ' finished' : ''}`;
+    default: return r.duel[1] ? `${r.duel[0]} of ${r.duel[1]}${long ? ' rounds' : ''}` : '-';
+  }
+}
+
+export interface CompareRow {
+  label: string;
+  a: { figure: string; rating: number | null };
+  b: { figure: string; rating: number | null };
+  /** Who has the higher rating, or null when level or a rating is missing. */
+  better: 'a' | 'b' | null;
+}
+
+/** Overall rating and the six stats of two drivers side by side. */
+export function compareRows(a: CardData, b: CardData): CompareRow[] {
+  const better = (x: number | null, y: number | null): 'a' | 'b' | null => (x == null || y == null || x === y ? null : x > y ? 'a' : 'b');
+  const rows: CompareRow[] = [{ label: 'Overall rating', a: { figure: `P${a.pos}, ${a.points} pts`, rating: a.overall }, b: { figure: `P${b.pos}, ${b.points} pts`, rating: b.overall }, better: better(a.overall, b.overall) }];
+  STAT_LABELS.forEach((label, k) => {
+    const ra = a.ratings?.[k] ?? null, rb = b.ratings?.[k] ?? null;
+    rows.push({ label, a: { figure: statFigure(k, a, true), rating: ra }, b: { figure: statFigure(k, b, true), rating: rb }, better: better(ra, rb) });
+  });
+  return rows;
+}

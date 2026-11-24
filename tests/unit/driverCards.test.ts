@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RaceWithQualifying, RaceWithResults } from '../../src/api/jolpica';
-import { driverCardSnapshots, overallRating, rateFromPercent, ratingTier, WEIGHTS } from '../../src/lib/driverCards';
+import { compareRows, driverCardSnapshots, overallRating, rateFromPercent, ratingTier, statFigure, WEIGHTS } from '../../src/lib/driverCards';
 
 const driver = (id: string, code: string) => ({ driverId: id, code, givenName: id.toUpperCase(), familyName: id, permanentNumber: '7', nationality: 'Dutch' });
 const team = (id: string) => ({ constructorId: id, name: id });
@@ -84,5 +84,22 @@ describe('driver cards', () => {
   it('turns a percentile into a rating from 1 to 99 and bands it by colour', () => {
     expect([0, 50, 100].map(rateFromPercent)).toEqual([1, 50, 99]);
     expect([99, 85, 84, 70, 69, 50, 49, 1, null].map(ratingTier)).toEqual(['gold', 'gold', 'green', 'green', 'amber', 'amber', 'grey', 'grey', 'grey']);
+  });
+
+  it('writes the figure behind a stat, short for the card and with units for the compare table', () => {
+    const ace = snaps[3].cards.ace;
+    expect([0, 1, 2, 3, 4, 5].map((k) => statFigure(k, ace))).toEqual(['25.0', 'P1.0', 'P1.0', '100%', '100%', '4 of 4']);
+    expect([0, 3, 4, 5].map((k) => statFigure(k, ace, true))).toEqual(['25.0 pts', '100% in the points', '100% finished', '4 of 4 rounds']);
+  });
+
+  it('compares two drivers line by line and marks who is ahead', () => {
+    const rows = compareRows(snaps[3].cards.ace, snaps[3].cards.dee);
+    expect(rows.map((r) => r.label)).toEqual(['Overall rating', 'Points / race', 'Qualifying', 'Race finish', 'Points finishes', 'Finish rate', 'Team-mate duel']);
+    expect(rows[0].better).toBe('a');
+    expect(rows.slice(1).every((r) => r.better === 'a')).toBe(true);
+    expect(rows[5].b).toEqual({ figure: '75% finished', rating: 1 });
+    // The same driver twice is level everywhere; a driver without ratings has nothing to compare.
+    expect(compareRows(snaps[3].cards.ace, snaps[3].cards.ace).every((r) => r.better === null)).toBe(true);
+    expect(compareRows(snaps[0].cards.ace, snaps[3].cards.bob).every((r) => r.better === null)).toBe(true);
   });
 });
