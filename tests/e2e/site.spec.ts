@@ -375,3 +375,40 @@ test('with Jolpica down, pages load from Pit Wall\'s own copy of its data', asyn
   expect(asked.filter((u) => /\/(current|2026)\/(races|results|sprint|qualifying|driverstandings|constructorstandings)\//.test(u))).toEqual([]);
   expect(errors).toEqual([]);
 });
+
+/** The Settings page says how old Pit Wall's data copy is (the test clock is 2026-11-22 08:00 UTC). */
+async function manifestFrom(page: Page, dataFrom: string | null) {
+  await page.route(/\/data\/jolpica\//, (r) => {
+    const key = new URL(r.request().url()).pathname.split('/data/jolpica/')[1];
+    if (key === 'manifest.json' && dataFrom) return r.fulfill({ json: { ...(MIRROR.manifest as object), dataFrom } });
+    return r.fulfill({ status: 404, body: 'Not found' });
+  });
+}
+
+test('Settings shows how fresh the data copy is', async ({ page }) => {
+  const errors = await setUp(page);
+  await manifestFrom(page, '2026-11-22T05:00:00Z');
+  await page.goto('#/settings');
+  const card = page.locator('section[aria-labelledby="data-copy"]');
+  await expect(card).toContainText('fetched 3 hours ago', { timeout: 20_000 });
+  await expect(card).not.toContainText('older than usual');
+  expect(errors).toEqual([]);
+});
+
+test('Settings warns when the data copy has stopped refreshing', async ({ page }) => {
+  const errors = await setUp(page);
+  await manifestFrom(page, '2026-11-21T08:00:00Z');
+  await page.goto('#/settings');
+  const card = page.locator('section[aria-labelledby="data-copy"]');
+  await expect(card).toContainText('fetched 24 hours ago', { timeout: 20_000 });
+  await expect(card).toContainText('older than usual');
+  expect(errors).toEqual([]);
+});
+
+test('Settings says so when there is no data copy', async ({ page }) => {
+  const errors = await setUp(page);
+  await manifestFrom(page, null);
+  await page.goto('#/settings');
+  await expect(page.locator('section[aria-labelledby="data-copy"]')).toContainText('No copy is available', { timeout: 20_000 });
+  expect(errors).toEqual([]);
+});

@@ -1,6 +1,8 @@
 import { DelayPicker } from '../components/DelayPicker';
 import { useSpoilers } from '../hooks/useSpoilers';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { mirrorDate } from '../api/mirror';
+import { copyAge } from '../lib/dataAge';
 import { useQueryClient } from '@tanstack/react-query';
 import { clearCache } from '../api/http';
 import { Footer } from '../components/Shell';
@@ -64,6 +66,7 @@ export function Settings() {
       <FavouriteSettings />
       <WatchingLater />
       <Appearance />
+      <DataCopy />
       <section className="card">
         <h2 className="h2 sm" style={{ marginBottom: 8 }}>About</h2>
         <p className="muted" style={{ margin: 0, lineHeight: 1.6 }}>
@@ -238,6 +241,27 @@ function Appearance() {
           </div>
         </div>
       </div>
+    </section>
+  );
+}
+
+/** When Pit Wall's own copy of the Jolpica data was last refreshed, and a warning if refreshes have stopped. */
+function DataCopy() {
+  const [from, setFrom] = useState<string | null | undefined>(undefined);
+  useEffect(() => { mirrorDate().then(setFrom, () => setFrom(null)); }, []);
+  const age = from ? copyAge(from) : null;
+  return (
+    <section className="card" aria-labelledby="data-copy">
+      <h2 id="data-copy" className="h2 sm" style={{ marginBottom: 8 }}>Data copy</h2>
+      <p className="muted" style={{ margin: 0, lineHeight: 1.6 }}>
+        Pit Wall keeps its own copy of the Jolpica calendar, results and standings so pages open quickly and still work when Jolpica is slow. It is refreshed
+        every 3 hours.
+      </p>
+      <p style={{ margin: '10px 0 0' }} role="status">
+        {from === undefined ? 'Checking the copy…'
+          : !age ? 'No copy is available right now, so the app asks Jolpica directly.'
+          : <>Data from Jolpica fetched <b>{age.text}</b>.{age.stale && <span className="muted"> That is older than usual: the refresh has not reached Jolpica for a while, so results from the last race or two may come from the backup instead.</span>}</>}
+      </p>
     </section>
   );
 }

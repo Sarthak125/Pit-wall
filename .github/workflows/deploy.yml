@@ -69,3 +69,39 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5
+  # After each run, look at the live copy. If it is older than 12 hours (four refreshes missed) or missing, open an
+  # issue (or add a comment to the open one); when it is fresh again, close the issue. Needs no extra settings.
+  copy-health:
+    needs: deploy
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Check the copy
+        id: check
+        continue-on-error: true
+        run: node scripts/check-copy.mjs https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/ | tee verdict.txt
+      - name: Open, update or close the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUTCOME: ${{ steps.check.outcome }}
+        run: |
+          verdict=$(cat verdict.txt 2>/dev/null || echo "Jolpica copy could not be checked.")
+          existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search 'in:title "Jolpica data copy is out of date"' --json number --jq '.[0].number // empty')
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -n "$existing" ]; then
+              gh issue close "$existing" --repo "$GITHUB_REPOSITORY" --comment "$verdict The copy is fresh again. ($run_url)"
+            fi
+          elif [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "$verdict Still out of date. ($run_url)"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "Jolpica data copy is out of date" \
+              --body "$verdict"$'\n\n'"The scheduled job that refreshes Pit Wall's copy of the Jolpica data has not succeeded for about 12 hours. The app falls back to Jolpica directly and to the OpenF1 backup, so pages still work but may be slower. Likely causes: Jolpica is down or rate limiting (look for 403, 429 or 504 in the 'Copy Jolpica data' step), or the job is failing. This issue closes itself when the copy is fresh. Latest run: $run_url"
+          fi
