@@ -49,7 +49,7 @@ async function fromJolpica(pq) {
       return await getJson(`${API}/${pq}`);
     } catch (err) {
       // A gateway timeout already took a minute: Jolpica is down, so stop asking it for this run.
-      if (/^(403|504) /.test(err.message) || err.name === 'TimeoutError') throw err;
+      if (/^(403|429|504) /.test(err.message) || err.name === 'TimeoutError') throw err;
       if (attempt) throw err;
       await sleep(3_000);
     }
@@ -86,7 +86,8 @@ async function get(pq, { reuseOnly = false } = {}) {
     } catch (err) {
       console.log(`Jolpica: ${err.message}`);
       // Refused, timed out or unreachable: stop asking Jolpica for this run and keep the earlier copy instead.
-      if (/^(403|504) /.test(err.message) || err.name === 'TimeoutError' || /fetch failed/.test(err.message)) jolpicaDown = true;
+      // (A 429 means this run has used up Jolpica's hourly allowance: the next run, 3 hours later, fills any gaps.)
+      if (/^(403|429|504) /.test(err.message) || err.name === 'TimeoutError' || /fetch failed/.test(err.message)) jolpicaDown = true;
     }
   }
   const old = await previousCopy(mirrorKey(pq));
@@ -141,10 +142,13 @@ async function season(label, { reuseOnly = false } = {}) {
   const done = (results?.races ?? []).filter((r) => r.Results?.length).map((r) => Number(r.round));
   const last = Math.max(0, ...done);
   for (const round of done) {
-    // Standings after older rounds no longer change, so the live copy is reused for them.
+    // Standings after older rounds no longer change, so the live copy is reused for them. Only for files the live
+    // copy actually has: one it lacks (for example after a rate-limited run) is fetched from Jolpica this time.
     const old = round < last - 1;
-    await get(`${label}/${round}/driverstandings/?limit=100`, { reuseOnly: reuseOnly || (old && !!previous) });
-    await get(`${label}/${round}/constructorstandings/?limit=100`, { reuseOnly: reuseOnly || (old && !!previous) });
+    for (const kind of ['driverstandings', 'constructorstandings']) {
+      const pq = `${label}/${round}/${kind}/?limit=100`;
+      await get(pq, { reuseOnly: reuseOnly || (old && !!previous?.keys.includes(mirrorKey(pq))) });
+    }
   }
   // Race pages ask for one round at a time.
   for (const r of racesOf(schedule)) {
