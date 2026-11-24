@@ -78,6 +78,9 @@ function store(pq, data) {
 /** Jolpica's answer, or the live site's copy if Jolpica fails. Once Jolpica is known to be down, only copies are used. */
 let jolpicaDown = false;
 async function get(pq, { reuseOnly = false } = {}) {
+  // Reuse-only is for files the live copy actually has; one it lacks is fetched from Jolpica (this is how a file left out
+  // by an earlier rate-limited run, or by a change to what is copied, gets filled in for a finished season).
+  if (reuseOnly && !previous?.keys.includes(mirrorKey(pq))) reuseOnly = false;
   if (!jolpicaDown && !reuseOnly) {
     try {
       const data = await fromJolpica(pq);
@@ -96,6 +99,7 @@ async function get(pq, { reuseOnly = false } = {}) {
     return store(pq, old);
   }
   missing++;
+  console.log(`Missing from the copy: ${pq}`);
   return undefined;
 }
 
@@ -142,12 +146,11 @@ async function season(label, { reuseOnly = false } = {}) {
   const done = (results?.races ?? []).filter((r) => r.Results?.length).map((r) => Number(r.round));
   const last = Math.max(0, ...done);
   for (const round of done) {
-    // Standings after older rounds no longer change, so the live copy is reused for them. Only for files the live
-    // copy actually has: one it lacks (for example after a rate-limited run) is fetched from Jolpica this time.
+    // Standings after older rounds no longer change, so the live copy is reused for them (a file it lacks is fetched).
     const old = round < last - 1;
     for (const kind of ['driverstandings', 'constructorstandings']) {
       const pq = `${label}/${round}/${kind}/?limit=100`;
-      await get(pq, { reuseOnly: reuseOnly || (old && !!previous?.keys.includes(mirrorKey(pq))) });
+      await get(pq, { reuseOnly: reuseOnly || old });
     }
   }
   // Race pages ask for one round at a time.
