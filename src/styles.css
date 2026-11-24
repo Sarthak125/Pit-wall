@@ -858,10 +858,16 @@ html { zoom: 1.1; }
 /* About cards from Wikipedia */
 .wiki { display: flex; gap: 18px; align-items: flex-start; }
 .wiki-photo { margin: 0; flex: none; width: 180px; }
-.wiki-photo img { width: 180px; height: auto; max-height: 240px; object-fit: cover; border-radius: 10px; display: block; background: var(--inset); }
+/* The whole photo is shown at its own proportions (never cropped); only its width is set. */
+.wiki-photo img { width: 100%; height: auto; border-radius: 10px; display: block; background: var(--inset); }
 .wiki-photo figcaption { font-size: 11px; margin-top: 4px; }
 .wiki-text { margin: 0; line-height: 1.65; color: var(--text-2); }
-@media (max-width: 599px) { .wiki { flex-direction: column; } .wiki-photo, .wiki-photo img { width: 100%; max-height: 260px; } }
+/* On a phone the photo sits above the text, centred and not wider than 240px (it stays whole, never cropped). */
+@media (max-width: 599px) {
+  .wiki { flex-direction: column; align-items: center; }
+  .wiki > div { align-self: stretch; }
+  .wiki-photo { width: min(100%, 240px); }
+}
 
 /* Saved data shown while a server is slow */
 .slow-note { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border: 1px solid var(--amber-line); background: var(--amber-bg-2); color: var(--text-2); border-radius: 10px; font-size: 13px; line-height: 1.5; }

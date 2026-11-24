@@ -267,7 +267,10 @@ async function extraFixtures(page: Page) {
   await page.route(/en\.wikipedia\.org\/api\/rest_v1\/page\/summary\//, (r) =>
     /Max_Verstappen/.test(r.request().url()) ? r.fulfill({ path: 'tests/fixtures/extra/wiki-Max_Verstappen.json', headers: { 'access-control-allow-origin': '*' } }) : r.fulfill({ status: 404, body: '{}' }),
   );
-  await page.route(/upload\.wikimedia\.org/, (r) => r.abort());
+  // A tall portrait photo, like many of Wikipedia's.
+  await page.route(/\.wikimedia\.org/, (r) =>
+    r.fulfill({ body: '<svg xmlns="http://www.w3.org/2000/svg" width="330" height="440"><rect width="330" height="440" fill="#456"/></svg>', contentType: 'image/svg+xml', headers: { 'access-control-allow-origin': '*' } }),
+  );
 }
 
 test('fastest laps of two drivers can be compared point by point', async ({ page }) => {
@@ -302,6 +305,17 @@ test('driver pages show a short biography from Wikipedia, with credit', async ({
   const about = page.locator('section:has(.wiki)');
   await expect(about).toContainText('Max Emilian Verstappen', { timeout: 60_000 });
   await expect(about.getByRole('link', { name: /Wikipedia/ })).toHaveAttribute('href', /wikipedia\.org\/wiki\/Max_Verstappen/);
+  // The photo, its credit and the text are laid out in order, never on top of each other (laptop and phone).
+  await expect(about.locator('.wiki-photo img')).toBeVisible();
+  const box = (sel: string) => about.locator(sel).first().evaluate((e) => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right }; });
+  const [photo, credit, text] = [await box('.wiki-photo'), await box('.wiki-photo figcaption'), await box('.wiki-text')];
+  expect(credit.bottom).toBeLessThanOrEqual(photo.bottom + 1);
+  const stacked = text.top >= photo.bottom - 1;
+  const beside = text.left >= photo.right - 1;
+  expect(stacked || beside).toBe(true);
+  // The photo is shown whole at its own proportions (330 x 440 here), never cropped.
+  const shown = await about.locator('.wiki-photo img').evaluate((i) => { const r = i.getBoundingClientRect(); return r.width / r.height; });
+  expect(shown).toBeCloseTo(330 / 440, 1);
   expect(errors).toEqual([]);
 });
 
