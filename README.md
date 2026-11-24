@@ -392,7 +392,7 @@ The screen designs live on a design canvas: [Pit Wall design canvas](https://cla
 | Standings | Standings (laptop) | Standings (Android tablet, portrait) |
 | Calendar | Calendar (laptop) | Calendar (Android tablet, portrait) |
 | Race results (opened from Calendar), with the circuit overview, weekend weather and positions lap by lap | Race results (laptop) | Race results (Android tablet, portrait), and Race page: circuit, weather and positions (Android tablet, portrait) for the screen further down |
-| Drivers | Drivers (laptop) | Drivers (Android tablet, portrait) |
+| Drivers (the card grid, with a profile link and favourite star under each card) | Drivers page: cards with a profile link and favourite star (laptop) | Drivers page: cards with a profile link and favourite star (Android tablet, portrait) |
 | Driver page, any driver (opened from Drivers) | Driver page, any driver (laptop) | Driver page, any driver (Android tablet, portrait) |
 | Settings, including "Watching on TV or later" (TV delay and spoiler-free mode) | Settings (laptop) | Settings (Android tablet, portrait) |
 | Live Timing: qualifying knockout view (Q1 to Q3 columns, drop zone and cut line, PART and CUT-OFF, OUT tags) with rain watch | Live Timing: qualifying knockout view, with rain watch (laptop) | Live Timing: qualifying (phone) |
@@ -415,8 +415,10 @@ Newer boards, added as features arrived (laptop unless marked phone):
 - **When a source is slow or down:** the yellow saved-data note and Pit Wall's own data copy.
 - **Data copy status and alerts:** the Settings card in its three states, the OpenF1 copy and the freshness check.
 - **Team-mate qualifying gap:** the Season review battle cards with the new gap line.
+- **Title what-if on driver pages** (also phone): shown with example standings (Antonelli's points cut), because the real 2026 title is already decided and the card does not appear on the live site.
+- **Driver cards:** the Drivers page as a grid of cards, on laptop, Android tablet and phone (the Drivers boards in the table above), with the driver page's card shown front and back (also phone), and the Compare view (also phone). The old List view no longer has a board.
 
-Several of the newest boards (Pit stops, Team-mate qualifying gap, Data copy, and the race analysis boards) use real values read from the app on 2026 data (the Las Vegas Grand Prix and the season to 24 November) instead of the sample data used elsewhere (the Data copy board labels which of its example times are made up). Photos on the About boards are placeholders.
+Several of the newest boards (Pit stops, Team-mate qualifying gap, Data copy, the driver card boards and the race analysis boards) use real values read from the app on 2026 data (the Las Vegas Grand Prix and the season to 24 November) instead of the sample data used elsewhere (the Data copy board labels which of its example times are made up). Photos on the About boards are placeholders, while the driver card boards use the real licensed photos (credited on the back of each card).
 
 The tablet boards show one screen (800 × 1280) with the bottom menu (Dashboard, Live Timing, Favourites, Standings, Calendar, Drivers). The app's tablet layout is a single scrolling column with the same sections, so some boards note what sits further down the page. Every page also has a phone board (390 × 844, titled "(phone)") in a row below the others: Dashboard, Live Timing, Favourites (Driver and Team tabs), Standings, Calendar, Drivers, Settings, Race results, the driver page, Live Timing in qualifying, and How to use. They use the compact header, the short bottom menu labels and the trimmed tables described under [Works everywhere](#works-everywhere), and their menus link to each other.
 
