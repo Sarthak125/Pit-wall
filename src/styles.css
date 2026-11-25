@@ -1045,3 +1045,83 @@ html { zoom: 1.1; }
 /* The Wikipedia text sits beside the driver's card, above how to read it. */
 .dc-side { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
 .dc-side > div:first-child { margin-top: 0 !important; }
+
+/* ---------- Calendar: race-week board and season timeline ---------- */
+.cb-wrap { margin-bottom: 18px; }
+.cb { display: grid; gap: 14px; }
+.cb-n3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr); }
+.cb-n2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
+.cb-n1 { grid-template-columns: minmax(0, 1fr); }
+.cb-pan { border: 1px solid var(--line); border-radius: 14px; padding: 18px; background: var(--inset); min-width: 0; }
+.cb-pan.next { border-color: var(--red-line); background: radial-gradient(520px 220px at 100% 0, color-mix(in srgb, var(--accent) 20%, transparent), transparent 60%), var(--red-bg-2); }
+.cb-kick { font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.cb-pan.next .cb-kick { color: var(--red-soft); }
+.cb-title { margin: 4px 0 2px; font: 600 30px/1.05 var(--display); }
+.cb-title.big { font-size: 40px; }
+.cb-title a { text-decoration: none; }
+.cb-title a:hover { text-decoration: underline; }
+.cb-sub { color: var(--muted); font-size: 13px; }
+.cb-note { margin: 12px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.cb-pod { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.cb-pod li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; background: var(--raised); font-size: 14px; }
+.cb-pod b { width: 26px; font: 700 13px var(--mono); color: var(--muted); }
+.cb-pod .p1 b { color: var(--amber); }
+.cb-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.cb-count { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 14px 0; }
+.cb-count > div { min-width: 74px; padding: 8px 12px; border-radius: 10px; background: var(--card); border: 1px solid var(--line-strong); text-align: center; }
+.cb-count b { display: block; font: 600 32px/1 var(--mono); }
+.cb-count span { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.cb-count small { color: var(--muted); font-size: 12px; }
+.cb-sess { list-style: none; margin: 12px 0 0; padding: 0; }
+.cb-sess li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line-soft); font-size: 14px; }
+.cb-sess li:last-child { border-bottom: 0; }
+.cb-sess li.done { opacity: 0.55; }
+.cb-sess li.race { font-weight: 700; }
+.cb-sess li.race .mono { color: var(--red-soft); }
+.cb-acts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.cb-acts .btn { display: inline-flex; align-items: center; text-decoration: none; }
+.cb-strip { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 4px; }
+.cb-strip a { display: flex; align-items: flex-end; justify-content: center; height: 34px; border-radius: 5px; background: var(--raised-3); color: var(--muted); font: 600 10px var(--mono); padding-bottom: 2px; text-decoration: none; }
+.cb-strip a[style] { background: var(--c); color: rgba(0, 0, 0, 0.65); }
+.cb-strip a.now { outline: 2px solid var(--text); outline-offset: 1px; color: var(--text); }
+.cb-cap { margin-top: 6px; }
+@media (max-width: 860px) {
+  .cb-n3, .cb-n2 { grid-template-columns: minmax(0, 1fr); }
+  /* On a narrow screen the next race comes first. */
+  .cb-pan.next { order: -1; }
+  .cb-title.big { font-size: 32px; }
+  .cb-count > div { flex: 1; min-width: 0; }
+}
+@media (max-width: 600px) {
+  .cb-strip a { height: 22px; font-size: 0; }
+}
+
+.tl { list-style: none; margin: 14px 0 0; padding: 0; --dw: 132px; }
+.tl-item { position: relative; }
+.tl-row { display: grid; grid-template-columns: var(--dw) 34px minmax(0, 1fr); align-items: center; min-height: 58px; }
+.tl-item::before { content: ''; position: absolute; left: calc(var(--dw) + 16px); top: 0; bottom: 0; width: 2px; background: var(--line); }
+.tl-item:first-child::before { top: 50%; }
+.tl-item:last-child::before { bottom: 50%; }
+.tl-date { text-align: right; padding-right: 8px; font-size: 13px; color: var(--muted); }
+.tl-dotcol { position: relative; display: flex; justify-content: center; z-index: 1; }
+.tl-dotcol i { width: 16px; height: 16px; border-radius: 50%; background: var(--c, var(--raised-3)); border: 3px solid var(--card); }
+.tl-item.up .tl-dotcol i { background: var(--card); border: 2px solid var(--hover-line); }
+.tl-item.next .tl-dotcol i { width: 22px; height: 22px; background: var(--accent); border-color: var(--card); box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 25%, transparent); }
+.tl-body { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; padding: 6px 12px; border-radius: 10px; min-width: 0; }
+.tl-item.next .tl-body { background: linear-gradient(90deg, var(--red-bg-2), transparent); border-left: 3px solid var(--accent); }
+.tl-rd { font-size: 12px; }
+.tl-name { font: 600 20px var(--display); }
+.tl-loc { font-size: 12.5px; }
+.tl-sprint { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: var(--amber-bg); border: 1px solid var(--amber-line); color: var(--amber); }
+.tl-win { margin-left: auto; display: inline-flex; align-items: center; gap: 7px; font-size: 13px; }
+.tl-wdot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.tl-today { display: grid; grid-template-columns: var(--dw) 34px minmax(0, 1fr); align-items: center; min-height: 26px; }
+.tl-today span { grid-column: 3; display: flex; align-items: center; gap: 10px; color: var(--red-soft); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; padding-left: 12px; }
+.tl-today span::after { content: ''; flex: 1; height: 1px; background: repeating-linear-gradient(90deg, var(--accent) 0 6px, transparent 6px 10px); }
+@media (max-width: 700px) {
+  .tl { --dw: 78px; }
+  .tl-date { font-size: 11px; }
+  .tl-win { margin-left: 0; flex-basis: 100%; }
+}
+
+.cb-more { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; min-height: 44px; font-weight: 600; font-size: 14px; }

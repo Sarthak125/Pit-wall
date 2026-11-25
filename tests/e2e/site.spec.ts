@@ -366,7 +366,7 @@ test('with Jolpica down, pages load from Pit Wall\'s own copy of its data', asyn
   await page.goto('#/standings');
   await expect(page.locator('main table').first().locator('tbody tr').first()).toContainText('Antonelli', { timeout: 20_000 });
   await page.goto('#/calendar');
-  await expect(page.locator('main tbody')).toContainText('Verstappen', { timeout: 20_000 });
+  await expect(page.locator('main')).toContainText('Verstappen', { timeout: 20_000 });
   await page.goto('#/race/21');
   await expect(page.locator('main')).toContainText('Max Verstappen', { timeout: 20_000 });
   await page.goto('#/');
@@ -649,6 +649,54 @@ test('a driver page shows our licensed photo, never a formula1.com headshot', as
   await page.goto('#/driver/HAM');
   await expect(page.locator('.profile-head img')).toHaveAttribute('src', /data\/photos\//, { timeout: 40_000 });
   expect(hotlinked).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test('the Calendar opens with the race-week board and a season timeline, and keeps the table as a tab', async ({ page }) => {
+  const errors = await setUp(page);
+  await page.goto('#/calendar');
+  const last = page.getByRole('region', { name: 'Last race' });
+  const next = page.getByRole('region', { name: 'Next race' });
+  await expect(next).toContainText('Qatar Grand Prix', { timeout: 40_000 });
+  // The test clock is just after the Las Vegas race: it is the last race, with a podium of three.
+  await expect(last).toContainText('Las Vegas');
+  await expect(last.locator('.cb-pod li')).toHaveCount(3, { timeout: 40_000 });
+  // The next weekend has a countdown, its sessions (the race last) and an add to calendar button.
+  await expect(next.getByRole('timer')).toBeVisible();
+  await expect(next.locator('.cb-sess li').last()).toContainText('Race');
+  await expect(next.getByRole('button', { name: /Add this weekend to calendar/ })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'The race after' })).toContainText('Abu Dhabi');
+  // One strip block and one timeline row per round, with the next race marked and a today line before it.
+  const rounds = await page.locator('.cb-strip li').count();
+  expect(rounds).toBeGreaterThan(20);
+  await expect(page.locator('.tl-item')).toHaveCount(rounds);
+  await expect(page.locator('.tl-item.next')).toContainText('Qatar');
+  await expect(page.locator('.tl-today')).toHaveCount(1);
+  await expect(page.locator('.cb-strip a.now')).toHaveAttribute('title', /Qatar/);
+  // The strip block of a finished race names its winner.
+  await expect(page.locator('.cb-strip a[title^="Round 21"]')).toHaveAttribute('title', /won by/, { timeout: 40_000 });
+  await noSidewaysScroll(page);
+  // The table is still there as the second tab.
+  await page.getByRole('tab', { name: 'Table' }).click();
+  await expect(page.locator('table.cal-tbl tbody tr')).toHaveCount(rounds);
+  await expect(page.locator('.tl')).toHaveCount(0);
+  await expect(page.getByRole('tab', { name: 'Table' })).toHaveAttribute('aria-selected', 'true');
+  await noSidewaysScroll(page);
+  expect(errors).toEqual([]);
+});
+
+test('in spoiler-free mode the Calendar board and timeline do not give away the last race', async ({ page }) => {
+  const errors = await setUp(page, AFTER_RACE, { spoilerFree: true });
+  await page.goto('#/calendar');
+  const last = page.getByRole('region', { name: 'Last race' });
+  await expect(last).toContainText('Las Vegas', { timeout: 40_000 });
+  await expect(last).toContainText('hidden');
+  await expect(last.locator('.cb-pod')).toHaveCount(0);
+  // The strip block and the timeline row of the hidden race show no winner.
+  await expect(page.locator('.cb-strip a[title^="Round 21"]')).not.toHaveAttribute('title', /won by/);
+  await expect(page.locator('.tl-item', { hasText: 'Las Vegas' })).toContainText('Hidden');
+  // Earlier races are still shown.
+  await expect(page.locator('.cb-strip a[title^="Round 20"]')).toHaveAttribute('title', /won by/);
   expect(errors).toEqual([]);
 });
 
