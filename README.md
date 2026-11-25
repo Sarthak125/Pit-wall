@@ -12,6 +12,8 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 ### Latest
 
+- **Cards after any round:** a **Cards after** picker on the Cards view, the Compare view and the card on each driver page shows the cards as they were after an earlier round (the latest is the default). The change arrows compare with the round before the chosen one, and the position chart on the back stops at it. After round 1 every card is still "building". See [Driver cards](#driver-cards).
+- **Licensed photos on driver pages and radio cards:** the driver page header now uses the same licensed Commons photo as the cards (a plain placeholder when there is none), and team radio cards show the driver's initials, so the app no longer loads formula1.com headshots.
 - **Drivers page is now the driver cards:** the page opens on the card grid (4 columns on a laptop, one per row on a phone), sortable by standing, overall rating or any stat and filterable by team. Under every card there is an **Open <driver> profile** link and the favourite star. The old List tab is gone, since each card already shows team, number, standing, points and recent form, and the formula1.com headshots are replaced by the freely licensed photos. Compare stays as the second tab. See [Driver cards](#driver-cards).
 - **Compare two drivers:** a **Compare** tab on the Drivers page puts two drivers' cards side by side, with a table below showing each one's overall rating and six stat ratings next to the real figures. The higher rating on each line is marked in gold. See [Driver cards](#driver-cards).
 - **Cleaner card chart:** on the back of a driver card, the position chart's axis labels now sit in their own column instead of on top of the line.
@@ -74,7 +76,7 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
   - **Track map:** every car moving, with S1 / S2 / S3 sector colours, a top 3 per sector, flag highlights, and a replay bar for finished sessions.
   - **Session bar:** lap X/Y, pit stop time loss and fuller weather.
   - **Before a race:** the starting grid with a countdown.
-  - **Team radio:** cards with photo, lap, time and a playback timer.
+  - **Team radio:** cards with the driver's initials, lap, time and a playback timer.
   - **FIA feed:** messages in plain English.
   - **Track limits panel:** session totals, the worst corner, bars that turn amber and red, and badges for black and white flags and penalties actually issued.
   - **Under investigation panel:** each open incident in plain English with the drivers, lap, time and decision status.
@@ -282,6 +284,7 @@ While the app is open and a session is live, pop-up alerts tell you when your fa
 - **Frame:** gold for the championship leader, silver for the rest of the top three, team colour for everyone else, and a plain frame for a driver still building.
 - **Back of the card** (click, or the turn button for keyboards): the championship position after each round, best and lowest finish with the race, wins, podiums, poles and retirements, and the head-to-head with the team-mate (races ahead, qualifying ahead, points). It also credits the photo.
 - **Photos:** each driver's lead Wikipedia photo when it is a freely licensed image on Wikimedia Commons (Creative Commons, public domain or the Open Government Licence), saved with its author and licence, credited on the back with a link to the licence. A driver without one gets a silhouette. Photos from formula1.com, teams or agencies are not used: a credit does not give permission to use them. See [Our own copy of the driver photos](#our-own-copy-of-the-driver-photos).
+- **Earlier rounds:** the **Cards after** picker shows every card as it stood after a chosen round, worked out from the results up to that round. Arrows compare with the round before it and the back's position chart ends there. It does not change the official standings: only the latest round uses them.
 - **Motion:** the card tilts and a soft foil shimmer follows the pointer; it is off for touch and when the device asks for reduced motion.
 
 ### Driver and team pages
