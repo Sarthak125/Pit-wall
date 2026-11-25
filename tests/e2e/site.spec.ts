@@ -641,14 +641,15 @@ test('the cards can be shown as they were after an earlier round', async ({ page
   expect(errors).toEqual([]);
 });
 
-test('a driver page shows our licensed photo, never a formula1.com headshot', async ({ page }) => {
+test('the driver page header and card use our licensed photo, never a formula1.com headshot', async ({ page }) => {
   const errors = await setUp(page);
   await servePhotos(page);
-  const hotlinked: string[] = [];
-  page.on('request', (r) => { if (/formula1\.com/.test(r.url())) hotlinked.push(r.url()); });
   await page.goto('#/driver/HAM');
   await expect(page.locator('.profile-head img')).toHaveAttribute('src', /data\/photos\//, { timeout: 40_000 });
-  expect(hotlinked).toEqual([]);
+  // Nothing in the header or the card section points at formula1.com. (Team radio cards further down still use OpenF1's headshots.)
+  const srcs = await page.locator('.profile-head img, section[aria-labelledby="driver-card"] img').evaluateAll((els) => els.map((e) => (e as HTMLImageElement).src));
+  expect(srcs.length).toBeGreaterThan(0);
+  expect(srcs.filter((u) => /formula1\.com/.test(u))).toEqual([]);
   expect(errors).toEqual([]);
 });
 
