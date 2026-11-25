@@ -14,7 +14,7 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 - **Driver page: the biography sits beside the card:** the Wikipedia summary now appears next to the driver's card (above "How to read the card", or under the card on a phone) instead of in a separate About section with a second photo. The card already carries the photo, with its credit on the back. A driver without a card still gets the summary on its own. See [Driver cards](#driver-cards).
 - **Cards after any round:** a **Cards after** picker on the Cards view, the Compare view and the card on each driver page shows the cards as they were after an earlier round (the latest is the default). The change arrows compare with the round before the chosen one, and the position chart on the back stops at it. After round 1 every card is still "building". See [Driver cards](#driver-cards).
-- **Licensed photos on driver pages and radio cards:** the driver page header now uses the same licensed Commons photo as the cards (a plain placeholder when there is none), and team radio cards show the driver's initials, so the app no longer loads formula1.com headshots.
+- **Licensed photos on driver pages:** the driver page header now uses the same licensed Commons photo as the cards (a plain placeholder when there is none), while the team radio cards keep the OpenF1 headshots (formula1.com images) with initials as the fallback, so the Drivers page and driver pages no longer load formula1.com headshots.
 - **Drivers page is now the driver cards:** the page opens on the card grid (4 columns on a laptop, one per row on a phone), sortable by standing, overall rating or any stat and filterable by team. Under every card there is an **Open <driver> profile** link and the favourite star. The old List tab is gone, since each card already shows team, number, standing, points and recent form, and the formula1.com headshots are replaced by the freely licensed photos. Compare stays as the second tab. See [Driver cards](#driver-cards).
 - **Compare two drivers:** a **Compare** tab on the Drivers page puts two drivers' cards side by side, with a table below showing each one's overall rating and six stat ratings next to the real figures. The higher rating on each line is marked in gold. See [Driver cards](#driver-cards).
 - **Cleaner card chart:** on the back of a driver card, the position chart's axis labels now sit in their own column instead of on top of the line.
@@ -77,7 +77,7 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
   - **Track map:** every car moving, with S1 / S2 / S3 sector colours, a top 3 per sector, flag highlights, and a replay bar for finished sessions.
   - **Session bar:** lap X/Y, pit stop time loss and fuller weather.
   - **Before a race:** the starting grid with a countdown.
-  - **Team radio:** cards with the driver's initials, lap, time and a playback timer.
+  - **Team radio:** cards with photo, lap, time and a playback timer.
   - **FIA feed:** messages in plain English.
   - **Track limits panel:** session totals, the worst corner, bars that turn amber and red, and badges for black and white flags and penalties actually issued.
   - **Under investigation panel:** each open incident in plain English with the drivers, lap, time and decision status.
