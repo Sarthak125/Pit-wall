@@ -300,24 +300,22 @@ test('a race page ranks race pace with each stint and its tyre wear', async ({ p
   expect(errors).toEqual([]);
 });
 
-test('driver pages show a short biography from Wikipedia, with credit', async ({ page }) => {
+test('driver pages show a short biography from Wikipedia beside the card, with credit and no second photo', async ({ page }) => {
   const errors = await setUp(page);
   await extraFixtures(page);
+  await servePhotos(page);
   await page.goto('#/driver/VER');
-  const about = page.locator('section:has(.wiki)');
-  await expect(about).toContainText('Max Emilian Verstappen', { timeout: 60_000 });
-  await expect(about.getByRole('link', { name: /Wikipedia/ })).toHaveAttribute('href', /wikipedia\.org\/wiki\/Max_Verstappen/);
-  // The photo, its credit and the text are laid out in order, never on top of each other (laptop and phone).
-  await expect(about.locator('.wiki-photo img')).toBeVisible();
-  const box = (sel: string) => about.locator(sel).first().evaluate((e) => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right }; });
-  const [photo, credit, text] = [await box('.wiki-photo'), await box('.wiki-photo figcaption'), await box('.wiki-text')];
-  expect(credit.bottom).toBeLessThanOrEqual(photo.bottom + 1);
-  const stacked = text.top >= photo.bottom - 1;
-  const beside = text.left >= photo.right - 1;
-  expect(stacked || beside).toBe(true);
-  // The photo is shown whole at its own proportions (330 x 440 here), never cropped.
-  const shown = await about.locator('.wiki-photo img').evaluate((i) => { const r = i.getBoundingClientRect(); return r.width / r.height; });
-  expect(shown).toBeCloseTo(330 / 440, 1);
+  const section = page.locator('section[aria-labelledby="driver-card"]');
+  await expect(section).toContainText('Max Emilian Verstappen', { timeout: 60_000 });
+  await expect(section.getByRole('link', { name: /Wikipedia/ })).toHaveAttribute('href', /wikipedia\.org\/wiki\/Max_Verstappen/);
+  // The card already has the photo, so the text has no photo of its own and there is no separate About section.
+  await expect(page.locator('.wiki-photo')).toHaveCount(0);
+  await expect(page.locator('section:has(.wiki)')).toHaveCount(1);
+  // The text is laid out beside the card (laptop) or below it (phone), never on top of it.
+  const box = (sel: string) => page.locator(sel).first().evaluate((e) => { const r = e.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right }; });
+  const [card, text] = [await box('section[aria-labelledby="driver-card"] .dc'), await box('.wiki-text')];
+  expect(text.left >= card.right - 1 || text.top >= card.bottom - 1).toBe(true);
+  await noSidewaysScroll(page);
   expect(errors).toEqual([]);
 });
 

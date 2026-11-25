@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { DriverPhoto } from '../api/photos';
 import { useDriverPhotos } from '../api/photos';
+import { WikiAbout } from './WikiAbout';
 import { useDriverCards } from '../hooks/useDriverCards';
 import { useDriverStandings } from '../hooks/useSeason';
 import { StarIcon } from './Icons';
@@ -253,13 +254,15 @@ export function RoundPicker({ snapshots, round, onChange }: { snapshots: CardSna
 }
 
 /** The card of one driver (by Jolpica driver id), with the explanation beside it. */
-export function DriverCardSection({ season, driverId }: { season: string; driverId: string }) {
+export function DriverCardSection({ season, driverId, wikiUrl, name }: { season: string; driverId: string; wikiUrl?: string; name: string }) {
   const { snapshots, isLoading } = useDriverCards(season);
   const photos = useDriverPhotos();
   const [round, setRound] = useState<number | null>(null);
   const { last, prev, trend } = useMemo(() => pick(snapshots, round), [snapshots, round]);
   const card = last?.cards[driverId];
-  if (isLoading || !card) return null;
+  if (isLoading) return null;
+  // A driver without a card still gets the Wikipedia text.
+  if (!card) return wikiUrl ? <WikiAbout url={wikiUrl} heading={`About ${name}`} /> : null;
   return (
     <section className="card" aria-labelledby="driver-card">
       <div className="card-head">
@@ -269,7 +272,10 @@ export function DriverCardSection({ season, driverId }: { season: string; driver
       </div>
       <div className="dc-driver">
         <DriverCard card={card} prev={prev?.cards[driverId]} trend={trend(driverId)} photo={photos[driverId]} />
-        <CardHowTo />
+        <div className="dc-side">
+          {wikiUrl && <WikiAbout url={wikiUrl} heading={`About ${name}`} photo={false} bare />}
+          <CardHowTo />
+        </div>
       </div>
     </section>
   );

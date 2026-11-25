@@ -1041,3 +1041,7 @@ html { zoom: 1.1; }
 .dc-names { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 4px 24px; }
 .dc-names li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 0; border-top: 1px solid var(--line); }
 .dc-names .dc-actions { width: auto; max-width: none; margin-top: 0; gap: 14px; }
+
+/* The Wikipedia text sits beside the driver's card, above how to read it. */
+.dc-side { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.dc-side > div:first-child { margin-top: 0 !important; }
