@@ -74,7 +74,7 @@ export function RadioCards({ clips, drivers, favNum, teamNums, laps = [], limit 
           return (
             <div className={`rcard${mark}`} key={c.recording_url}>
               <button className="rcard-face" style={{ '--team': colour } as React.CSSProperties} onClick={() => toggle(c.recording_url)} aria-label={`${on ? 'Pause' : 'Play'} team radio from ${name} at ${fmtClock(at)}`}>
-                {d?.headshot_url ? <img src={d.headshot_url} alt="" loading="lazy" /> : <span className="rcard-init">{d?.name_acronym ?? c.driver_number}</span>}
+                <span className="rcard-init">{d?.name_acronym ?? c.driver_number}</span>
                 <span className={`rcard-mic${on ? ' on' : ''}`} aria-hidden="true">
                   {on ? (
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>

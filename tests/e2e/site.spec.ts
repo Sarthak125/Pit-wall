@@ -621,6 +621,39 @@ test('the Drivers page is a grid of cards that can be sorted and filtered by tea
   expect(errors).toEqual([]);
 });
 
+test('the cards can be shown as they were after an earlier round', async ({ page }) => {
+  const errors = await setUp(page);
+  await servePhotos(page);
+  await page.goto('#/drivers');
+  const cards = page.getByTestId('driver-card');
+  await expect(cards.first()).toBeVisible({ timeout: 40_000 });
+  const picker = page.getByLabel('Show cards after round');
+  const latest = await picker.inputValue();
+  expect(Number(latest)).toBeGreaterThan(1);
+  await expect(page.locator('.dc-toolbar')).toContainText(`After round ${latest}.`);
+  await picker.selectOption('1');
+  await expect(page.locator('.dc-toolbar')).toContainText('After round 1.');
+  // After one race nobody has three starts yet, so every card is still being built.
+  await expect(cards.first()).toBeVisible();
+  await expect(page.locator('.dc-building-note').first()).toContainText('1 / 3');
+  await picker.selectOption(latest);
+  await expect(page.locator('.dc-front .dc-meta').first()).toContainText('P1 ·');
+  await expect(page.locator('.dc-toolbar')).toContainText(`After round ${latest}.`);
+  await noSidewaysScroll(page);
+  expect(errors).toEqual([]);
+});
+
+test('a driver page shows our licensed photo, never a formula1.com headshot', async ({ page }) => {
+  const errors = await setUp(page);
+  await servePhotos(page);
+  const hotlinked: string[] = [];
+  page.on('request', (r) => { if (/formula1\.com/.test(r.url())) hotlinked.push(r.url()); });
+  await page.goto('#/driver/HAM');
+  await expect(page.locator('.profile-head img')).toHaveAttribute('src', /data\/photos\//, { timeout: 40_000 });
+  expect(hotlinked).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
 test('spoiler-free mode covers the driver cards and lists only the names, with their links and stars', async ({ page }) => {
   const errors = await setUp(page, AFTER_RACE, { spoilerFree: true });
   await page.goto('#/drivers');

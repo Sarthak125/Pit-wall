@@ -5,6 +5,7 @@ import { openf1, type Lap, type OF1Driver, type Session, type SessionResult, typ
 import { StarIcon } from '../components/Icons';
 import { FavTabs } from '../components/FavTabs';
 import { LiveDriver } from '../components/LiveDriver';
+import { useDriverPhotos } from '../api/photos';
 import { RadioCards } from '../components/RadioCards';
 import { Footer } from '../components/Shell';
 import { Empty, ErrorBox, Loading } from '../components/States';
@@ -88,6 +89,8 @@ function Profile({ code, name: givenName, season, isFav }: { code: string; name:
   const idx = list.findIndex((s) => s.Driver.code === code);
   const me = list[idx];
   const of1 = latestDrivers.data?.find((d) => d.name_acronym === code);
+  const photos = useDriverPhotos();
+  const photo = me ? photos[me.Driver.driverId] : undefined;
   const team = me?.Constructors[me.Constructors.length - 1];
   const name = givenName || (me ? `${me.Driver.givenName} ${me.Driver.familyName}` : of1 ? niceName(of1.full_name) : code);
   const colour = teamColour(team?.constructorId ?? team?.name ?? of1?.team_name, of1?.team_colour);
@@ -112,7 +115,7 @@ function Profile({ code, name: givenName, season, isFav }: { code: string; name:
         <a className="link" href={href('drivers')} style={{ alignSelf: 'flex-start' }}>← All drivers</a>
       )}
       <section className="card profile-head" style={{ borderLeftColor: colour }}>
-        {of1?.headshot_url ? <img src={of1.headshot_url} alt="" /> : <div className="ph" aria-hidden="true" />}
+        {photo ? <img src={photo.url} alt="" /> : <div className="ph" aria-hidden="true" />}
         <div style={{ flex: '1 1 260px', minWidth: 0 }}>
           <div className="code" style={{ fontSize: 22, color: colour }}>
             {me?.Driver.permanentNumber || of1?.driver_number ? `#${me?.Driver.permanentNumber ?? of1?.driver_number} · ` : ''}

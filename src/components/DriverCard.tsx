@@ -225,18 +225,39 @@ export function CardHowTo() {
   );
 }
 
-function pick(snapshots: CardSnapshot[]) {
-  const last = snapshots[snapshots.length - 1];
-  const prev = snapshots.length > 1 ? snapshots[snapshots.length - 2] : null;
-  const trend = (id: string): [number, number][] => snapshots.filter((s) => s.cards[id]).map((s) => [s.round, s.cards[id].pos]);
+/**
+ * The card set to show: the latest round, or an earlier one when `round` is given. The change arrows compare with the
+ * round before it, and the chart stops at the chosen round, so a past card looks the way it did then.
+ */
+function pick(snapshots: CardSnapshot[], round: number | null = null) {
+  const at = round == null ? -1 : snapshots.findIndex((s) => s.round === round);
+  const end = at < 0 ? snapshots.length - 1 : at;
+  const upTo = snapshots.slice(0, end + 1);
+  const last = snapshots[end];
+  const prev = end > 0 ? snapshots[end - 1] : null;
+  const trend = (id: string): [number, number][] => upTo.filter((s) => s.cards[id]).map((s) => [s.round, s.cards[id].pos]);
   return { last, prev, trend };
+}
+
+/** Choose the round the cards are shown after; the latest by default. */
+export function RoundPicker({ snapshots, round, onChange }: { snapshots: CardSnapshot[]; round: number | null; onChange: (r: number | null) => void }) {
+  if (snapshots.length < 2) return null;
+  const latest = snapshots[snapshots.length - 1].round;
+  return (
+    <label>Cards after
+      <select value={round ?? latest} onChange={(e) => onChange(Number(e.target.value) === latest ? null : Number(e.target.value))} aria-label="Show cards after round">
+        {[...snapshots].reverse().map((s) => <option key={s.round} value={s.round}>Round {s.round}{s.race ? `: ${shortRace(s.race)}` : ''}{s.round === latest ? ' (latest)' : ''}</option>)}
+      </select>
+    </label>
+  );
 }
 
 /** The card of one driver (by Jolpica driver id), with the explanation beside it. */
 export function DriverCardSection({ season, driverId }: { season: string; driverId: string }) {
   const { snapshots, isLoading } = useDriverCards(season);
   const photos = useDriverPhotos();
-  const { last, prev, trend } = useMemo(() => pick(snapshots), [snapshots]);
+  const [round, setRound] = useState<number | null>(null);
+  const { last, prev, trend } = useMemo(() => pick(snapshots, round), [snapshots, round]);
   const card = last?.cards[driverId];
   if (isLoading || !card) return null;
   return (
@@ -244,6 +265,7 @@ export function DriverCardSection({ season, driverId }: { season: string; driver
       <div className="card-head">
         <h2 className="h2" id="driver-card">Driver card</h2>
         <span className="muted">After round {last.round}{last.race ? `: ${shortRace(last.race)}` : ''}</span>
+        <div className="dc-toolbar" style={{ marginLeft: 'auto' }}><RoundPicker snapshots={snapshots} round={round} onChange={setRound} /></div>
       </div>
       <div className="dc-driver">
         <DriverCard card={card} prev={prev?.cards[driverId]} trend={trend(driverId)} photo={photos[driverId]} />
@@ -293,7 +315,8 @@ export function DriverCardGrid({ season }: { season: string }): ReactNode {
   const photos = useDriverPhotos();
   const [sort, setSort] = useState<SortKey>('standing');
   const [team, setTeam] = useState('all');
-  const { last, prev, trend } = useMemo(() => pick(snapshots), [snapshots]);
+  const [round, setRound] = useState<number | null>(null);
+  const { last, prev, trend } = useMemo(() => pick(snapshots, round), [snapshots, round]);
   if (error) return <ErrorBox error={error} what="driver cards" />;
   if (isLoading) return <Loading rows={6} />;
   if (!last) return <Empty>Cards appear after the first race.</Empty>;
@@ -317,6 +340,7 @@ export function DriverCardGrid({ season }: { season: string }): ReactNode {
             {teams.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
         </label>
+        <RoundPicker snapshots={snapshots} round={round} onChange={setRound} />
         <span className="muted" style={{ fontSize: 12 }}>After round {last.round}. Click a card to turn it over.</span>
       </div>
       <div className="dc-collection">
@@ -338,7 +362,8 @@ export function DriverCompare({ season }: { season: string }): ReactNode {
   const { snapshots, isLoading, error } = useDriverCards(season);
   const photos = useDriverPhotos();
   const { favoriteDriver } = useSettings();
-  const { last, prev, trend } = useMemo(() => pick(snapshots), [snapshots]);
+  const [round, setRound] = useState<number | null>(null);
+  const { last, prev, trend } = useMemo(() => pick(snapshots, round), [snapshots, round]);
   const [chosen, setChosen] = useState<[string | null, string | null]>([null, null]);
   if (error) return <ErrorBox error={error} what="driver cards" />;
   if (isLoading) return <Loading rows={6} />;
@@ -356,6 +381,7 @@ export function DriverCompare({ season }: { season: string }): ReactNode {
       <div className="dc-toolbar">
         <label>First driver<select value={first} onChange={(e) => setChosen([e.target.value, second])} aria-label="First driver">{options}</select></label>
         <label>Second driver<select value={second} onChange={(e) => setChosen([first, e.target.value])} aria-label="Second driver">{options}</select></label>
+        <RoundPicker snapshots={snapshots} round={round} onChange={setRound} />
         <span className="muted" style={{ fontSize: 12 }}>After round {last.round}.</span>
       </div>
       <div className="dc-compare-cards">
