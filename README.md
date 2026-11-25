@@ -419,7 +419,7 @@ Newer boards, added as features arrived (laptop unless marked phone):
 - **Data copy status and alerts:** the Settings card in its three states, the OpenF1 copy and the freshness check.
 - **Team-mate qualifying gap:** the Season review battle cards with the new gap line.
 - **Title what-if on driver pages** (also phone): shown with example standings (Antonelli's points cut), because the real 2026 title is already decided and the card does not appear on the live site.
-- **Driver cards:** the Drivers page as a grid of cards, on laptop, Android tablet and phone (the Drivers boards in the table above), with the driver page's card shown front and back (also phone), and the Compare view (also phone). The old List view no longer has a board.
+- **Driver cards:** the Drivers page as a grid of cards, on laptop, Android tablet and phone (the Drivers boards in the table above), with the driver page's card shown front and back (also phone), and the Compare view (also phone). The old List view no longer has a board. These boards also show the **Cards after** round picker, and one more laptop board shows the cards after round 8 next to the same driver's card now.
 
 Several of the newest boards (Pit stops, Team-mate qualifying gap, Data copy, the driver card boards and the race analysis boards) use real values read from the app on 2026 data (the Las Vegas Grand Prix and the season to 24 November) instead of the sample data used elsewhere (the Data copy board labels which of its example times are made up). Photos on the About boards are placeholders, while the driver card boards use the real licensed photos (credited on the back of each card).
 
