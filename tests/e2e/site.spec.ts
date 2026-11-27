@@ -754,3 +754,39 @@ test('the back of a card draws the position chart with its axis labels clear of 
   expect(labelRight).toBeLessThan(firstX);
   expect(errors).toEqual([]);
 });
+
+test.describe('Calendar month view', () => {
+  test.use({ timezoneId: 'UTC', locale: 'en-GB' });
+  test('the Month tab shows a session grid and the picked day, and the filters narrow it', async ({ page }) => {
+    const errors = await setUp(page);
+    await page.goto('#/calendar');
+    await page.getByRole('tab', { name: 'Month' }).click({ timeout: 40_000 });
+    // The test clock is Sunday 22 November, Las Vegas race day: the month opens on today.
+    const day = page.getByRole('region', { name: 'Picked day' });
+    await expect(day).toContainText('Sunday, 22 November 2026');
+    await expect(day).toContainText('Today');
+    await expect(day.locator('.cm-ev')).toContainText('Las Vegas Grand Prix');
+    await expect(day.locator('.cm-sess li')).toContainText(['Race']);
+    await expect(day).toContainText('Won by', { timeout: 40_000 });
+    await expect(page.locator('.cm-cell[aria-pressed="true"]')).toHaveCount(1);
+    await expect(page.locator('.cm-cell.today')).toHaveCount(1);
+    // Practice Friday has practice dots and no race marker.
+    const fri = page.locator('.cm-cell').filter({ has: page.locator('b', { hasText: /^20$/ }) });
+    await expect(fri.locator('.k-practice')).toHaveCount(1);
+    await expect(fri.locator('.k-race')).toHaveCount(0);
+    // The Race filter leaves race days only, and a day without one points to the next.
+    await page.getByRole('button', { name: /^Race\s*\d+$/ }).click();
+    await expect(page.locator('.cm-grid .k-practice')).toHaveCount(0);
+    await fri.click();
+    await expect(day).toContainText('No sessions');
+    await day.getByRole('button', { name: /Next up:.*Las Vegas/ }).click();
+    await expect(day).toContainText('Sunday, 22 November 2026');
+    // The month arrows turn the grid over, and Go to today comes back.
+    await page.getByRole('button', { name: 'Next month' }).click();
+    await expect(page.locator('.cm-mnav b')).toHaveText(/December 2026/i);
+    await page.getByRole('button', { name: 'Go to today' }).click();
+    await expect(page.locator('.cm-mnav b')).toHaveText(/November 2026/i);
+    await noSidewaysScroll(page);
+    expect(errors).toEqual([]);
+  });
+});
