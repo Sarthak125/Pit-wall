@@ -807,7 +807,7 @@ test.describe('Calendar month view', () => {
     await page.getByRole('tab', { name: 'Upcoming' }).click();
     await expect(page.locator('.cm-up-g').first()).toContainText('Qatar');
     await expect(page.locator('.cm-up-g')).toHaveCount(2);
-    await page.locator('.cm-up-g').last().getByRole('button', { name: /Race/ }).click();
+    await page.locator('.cm-up-g').last().locator('.cm-up-row', { hasText: 'Race' }).click();
     await expect(day).toContainText('Abu Dhabi Grand Prix');
     await noSidewaysScroll(page);
     expect(errors).toEqual([]);
@@ -825,7 +825,7 @@ test.describe('Calendar overnight sessions', () => {
     await expect(next.locator('.cb-sess li.race')).toContainText('Overnight');
     await page.getByRole('tab', { name: 'Month' }).click();
     await page.getByRole('tab', { name: 'Upcoming' }).click();
-    await expect(page.locator('.cm-up-g').first().getByRole('button', { name: /Race/ })).toContainText('Overnight');
+    await expect(page.locator('.cm-up-g').first().locator('.cm-up-row', { hasText: 'Race' })).toContainText('Overnight');
     expect(errors).toEqual([]);
   });
 });

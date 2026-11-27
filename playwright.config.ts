@@ -10,6 +10,9 @@ export default defineConfig({
   // Every test sets up its own page and recordings, so tests from one file can run side by side (and be split across CI machines).
   fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
+  // Most of a test's time is spent waiting on the app's request pacing, not the processor, so the 4-core CI machines
+  // run 4 at once (twice Playwright's default there).
+  workers: process.env.CI ? 4 : undefined,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: 'http://localhost:4173/',
