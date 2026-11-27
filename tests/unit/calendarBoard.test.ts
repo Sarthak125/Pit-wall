@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Race } from '../../src/api/jolpica';
-import { countdown, hasSprint, nextRaceIndex, weekendSessions } from '../../src/lib/calendarBoard';
+import { countdown, dayKey, hasSprint, monthGrid, nextRaceIndex, sessionKind, weekendSessions } from '../../src/lib/calendarBoard';
 
 const race = (round: string, date: string, time = '13:00:00Z', extra: Partial<Race> = {}): Race => ({
   season: '2026',
@@ -59,5 +59,18 @@ describe('weekendSessions', () => {
     expect(weekendSessions(r).map((s) => s.label)).toEqual(['Practice 1', 'Sprint Qualifying', 'Sprint', 'Qualifying', 'Race']);
     expect(hasSprint(r)).toBe(true);
     expect(hasSprint(race('3', '2026-03-22'))).toBe(false);
+  });
+});
+
+
+describe('month view helpers', () => {
+  it('sorts sessions into kinds', () => {
+    expect(['Practice 2', 'Sprint Qualifying', 'Sprint Shootout', 'Sprint', 'Qualifying', 'Race'].map(sessionKind)).toEqual(['practice', 'quali', 'quali', 'sprint', 'quali', 'race']);
+  });
+  it('lays out a month Monday first', () => {
+    const g = monthGrid(2026, 10); // November 2026 starts on a Sunday
+    expect(g.slice(0, 6)).toEqual(Array(6).fill(null));
+    expect(dayKey(g[6]!)).toBe('2026-11-01');
+    expect(g.length).toBe(36);
   });
 });

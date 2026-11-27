@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AddToCalendar } from '../components/AddToCalendar';
 import { CalendarBoard } from '../components/CalendarBoard';
 import { CalendarTimeline } from '../components/CalendarTimeline';
+import { CalendarMonth } from '../components/CalendarMonth';
 import { useSpoilers } from '../hooks/useSpoilers';
 import { SESSION_FIELDS, type Race } from '../api/jolpica';
 import { Empty, ErrorBox, Loading } from '../components/States';
@@ -23,7 +24,7 @@ export function Calendar() {
   const shown = schedule.data?.[0]?.season;
   const resultsByRound = new Map((results.data?.races ?? []).filter((r) => r.Results?.length && (!shown || r.season === shown)).map((r) => [r.round, r.Results!]));
   const hidden = (r: { season: string; round: string }) => season === 'current' && spoilers.raceHidden(r.season, r.round);
-  const [view, setView] = useState<'timeline' | 'table'>('timeline');
+  const [view, setView] = useState<'timeline' | 'month' | 'table'>('timeline');
   const now = useNow(60_000);
   const nextIdx = (schedule.data ?? []).findIndex((r) => (raceStart(r)?.getTime() ?? 0) + 3 * 3_600_000 > now);
 
@@ -45,10 +46,11 @@ export function Calendar() {
         {schedule.data?.length ? (
           <div className="tabs" role="tablist" aria-label="Season view">
             <button role="tab" className="tab" aria-selected={view === 'timeline'} onClick={() => setView('timeline')}>Timeline</button>
+            <button role="tab" className="tab" aria-selected={view === 'month'} onClick={() => setView('month')}>Month</button>
             <button role="tab" className="tab" aria-selected={view === 'table'} onClick={() => setView('table')}>Table</button>
           </div>
         ) : null}
-        {schedule.data?.length && view === 'timeline' ? <CalendarTimeline races={schedule.data} results={resultsByRound} hidden={hidden} now={now} /> : schedule.error ? <ErrorBox error={schedule.error} what="the calendar" /> : schedule.isLoading ? <Loading rows={12} /> : !schedule.data?.length ? <Empty>{season === 'current' ? 'The new season\'s calendar has not been published yet. Pick an earlier season above to see past calendars.' : 'No races published for this season.'}</Empty> : (
+        {schedule.data?.length && view === 'timeline' ? <CalendarTimeline races={schedule.data} results={resultsByRound} hidden={hidden} now={now} /> : schedule.data?.length && view === 'month' ? <CalendarMonth races={schedule.data} results={resultsByRound} hidden={hidden} now={now} /> : schedule.error ? <ErrorBox error={schedule.error} what="the calendar" /> : schedule.isLoading ? <Loading rows={12} /> : !schedule.data?.length ? <Empty>{season === 'current' ? 'The new season\'s calendar has not been published yet. Pick an earlier season above to see past calendars.' : 'No races published for this season.'}</Empty> : (
           <div className="scroll-x">
             <table className="tbl cal-tbl">
               <thead>

@@ -42,3 +42,46 @@ export function weekendSessions(r: Race): WeekendSession[] {
 
 /** Whether the weekend has a sprint. */
 export const hasSprint = (r: Race): boolean => !!(r.Sprint || r.SprintQualifying || r.SprintShootout);
+
+export type SessionKind = 'practice' | 'quali' | 'sprint' | 'race';
+
+/** The kind of a session by its label: Sprint Qualifying and Sprint Shootout count as qualifying. */
+export function sessionKind(label: string): SessionKind {
+  if (label === 'Race') return 'race';
+  if (/Qualifying|Shootout/.test(label)) return 'quali';
+  if (label === 'Sprint') return 'sprint';
+  return 'practice';
+}
+
+/** A calendar day in the device's time zone, as "2026-11-29". */
+export function dayKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export interface DaySession extends WeekendSession {
+  kind: SessionKind;
+  race: Race;
+}
+
+/** Every session of the season grouped by the local day it falls on, each day in time order. */
+export function sessionsByDay(races: Race[]): Map<string, DaySession[]> {
+  const out = new Map<string, DaySession[]>();
+  for (const race of races) {
+    for (const s of weekendSessions(race)) {
+      const k = dayKey(s.at);
+      const list = out.get(k) ?? [];
+      list.push({ ...s, kind: sessionKind(s.label), race });
+      out.set(k, list);
+    }
+  }
+  for (const list of out.values()) list.sort((a, b) => a.at.getTime() - b.at.getTime());
+  return out;
+}
+
+/** The days of a month laid out Monday first: leading nulls, then 1..n as local dates. */
+export function monthGrid(year: number, month: number): (Date | null)[] {
+  const first = new Date(year, month, 1);
+  const lead = (first.getDay() + 6) % 7;
+  const days = new Date(year, month + 1, 0).getDate();
+  return [...Array<null>(lead).fill(null), ...Array.from({ length: days }, (_, i) => new Date(year, month, i + 1))];
+}
