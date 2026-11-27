@@ -34,13 +34,18 @@ export function dismissAlert(id: number) {
   emit();
 }
 
-function push(a: Omit<AppAlert, 'id'>) {
+/** Shows an in-app alert and, when allowed, a system notification. `notify` forces the system one (session reminders). */
+export function pushAlert(a: Omit<AppAlert, 'id'>, notify = false) {
+  push(a, notify);
+}
+
+function push(a: Omit<AppAlert, 'id'>, notify = false) {
   const alert = { ...a, id: nextId++ };
   alerts = [...alerts, alert].slice(-4);
   emit();
   setTimeout(() => dismissAlert(alert.id), 9000);
   const s = getSettings();
-  if (s.systemNotifications && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+  if ((s.systemNotifications || notify) && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
     try {
       new Notification(a.title, { body: a.body, tag: `pitwall-${alert.id}` });
     } catch {

@@ -7,6 +7,7 @@ import { driverHref, href, raceHref, teamHref } from '../lib/router';
 import { teamColour } from '../lib/teams';
 import { useSettings } from '../lib/settings';
 import { MyFinish } from './MyFinish';
+import { RemindButton } from './RemindButton';
 
 export interface BoardProps {
   races: Race[];
@@ -93,7 +94,7 @@ export function CalendarBoard({ races, results, hidden, now, loading, champions 
               {sessions.map((s) => (
                 <li key={s.label} className={`${s.label === 'Race' ? 'race' : ''}${s.at.getTime() < now ? ' done' : ''}`}>
                   <span>{s.label}</span>
-                  <span className="cb-when">{isOvernight(s.at) && <Overnight />}<span className="mono">{fmtWeekdayDayTime(s.at)}</span></span>
+                  <span className="cb-when">{isOvernight(s.at) && <Overnight />}<span className="mono">{fmtWeekdayDayTime(s.at)}</span><RemindButton race={next} session={s.label} at={s.at} now={now} /></span>
                 </li>
               ))}
             </ul>
@@ -110,7 +111,7 @@ export function CalendarBoard({ races, results, hidden, now, loading, champions 
             <div className="cb-sub">{then.Circuit.circuitName} · {fmtDateRange(weekendSessions(then)[0]?.at ?? new Date(then.date), raceStart(then) ?? new Date(then.date))}</div>
             <ul className="cb-sess">
               {weekendSessions(then).map((s) => (
-                <li key={s.label} className={s.label === 'Race' ? 'race' : undefined}><span>{s.label}</span><span className="cb-when">{isOvernight(s.at) && <Overnight />}<span className="mono">{fmtWeekdayDayTime(s.at)}</span></span></li>
+                <li key={s.label} className={s.label === 'Race' ? 'race' : undefined}><span>{s.label}</span><span className="cb-when">{isOvernight(s.at) && <Overnight />}<span className="mono">{fmtWeekdayDayTime(s.at)}</span><RemindButton race={then} session={s.label} at={s.at} now={now} /></span></li>
               ))}
             </ul>
           </section>

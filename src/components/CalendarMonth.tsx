@@ -6,6 +6,7 @@ import { driverHref, raceHref } from '../lib/router';
 import { teamColour } from '../lib/teams';
 import { useSettings } from '../lib/settings';
 import { MyFinish } from './MyFinish';
+import { RemindButton } from './RemindButton';
 
 const KINDS: { kind: SessionKind; label: string }[] = [
   { kind: 'practice', label: 'Practice' },
@@ -96,7 +97,7 @@ export function CalendarMonth({ races, results, hidden, now }: BoardProps) {
                   {day.map((s) => (
                     <li key={s.label} className={s.at.getTime() < now ? 'done' : undefined}>
                       <span><i className={`cm-dot k-${s.kind}`} aria-hidden="true" />{s.label}</span>
-                      <span className="cm-time">{isOvernight(s.at) && <Overnight />}<span className="mono">{fmtShortClock(s.at)}</span></span>
+                      <span className="cm-time">{isOvernight(s.at) && <Overnight />}<span className="mono">{fmtShortClock(s.at)}</span><RemindButton race={race} session={s.label} at={s.at} now={now} /></span>
                     </li>
                   ))}
                 </ul>
@@ -203,11 +204,12 @@ export function CalendarMonth({ races, results, hidden, now }: BoardProps) {
                     <div className="cm-kicker">Round {g.race.round} · {g.race.raceName.replace(' Grand Prix', ' GP')}</div>
                     <ul>
                       {g.list.map((s) => (
-                        <li key={s.label}>
+                        <li key={s.label} className="cm-up-li">
                           <button className="cm-up-row" aria-pressed={dayKey(s.at) === sel} onClick={() => pick(dayKey(s.at))}>
                             <span><i className={`cm-dot k-${s.kind}`} aria-hidden="true" />{s.label}</span>
                             <span className="cm-time">{isOvernight(s.at) && <Overnight />}<span className="mono muted">{shortDay.format(s.at)} · {fmtShortClock(s.at)}</span></span>
                           </button>
+                          <RemindButton race={g.race} session={s.label} at={s.at} now={now} />
                         </li>
                       ))}
                     </ul>

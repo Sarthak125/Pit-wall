@@ -2,6 +2,7 @@ import { OffseasonNote } from '../components/OffseasonNote';
 import { ChampionsBanner } from '../components/Champions';
 import { ProvisionalNote } from '../components/ProvisionalNote';
 import { RainWatch } from '../components/RainWatch';
+import { RemindButton } from '../components/RemindButton';
 import { AddToCalendar } from '../components/AddToCalendar';
 import { SpoilerCover } from '../components/SpoilerCover';
 import { useSpoilers } from '../hooks/useSpoilers';
@@ -428,6 +429,7 @@ function NextRace({ race, total }: { race: Race; total: number }) {
                     <span className="when-time">{fmtShortClock(s.start)}</span>
                   </div>
               <span className={`pill ${tone}`}>{status}</span>
+              <RemindButton race={race} session={s.label} at={s.start} now={now} />
             </div>
           );
         })}

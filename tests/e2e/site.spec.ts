@@ -877,3 +877,27 @@ test('in spoiler-free mode the season summary waits until the final race is reve
   await expect(wrap.locator('.cb-wbars')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test('a session reminder can be set from the Calendar and goes off 15 minutes before', async ({ page }) => {
+  const errors = await setUp(page);
+  await page.goto('#/calendar');
+  const next = page.getByRole('region', { name: 'Next race' });
+  await expect(next).toContainText('Qatar Grand Prix', { timeout: 40_000 });
+  const bell = next.getByRole('button', { name: /Remind me 15 minutes before Qualifying, Qatar Grand Prix/ });
+  await bell.click();
+  await expect(next.getByRole('button', { name: /Reminder on for Qualifying, Qatar Grand Prix/ })).toHaveAttribute('aria-pressed', 'true');
+  // Kept on this device.
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('pitwall:reminders') ?? '[]'));
+  expect(saved).toHaveLength(1);
+  // The same reminder shows as on in the Month tab's Upcoming list.
+  await page.getByRole('tab', { name: 'Month' }).click();
+  await page.getByRole('tab', { name: 'Upcoming' }).click();
+  await expect(page.locator('.cm-up-li').filter({ hasText: 'Qualifying' }).first().locator('.remind')).toHaveAttribute('aria-pressed', 'true');
+  // 15 minutes before qualifying the reminder goes off inside the app, and is then cleared.
+  const at = saved[0].at as number;
+  await page.clock.setSystemTime(new Date(at - 15 * 60_000 + 1000));
+  await page.clock.runFor(25_000);
+  await expect(page.locator('.toasts')).toContainText(/Qualifying starts in 1[45] minutes/);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('pitwall:reminders') ?? '[]'))).toEqual([]);
+  expect(errors).toEqual([]);
+});

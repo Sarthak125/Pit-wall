@@ -6,6 +6,7 @@ import { useNow } from './hooks/usePoll';
 import { useLatestSessions } from './hooks/useSeason';
 import { Dashboard } from './pages/Dashboard';
 import { Toasts } from './components/Toasts';
+import { startReminders } from './lib/reminders';
 import { UpdateBanner } from './components/UpdateBanner';
 import { SlowNotice } from './components/SlowNotice';
 import { useAlertWatcher } from './hooks/useFavourite';
@@ -36,6 +37,9 @@ export default function App() {
   useAlertWatcher(route !== 'live' && route !== 'driver');
   // Charts read some colours (such as the hard tyre) when drawn, so the page is redrawn when the theme changes.
   const theme = useResolvedTheme();
+
+  // Session reminders fire from here, whichever page is open.
+  useEffect(() => startReminders(), []);
 
   useEffect(() => {
     document.title = `${TITLES[route]} · Pit Wall`;
