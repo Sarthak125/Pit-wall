@@ -245,7 +245,7 @@ function DriverCell({ r }: { r: { Driver: Result['Driver']; Constructor: Result[
       ) : (
         <span style={{ fontWeight: 600 }}>{r.Driver.givenName} {r.Driver.familyName}</span>
       )}
-      {fav?.code === r.Driver.code && <span className="fav-star" aria-label="Favourite">★</span>}
+      {fav?.code === r.Driver.code && <span className="fav-star" role="img" aria-label="Favourite">★</span>}
     </div>
   );
 }

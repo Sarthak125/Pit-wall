@@ -74,7 +74,7 @@ export function Standings() {
                             ) : (
                               <span style={{ fontWeight: 600 }}>{d.Driver.givenName} {d.Driver.familyName}</span>
                             )}
-                            {fav?.code === d.Driver.code && <span className="fav-star" aria-label="Favourite"><StarIcon filled size={14} /></span>}
+                            {fav?.code === d.Driver.code && <span className="fav-star" role="img" aria-label="Favourite"><StarIcon filled size={14} /></span>}
                             {titles?.driver?.id === d.Driver.driverId && <ChampionTag decision={titles.driver} />}
                             <span className="faint mono hide-sm" style={{ fontSize: 12 }}>{d.Driver.permanentNumber}</span>
                           </div>

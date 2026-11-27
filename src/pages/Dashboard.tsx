@@ -241,7 +241,7 @@ export function Dashboard() {
                                 {d.Driver.givenName} {d.Driver.familyName}
                               </span>
                             )}
-                            {fav?.code === d.Driver.code && <span className="fav-star" aria-label="Favourite"><StarIcon filled size={14} /></span>}
+                            {fav?.code === d.Driver.code && <span className="fav-star" role="img" aria-label="Favourite"><StarIcon filled size={14} /></span>}
                           </div>
                         </td>
                         <td className="muted">{team ? <a className="name-link" style={{ fontWeight: 400 }} href={teamHref(team.constructorId)}>{team.name}</a> : null}</td>

@@ -73,7 +73,7 @@ export function RaceStory({ race, results, sprint }: { race: Race; results: Resu
                 <div className="story-title">
                   <span className={`pill tone-${k.tone}`}>{k.label}</span>
                   <span>{e.title}</span>
-                  {mine && <span className="fav-star" aria-label="Favourite">★</span>}
+                  {mine && <span className="fav-star" role="img" aria-label="Favourite">★</span>}
                 </div>
                 {e.detail && <div className="muted story-detail">{e.detail}</div>}
               </div>

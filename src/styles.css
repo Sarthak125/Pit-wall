@@ -13,6 +13,7 @@
   --green: #4ade80;
   --amber: #facc15;
   --purple: #c084fc;
+  --on-purple: #1a0b2e;
   --red-soft: #ff8a8a;
   --blue-soft: #8ab8ff;
   /* Timing sector colours, used everywhere a sector is shown: red, light blue, yellow.
@@ -64,11 +65,12 @@
   --line-strong: #cfd4da;
   --text: #16191d;
   --muted: #555e69;
-  --faint: #6b7480;
+  --faint: #626b76;
   --accent: #d00500;
-  --green: #15803d;
+  --green: #13753a;
   --amber: #946200;
   --purple: #7e22ce;
+  --on-purple: #ffffff;
   --red-soft: #b91c1c;
   --blue-soft: #1d4ed8;
   --violet-soft: #6d28d9;
@@ -109,11 +111,12 @@
     --line-strong: #cfd4da;
     --text: #16191d;
     --muted: #555e69;
-    --faint: #6b7480;
+    --faint: #626b76;
     --accent: #d00500;
-    --green: #15803d;
+    --green: #13753a;
     --amber: #946200;
     --purple: #7e22ce;
+    --on-purple: #ffffff;
     --red-soft: #b91c1c;
     --blue-soft: #1d4ed8;
     --violet-soft: #6d28d9;
@@ -252,7 +255,7 @@ button, select, input { font: inherit; color: inherit; }
 /* Calendar strip */
 .strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; }
 .round { flex: 0 0 132px; padding: 10px 12px; border-radius: 10px; background: var(--inset); border: 1px solid var(--line-strong); }
-.round.done { border-color: var(--line); opacity: 0.75; }
+.round.done { border-color: var(--line); background: transparent; }
 .round.next { background: var(--red-bg-2); border-color: var(--accent); opacity: 1; }
 
 /* Live */
@@ -536,7 +539,7 @@ tr.in-pit td { background: rgba(225, 6, 0, 0.08); }
 .rcard-when { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
 .rcard-lap { font-family: var(--mono); font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--inset); border: 1px solid var(--line-strong); color: var(--text); }
 .rcard-time { margin-left: auto; font-size: 11px; color: var(--text); }
-.lap-pill.best { background: var(--purple); color: #1a0b2e; font-weight: 700; }
+.lap-pill.best { background: var(--purple); color: var(--on-purple); font-weight: 700; }
 .metric .s { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .metric .v .u { font-size: 13px; color: var(--muted); }
 .wind-dir { font-size: 14px; color: var(--muted); }

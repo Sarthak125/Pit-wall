@@ -59,7 +59,7 @@ export function Shell({ route, live, children }: { route: Route; live: boolean; 
         </a>
         <nav className="topnav" aria-label="Main">
           {NAV.map((n) => (
-            <a key={n.route} href={href(n.route)} aria-current={active === n.route ? 'page' : undefined}>
+            <a key={n.route} href={href(n.route)} aria-current={active === n.route ? 'page' : undefined} aria-label={n.route === 'live' && live ? `${n.label}, live now` : n.label}>
               {n.route === 'driver' && <span className="fav-star"><StarIcon filled size={14} /></span>}
               {n.label}
               {n.route === 'live' && live && <span className={`live-dot on`} aria-label="Session live" />}
@@ -69,7 +69,7 @@ export function Shell({ route, live, children }: { route: Route; live: boolean; 
         <div className="topbar-tools">
           <label className="field">
             <span className="field-label">Season</span>
-            <select className="select" value={season} onChange={(e) => updateSettings({ season: e.target.value })}>
+            <select className="select" aria-label="Season" value={season} onChange={(e) => updateSettings({ season: e.target.value })}>
               {seasons.map((s) => (
                 <option key={s} value={s}>
                   {s === 'current' ? `${year} (current)` : s}
@@ -98,7 +98,7 @@ export function Shell({ route, live, children }: { route: Route; live: boolean; 
 
       <nav className="bottomnav" aria-label="Main">
         {NAV.map((n) => (
-          <a key={n.route} href={href(n.route)} aria-current={active === n.route ? 'page' : undefined}>
+          <a key={n.route} href={href(n.route)} aria-current={active === n.route ? 'page' : undefined} aria-label={n.route === 'live' && live ? `${n.label}, live now` : n.label}>
             <n.icon />
             <span className="bn-label">
               <span className={n.short ? 'bn-long' : undefined}>{n.label}</span>

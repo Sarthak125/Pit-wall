@@ -72,7 +72,7 @@ export function RacePace({ race, results, sprint }: { race: Race; results: Resul
                   <div className="who">
                     <span className="team-bar" style={{ background: teamColour(p.r.Constructor.constructorId) }} />
                     <span style={{ fontWeight: 600 }}>{p.r.Driver.code ?? p.r.Driver.familyName}</span>
-                    {p.r.Driver.code === fav?.code && <span className="fav-star" aria-label="Favourite">★</span>}
+                    {p.r.Driver.code === fav?.code && <span className="fav-star" role="img" aria-label="Favourite">★</span>}
                   </div>
                 </td>
                 <td className="r mono">{/^\d+$/.test(p.r.positionText) ? `P${p.r.positionText}` : p.r.status}</td>

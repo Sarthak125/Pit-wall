@@ -490,7 +490,7 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitL
                     <span className="team-bar" style={{ height: 20, background: r.colour }} />
                     <a className="code name-link" style={{ fontWeight: 700 }} href={driverHref(r.driver.name_acronym)} title={`${r.driver.name_acronym}: full stats`}>{r.driver.name_acronym}</a>
                     <span className="faint" style={{ fontSize: 11 }}>{r.driver.driver_number}</span>
-                    {favNum === r.driver.driver_number && <span className="fav-star" aria-label="Favourite"><StarIcon filled size={14} /></span>}
+                    {favNum === r.driver.driver_number && <span className="fav-star" role="img" aria-label="Favourite"><StarIcon filled size={14} /></span>}
                   </div>
                 </td>
                 <td className="r mono">{gap}</td>

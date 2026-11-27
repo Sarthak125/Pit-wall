@@ -81,7 +81,7 @@ export function RacePitStops({ race, results, sprint }: { race: Race; results: R
                     <div className="who">
                       <span className="team-bar" style={{ background: teamColour(r.Constructor.constructorId) }} />
                       <span style={{ fontWeight: 600 }}>{r.Driver.code ?? r.Driver.familyName}</span>
-                      {r.Driver.code === fav?.code && <span className="fav-star" aria-label="Favourite">★</span>}
+                      {r.Driver.code === fav?.code && <span className="fav-star" role="img" aria-label="Favourite">★</span>}
                     </div>
                   </td>
                   <td className="r mono">{x.stop.lap}</td>
