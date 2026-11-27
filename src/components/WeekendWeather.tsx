@@ -2,9 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { describeWeather, getWeekendWeather } from '../api/weather';
 import { SESSION_FIELDS, type Race } from '../api/jolpica';
 import { raceStart, toDate } from '../lib/format';
+import { weekendDays } from '../lib/weatherKey';
 
 const DAY = 86_400_000;
 const iso = (t: number) => new Date(t).toISOString().slice(0, 10);
+const copyTime = new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: '2-digit', minute: '2-digit' });
 const dayFmt = new Intl.DateTimeFormat(undefined, { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'UTC' });
 
 /** Weather for each day of a race weekend: a forecast before it, the recorded weather after it. */
@@ -24,7 +26,10 @@ export function WeekendWeather({ race, now }: { race: Race; now: number }) {
     enabled,
     staleTime: 60 * 60_000,
     retry: false,
-    queryFn: () => getWeekendWeather(loc.lat!, loc.long!, iso(first - DAY), iso(last + DAY)),
+    queryFn: () => {
+      const { start, end } = weekendDays([first, last]);
+      return getWeekendWeather(loc.lat!, loc.long!, start, end, { season: race.season, round: race.round });
+    },
   });
 
   if (!loc.lat || !loc.long || !sessions.length) return null;
@@ -46,6 +51,11 @@ export function WeekendWeather({ race, now }: { race: Race; now: number }) {
           <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
             {past ? 'Recorded weather at the circuit' : 'Forecast for the circuit'} · days in local track time · Open-Meteo
           </div>
+          {wx.data?.copiedAt && (
+            <div className="muted" style={{ fontSize: 12, marginTop: 2 }} role="status">
+              Open-Meteo is not answering, so this is the forecast Pit Wall saved at {copyTime.format(new Date(wx.data.copiedAt))}.
+            </div>
+          )}
         </div>
       </div>
       {tooFar ? (
@@ -53,7 +63,7 @@ export function WeekendWeather({ race, now }: { race: Race; now: number }) {
       ) : wx.isLoading ? (
         <div className="empty">Loading the weather…</div>
       ) : wx.error || !wx.data ? (
-        <div className="empty">The weather service is not answering right now. Try again later.</div>
+        <div className="empty">The weather service is not answering right now, and Pit Wall has no saved forecast for this weekend. Try again later.</div>
       ) : (
         <div className="wx-days">
           {[...byDay.entries()].map(([day, labels]) => {

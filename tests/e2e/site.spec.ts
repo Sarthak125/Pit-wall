@@ -903,3 +903,29 @@ test('a session reminder can be set from the Calendar and goes off 15 minutes be
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('pitwall:reminders') ?? '[]'))).toEqual([]);
   expect(errors).toEqual([]);
 });
+
+test("when Open-Meteo refuses, the weekend forecast comes from Pit Wall's saved copy", async ({ page }) => {
+  const errors = await setUp(page);
+  // Open-Meteo's daily cap for the network address, as a shared mobile or office connection can reach.
+  const asked: string[] = [];
+  await page.route(/api\.open-meteo\.com\/v1\/forecast\?.*daily=/, (r) => {
+    asked.push(r.request().url());
+    return r.fulfill({ status: 429, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"error":true,"reason":"Daily API request limit exceeded. Please try again tomorrow."}' });
+  });
+  await page.route('**/data/weather/2026-22.json', (r) =>
+    r.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        url: asked[0],
+        fetchedAt: '2026-11-22T06:00:00Z',
+        data: { utc_offset_seconds: 10800, daily: { time: ['2026-11-26', '2026-11-27', '2026-11-28', '2026-11-29', '2026-11-30'], weather_code: [0, 1, 2, 3, 0], temperature_2m_max: [29, 28, 27, 28, 29], temperature_2m_min: [20, 20, 19, 20, 21], precipitation_sum: [0, 0, 0, 0, 0], wind_speed_10m_max: [12, 14, 16, 12, 10], precipitation_probability_max: [0, 0, 5, 0, 0] } },
+      }),
+    }),
+  );
+  await page.goto('#/');
+  const card = page.locator('section[aria-labelledby="weather"]');
+  await expect(card).toContainText('this is the forecast Pit Wall saved', { timeout: 40_000 });
+  await expect(card.locator('.wx-day').first()).toContainText('°');
+  expect(asked.length).toBeGreaterThan(0);
+  expect(errors).toEqual([]);
+});

@@ -94,6 +94,13 @@ jobs:
         continue-on-error: true
         timeout-minutes: 10
         run: node scripts/mirror-photos.mjs dist/data/photos https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/ dist/data/jolpica
+      # The weekend forecast for the race weekend under way and the next one, used by the app when Open-Meteo does not
+      # answer (it caps requests per network address per day). Keeps the live site's copy when Open-Meteo refuses.
+      # This step never stops a deploy either.
+      - name: Copy weekend forecast
+        continue-on-error: true
+        timeout-minutes: 3
+        run: node scripts/mirror-weather.mjs dist/data/weather dist/data/jolpica https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist

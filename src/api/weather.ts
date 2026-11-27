@@ -4,6 +4,7 @@
  * Docs: https://open-meteo.com/en/docs
  */
 import { fetchJson, RateLimiter } from './http';
+import { FORECAST_FIELDS, forecastUrl, weatherFile } from '../lib/weatherKey';
 
 const limiter = new RateLimiter(2, 20);
 
@@ -12,6 +13,8 @@ export interface WeatherDays {
   /** Local date (YYYY-MM-DD) to that day's weather. */
   days: Map<string, DayWeather>;
   kind: 'forecast' | 'archive';
+  /** Set when Open-Meteo did not answer and Pit Wall's saved copy was used: when that copy was made. */
+  copiedAt?: string;
 }
 
 export interface DayWeather {
@@ -30,14 +33,38 @@ interface Resp {
   daily: Record<string, (number | null)[]> & { time: string[] };
 }
 
-/** Daily weather between two dates (YYYY-MM-DD, local to the circuit). */
-export async function getWeekendWeather(lat: string, long: string, start: string, end: string): Promise<WeatherDays> {
+const COPY = `${import.meta.env.BASE_URL}data/weather`;
+const copyLimiter = new RateLimiter(10, 300);
+
+interface Copy {
+  url: string;
+  fetchedAt: string;
+  data: Resp;
+}
+
+/**
+ * Daily weather between two dates (YYYY-MM-DD, local to the circuit). Forecasts come from Open-Meteo; when it does not
+ * answer (it caps requests per network address per day, which a shared mobile or office connection can reach), the
+ * forecast Pit Wall saved with the site is used instead (scripts/mirror-weather.mjs), if it has one for this weekend.
+ */
+export async function getWeekendWeather(lat: string, long: string, start: string, end: string, weekend?: { season: string; round: string }): Promise<WeatherDays> {
   // The forecast API also covers the last ~3 months; anything older needs the archive.
   const old = Date.parse(end) < Date.now() - 80 * 86_400_000;
-  const base = old ? 'https://archive-api.open-meteo.com/v1/archive' : 'https://api.open-meteo.com/v1/forecast';
-  const fields = ['weather_code', 'temperature_2m_max', 'temperature_2m_min', 'precipitation_sum', 'wind_speed_10m_max', ...(old ? [] : ['precipitation_probability_max'])];
-  const url = `${base}?latitude=${lat}&longitude=${long}&daily=${fields.join(',')}&timezone=auto&start_date=${start}&end_date=${end}`;
-  const data = await fetchJson<Resp>(url, { limiter, retries: 0, cacheTtlMs: old ? 7 * 86_400_000 : 60 * 60_000 });
+  const url = old
+    ? `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${long}&daily=${FORECAST_FIELDS.filter((f) => f !== 'precipitation_probability_max').join(',')}&timezone=auto&start_date=${start}&end_date=${end}`
+    : forecastUrl(lat, long, start, end);
+  let data: Resp;
+  let copiedAt: string | undefined;
+  try {
+    data = await fetchJson<Resp>(url, { limiter, retries: 1, cacheTtlMs: old ? 7 * 86_400_000 : 60 * 60_000 });
+  } catch (err) {
+    if (old || !weekend) throw err;
+    const copy = await fetchJson<Copy>(`${COPY}/${weatherFile(weekend.season, weekend.round)}`, { limiter: copyLimiter, retries: 0 }).catch(() => null);
+    // Only a copy of this exact request will do (the weekend's dates can move).
+    if (!copy || copy.url !== url || !copy.data?.daily) throw err;
+    data = copy.data;
+    copiedAt = copy.fetchedAt;
+  }
   const d = data.daily;
   const days = new Map<string, DayWeather>();
   d.time.forEach((t, i) => {
@@ -50,7 +77,7 @@ export async function getWeekendWeather(lat: string, long: string, start: string
       windMax: d.wind_speed_10m_max?.[i] ?? null,
     });
   });
-  return { utcOffsetSeconds: data.utc_offset_seconds, days, kind: old ? 'archive' : 'forecast' };
+  return { utcOffsetSeconds: data.utc_offset_seconds, days, kind: old ? 'archive' : 'forecast', copiedAt };
 }
 
 /** WMO weather codes, as Open-Meteo reports them. */
