@@ -946,3 +946,23 @@ test('one button sets reminders for every session of the next weekend, and turns
   await expect(page.locator('.sessions .remind[aria-pressed="true"]')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test('a forecast copy made from MET Norway is credited to it, with rain in mm instead of a chance', async ({ page }) => {
+  const errors = await setUp(page);
+  const asked: string[] = [];
+  await page.route(/api\.open-meteo\.com\/v1\/forecast\?.*daily=/, (r) => {
+    asked.push(r.request().url());
+    return r.fulfill({ status: 429, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: '{"error":true}' });
+  });
+  // The copy the job made from MET Norway on 27 Nov 2026, matched to the request this page makes.
+  const copy = JSON.parse(readFileSync('tests/fixtures/weather-copy-metno-2026-22.json', 'utf8'));
+  await page.route('**/data/weather/2026-22.json', (r) => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ ...copy, url: asked[0] }) }));
+  await page.goto('#/');
+  const card = page.locator('section[aria-labelledby="weather"]');
+  await expect(card).toContainText('from MET Norway', { timeout: 40_000 });
+  await expect(card.getByRole('link', { name: 'MET Norway' })).toHaveAttribute('href', /met\.no/);
+  await expect(card.getByRole('link', { name: 'CC BY 4.0' })).toBeVisible();
+  await expect(card.locator('.wx-day').filter({ hasText: 'Race' })).toContainText(/Rain \d+\.\d mm/);
+  await expect(card).not.toContainText('Rain chance');
+  expect(errors).toEqual([]);
+});

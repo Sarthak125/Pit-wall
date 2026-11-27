@@ -49,11 +49,19 @@ export function WeekendWeather({ race, now }: { race: Race; now: number }) {
         <div>
           <h2 className="h2" id="weather">{past ? 'Weekend weather' : 'Weekend forecast'}</h2>
           <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
-            {past ? 'Recorded weather at the circuit' : 'Forecast for the circuit'} · days in local track time · Open-Meteo
+            {past ? 'Recorded weather at the circuit' : 'Forecast for the circuit'} · days in local track time ·{' '}
+            {wx.data?.copySource === 'metno' ? (
+              <>
+                <a className="name-link" style={{ fontWeight: 400 }} href="https://www.met.no/en" target="_blank" rel="noreferrer">MET Norway</a> (<a className="name-link" style={{ fontWeight: 400 }} href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>)
+              </>
+            ) : (
+              'Open-Meteo'
+            )}
           </div>
           {wx.data?.copiedAt && (
             <div className="muted" style={{ fontSize: 12, marginTop: 2 }} role="status">
-              Open-Meteo is not answering, so this is the forecast Pit Wall saved at {copyTime.format(new Date(wx.data.copiedAt))}.
+              Open-Meteo is not answering, so this is the forecast Pit Wall saved at {copyTime.format(new Date(wx.data.copiedAt))}
+              {wx.data.copySource === 'metno' ? ', from MET Norway, which has no chance of rain here, so expected rain is shown instead.' : '.'}
             </div>
           )}
         </div>

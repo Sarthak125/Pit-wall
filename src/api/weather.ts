@@ -15,6 +15,8 @@ export interface WeatherDays {
   kind: 'forecast' | 'archive';
   /** Set when Open-Meteo did not answer and Pit Wall's saved copy was used: when that copy was made. */
   copiedAt?: string;
+  /** Who made that saved forecast. */
+  copySource?: 'open-meteo' | 'metno';
 }
 
 export interface DayWeather {
@@ -39,6 +41,8 @@ const copyLimiter = new RateLimiter(10, 300);
 interface Copy {
   url: string;
   fetchedAt: string;
+  /** Where the job got it: Open-Meteo, or MET Norway when Open-Meteo refused the job too. Older copies have none. */
+  source?: 'open-meteo' | 'metno';
   data: Resp;
 }
 
@@ -55,6 +59,7 @@ export async function getWeekendWeather(lat: string, long: string, start: string
     : forecastUrl(lat, long, start, end);
   let data: Resp;
   let copiedAt: string | undefined;
+  let copySource: WeatherDays['copySource'];
   try {
     data = await fetchJson<Resp>(url, { limiter, retries: 1, cacheTtlMs: old ? 7 * 86_400_000 : 60 * 60_000 });
   } catch (err) {
@@ -64,6 +69,7 @@ export async function getWeekendWeather(lat: string, long: string, start: string
     if (!copy || copy.url !== url || !copy.data?.daily) throw err;
     data = copy.data;
     copiedAt = copy.fetchedAt;
+    copySource = copy.source === 'metno' ? 'metno' : 'open-meteo';
   }
   const d = data.daily;
   const days = new Map<string, DayWeather>();
@@ -77,7 +83,7 @@ export async function getWeekendWeather(lat: string, long: string, start: string
       windMax: d.wind_speed_10m_max?.[i] ?? null,
     });
   });
-  return { utcOffsetSeconds: data.utc_offset_seconds, days, kind: old ? 'archive' : 'forecast', copiedAt };
+  return { utcOffsetSeconds: data.utc_offset_seconds, days, kind: old ? 'archive' : 'forecast', copiedAt, copySource };
 }
 
 /** WMO weather codes, as Open-Meteo reports them. */

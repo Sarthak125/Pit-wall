@@ -6,8 +6,10 @@
  *
  *   node scripts/mirror-weather.mjs <output folder> [Jolpica copy folder] [live site URL]
  *
- * When Open-Meteo refuses, the forecast already on the live site for that weekend is kept, so a failed run never
- * removes a saved copy.
+ * When Open-Meteo refuses, the forecast comes from MET Norway instead (api.met.no, CC BY 4.0), turned into the same
+ * daily shape. MET Norway asks browsers not to call it directly, so only this job does, identifying itself as its
+ * terms require. When both refuse, the forecast already on the live site for that weekend is kept, so a failed run
+ * never removes a saved copy.
  *
  * The calendar comes from the Jolpica copy made just before. Open-Meteo's data is free for non-commercial use with
  * credit (CC BY 4.0); the app credits it on the forecast card. Never stops a deploy.
@@ -16,6 +18,9 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { mirrorKey } from '../src/lib/mirrorKey.ts';
 import { forecastUrl, weatherFile, weekendDays } from '../src/lib/weatherKey.ts';
+import { CIRCUIT_TZ, metnoToDaily, metnoUrl } from '../src/lib/metno.ts';
+
+const USER_AGENT = 'PitWall/1.0 (https://github.com/Sarthak125/Pit-wall; fan project, non-commercial)';
 
 const OUT = process.argv[2] ?? 'dist/data/weather';
 const JOLPICA = process.argv[3] ?? 'dist/data/jolpica';
@@ -39,6 +44,18 @@ export function weekendsToSave(races, now) {
     const last = Math.max(...t);
     return last + DAY > now && first - now <= 15 * DAY;
   });
+}
+
+/** The weekend from MET Norway, in Open-Meteo's daily shape (only for circuits whose time zone Pit Wall knows). */
+async function fromMetno(race, start, end) {
+  const tz = CIRCUIT_TZ[race.Circuit.circuitId];
+  if (!tz) throw new Error(`no time zone known for circuit ${race.Circuit.circuitId}`);
+  const res = await fetch(metnoUrl(race.Circuit.Location.lat, race.Circuit.Location.long), { headers: { 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(20_000) });
+  if (!res.ok) throw new Error(`${res.status}`);
+  const body = await res.json();
+  const data = metnoToDaily(body?.properties?.timeseries ?? [], tz, start, end);
+  if (!data.daily.time.length) throw new Error('no days in range');
+  return data;
 }
 
 /** Copies the live site's saved forecast for this weekend into the new build, if it is for the same request. */
@@ -71,17 +88,27 @@ async function main() {
   for (const race of weekendsToSave(races, now)) {
     const { start, end } = weekendDays(sessionTimes(race));
     const url = forecastUrl(race.Circuit.Location.lat, race.Circuit.Location.long, start, end);
+    const file = join(OUT, weatherFile(race.season, race.round));
     try {
-      const res = await fetch(url, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(20_000) });
+      const res = await fetch(url, { headers: { Accept: 'application/json', 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(20_000) });
       if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 120)}`);
       const data = await res.json();
       if (!data?.daily?.time?.length) throw new Error('no daily data');
-      writeFileSync(join(OUT, weatherFile(race.season, race.round)), JSON.stringify({ url, fetchedAt: new Date(now).toISOString(), data }));
+      writeFileSync(file, JSON.stringify({ url, fetchedAt: new Date(now).toISOString(), source: 'open-meteo', data }));
       saved++;
-      console.log(`Saved the forecast for ${race.season} round ${race.round} (${race.raceName}), ${start} to ${end}.`);
+      console.log(`Saved the Open-Meteo forecast for ${race.season} round ${race.round} (${race.raceName}), ${start} to ${end}.`);
+      continue;
+    } catch (err) {
+      console.log(`Open-Meteo refused the forecast for ${race.raceName}: ${err.message}.`);
+    }
+    try {
+      const data = await fromMetno(race, start, end);
+      writeFileSync(file, JSON.stringify({ url, fetchedAt: new Date(now).toISOString(), source: 'metno', data }));
+      saved++;
+      console.log(`Saved the MET Norway forecast for ${race.season} round ${race.round} (${race.raceName}), ${data.daily.time.length} days.`);
     } catch (err) {
       const kept = await keepPrevious(race, url);
-      console.log(`Could not fetch the forecast for ${race.raceName}: ${err.message}.${kept ? ` Kept the copy saved at ${kept}.` : ''}`);
+      console.log(`MET Norway did not give a forecast for ${race.raceName} either: ${err.message}.${kept ? ` Kept the copy saved at ${kept}.` : ''}`);
     }
   }
   if (!saved) console.log('No forecast saved this time.');
