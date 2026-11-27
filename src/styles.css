@@ -1169,3 +1169,26 @@ html { zoom: 1.1; }
 .cm-leg { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; padding: 8px 10px; border-radius: 8px; background: var(--card); font-size: 12px; color: var(--muted); }
 .cm-today { width: 100%; margin-top: 10px; }
 @media (max-width: 860px) { .cm-wrap { grid-template-columns: 1fr; } .cm-cal { order: -1; } }
+
+/* Calendar: overnight tag, and the Week and Upcoming views of the Month tab */
+.night { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--text-2); background: var(--raised); border: 1px solid var(--line-strong); border-radius: 999px; padding: 1px 7px; white-space: nowrap; font-family: inherit; }
+.cm-time, .cb-when { display: inline-flex; align-items: center; gap: 8px; }
+.cm-modes { display: flex; gap: 4px; padding: 4px; margin-bottom: 12px; border-radius: 10px; background: var(--card); border: 1px solid var(--line); }
+.cm-modes button { flex: 1; min-height: 36px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
+.cm-modes button[aria-selected='true'] { background: var(--text); color: var(--bg); font-weight: 600; }
+.cm-week { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+.cm-wday { width: 100%; display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 10px; align-items: start; text-align: left; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+.cm-wday.race { background: var(--red-bg-2); }
+.cm-wday.today { border-color: var(--accent); }
+.cm-wday[aria-pressed='true'] { outline: 2px solid var(--text); outline-offset: 1px; }
+.cm-wdate b { font-weight: 600; }
+.cm-wlist { display: grid; gap: 4px; min-width: 0; }
+.cm-wses { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.cm-wses .cm-dot { margin-right: 0; }
+.cm-wlabel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cm-wses .night { padding: 0 5px; }
+.cm-up { display: grid; gap: 12px; }
+.cm-up-g ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 5px; }
+.cm-up-row { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--text); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+.cm-up-row[aria-pressed='true'] { outline: 2px solid var(--text); outline-offset: 1px; }
+.cm-up-empty { margin: 8px 0; }

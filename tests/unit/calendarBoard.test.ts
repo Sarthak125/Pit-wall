@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Race } from '../../src/api/jolpica';
-import { countdown, dayKey, hasSprint, monthGrid, nextRaceIndex, sessionKind, weekendSessions } from '../../src/lib/calendarBoard';
+import { countdown, dayKey, hasSprint, isOvernight, monthGrid, nextRaceIndex, sessionKind, weekendSessions, weekStart } from '../../src/lib/calendarBoard';
 
 const race = (round: string, date: string, time = '13:00:00Z', extra: Partial<Race> = {}): Race => ({
   season: '2026',
@@ -72,5 +72,19 @@ describe('month view helpers', () => {
     expect(g.slice(0, 6)).toEqual(Array(6).fill(null));
     expect(dayKey(g[6]!)).toBe('2026-11-01');
     expect(g.length).toBe(36);
+  });
+});
+
+describe('week and overnight helpers', () => {
+  it('finds the Monday of a week', () => {
+    expect(dayKey(weekStart('2026-11-27'))).toBe('2026-11-23');
+    expect(dayKey(weekStart('2026-11-23'))).toBe('2026-11-23');
+    expect(dayKey(weekStart('2026-11-01'))).toBe('2026-10-26');
+  });
+  it('treats midnight to 6 am as overnight', () => {
+    expect(isOvernight(new Date(2026, 10, 29, 1, 30))).toBe(true);
+    expect(isOvernight(new Date(2026, 10, 29, 5, 59))).toBe(true);
+    expect(isOvernight(new Date(2026, 10, 29, 6, 0))).toBe(false);
+    expect(isOvernight(new Date(2026, 10, 29, 23, 30))).toBe(false);
   });
 });

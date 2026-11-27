@@ -1,6 +1,7 @@
 import type { Result } from '../api/jolpica';
 import type { BoardProps } from './CalendarBoard';
-import { hasSprint, nextRaceIndex, weekendSessions } from '../lib/calendarBoard';
+import { hasSprint, isOvernight, nextRaceIndex, weekendSessions } from '../lib/calendarBoard';
+import { Overnight } from './CalendarMonth';
 import { fmtDayMonth, fmtDateRange, fmtWeekdayDayTime, raceStart } from '../lib/format';
 import { driverHref, raceHref } from '../lib/router';
 import { teamColour } from '../lib/teams';
@@ -47,7 +48,7 @@ function winnerOrWhen(w: Result | undefined, isHidden: boolean, start: Date | nu
     );
   }
   if (isHidden) return <span className="faint" title="Spoiler-free mode: reveal it on the race page or Dashboard">Hidden</span>;
-  if (start && start.getTime() > now) return <span className="muted">Race {fmtWeekdayDayTime(start)}</span>;
+  if (start && start.getTime() > now) return <span className="muted">Race {fmtWeekdayDayTime(start)}{isOvernight(start) && <> <Overnight /></>}</span>;
   return <span className="faint">-</span>;
 }
 

@@ -789,4 +789,43 @@ test.describe('Calendar month view', () => {
     await noSidewaysScroll(page);
     expect(errors).toEqual([]);
   });
+  test('the Week and Upcoming views list the sessions, and picking one opens its day', async ({ page }) => {
+    const errors = await setUp(page);
+    await page.goto('#/calendar');
+    await page.getByRole('tab', { name: 'Month' }).click({ timeout: 40_000 });
+    const day = page.getByRole('region', { name: 'Picked day' });
+    await expect(day).toContainText('Sunday, 22 November 2026');
+    // Week: Monday to Sunday of the picked day's week, the race day marked.
+    await page.getByRole('tab', { name: 'Week' }).click();
+    await expect(page.locator('.cm-wday')).toHaveCount(7);
+    await expect(page.locator('.cm-wday').first()).toContainText('Mon');
+    await expect(page.locator('.cm-wday.race')).toContainText('Race');
+    await page.getByRole('button', { name: 'Next week' }).click();
+    await expect(page.locator('.cm-wday.race')).toContainText('Race');
+    await expect(day).toContainText('Sunday, 29 November 2026');
+    // Upcoming: sessions still to come, grouped by weekend, the next race first.
+    await page.getByRole('tab', { name: 'Upcoming' }).click();
+    await expect(page.locator('.cm-up-g').first()).toContainText('Qatar');
+    await expect(page.locator('.cm-up-g')).toHaveCount(2);
+    await page.locator('.cm-up-g').last().getByRole('button', { name: /Race/ }).click();
+    await expect(day).toContainText('Abu Dhabi Grand Prix');
+    await noSidewaysScroll(page);
+    expect(errors).toEqual([]);
+  });
+});
+
+test.describe('Calendar overnight sessions', () => {
+  // In Tokyo the Qatar race (16:00 UTC) starts at 1 am.
+  test.use({ timezoneId: 'Asia/Tokyo', locale: 'en-GB' });
+  test('sessions between midnight and 6 am carry an Overnight tag', async ({ page }) => {
+    const errors = await setUp(page);
+    await page.goto('#/calendar');
+    const next = page.getByRole('region', { name: 'Next race' });
+    await expect(next).toContainText('Qatar Grand Prix', { timeout: 40_000 });
+    await expect(next.locator('.cb-sess li.race')).toContainText('Overnight');
+    await page.getByRole('tab', { name: 'Month' }).click();
+    await page.getByRole('tab', { name: 'Upcoming' }).click();
+    await expect(page.locator('.cm-up-g').first().getByRole('button', { name: /Race/ })).toContainText('Overnight');
+    expect(errors).toEqual([]);
+  });
 });

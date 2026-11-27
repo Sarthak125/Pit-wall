@@ -85,3 +85,13 @@ export function monthGrid(year: number, month: number): (Date | null)[] {
   const days = new Date(year, month + 1, 0).getDate();
   return [...Array<null>(lead).fill(null), ...Array.from({ length: days }, (_, i) => new Date(year, month, i + 1))];
 }
+
+/** Whether a session starts between midnight and 6 am in the device's time zone (a late night or early morning to watch live). */
+export const isOvernight = (d: Date): boolean => d.getHours() < 6;
+
+/** The Monday that starts the week holding this local day ("2026-11-27" gives "2026-11-23"). */
+export function weekStart(key: string): Date {
+  const [y, m, d] = key.split('-').map(Number);
+  const at = new Date(y, m - 1, d);
+  return new Date(y, m - 1, d - ((at.getDay() + 6) % 7));
+}

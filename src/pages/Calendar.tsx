@@ -3,6 +3,7 @@ import { AddToCalendar } from '../components/AddToCalendar';
 import { CalendarBoard } from '../components/CalendarBoard';
 import { CalendarTimeline } from '../components/CalendarTimeline';
 import { CalendarMonth } from '../components/CalendarMonth';
+import { isOvernight } from '../lib/calendarBoard';
 import { useSpoilers } from '../hooks/useSpoilers';
 import { SESSION_FIELDS, type Race } from '../api/jolpica';
 import { Empty, ErrorBox, Loading } from '../components/States';
@@ -132,7 +133,7 @@ function Sessions({ race }: { race: Race }) {
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px', fontSize: 12 }}>
       {list.map((s) => (
         <span key={s.label}>
-          <span className="muted">{s.label}</span> <span className="mono">{fmtWeekdayDayTime(s.d!)}</span>
+          <span className="muted">{s.label}</span> <span className="mono">{fmtWeekdayDayTime(s.d!)}</span>{isOvernight(s.d!) && <span className="night" title="Between midnight and 6 am in your time zone"> ☾</span>}
         </span>
       ))}
     </div>

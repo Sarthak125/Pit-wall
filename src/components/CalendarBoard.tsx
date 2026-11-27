@@ -1,6 +1,7 @@
 import type { Race, Result } from '../api/jolpica';
+import { Overnight } from './CalendarMonth';
 import { AddToCalendar } from './AddToCalendar';
-import { countdown, nextRaceIndex, weekendSessions } from '../lib/calendarBoard';
+import { countdown, nextRaceIndex, weekendSessions, isOvernight } from '../lib/calendarBoard';
 import { fmtDateRange, fmtWeekdayDayTime, raceStart } from '../lib/format';
 import { raceHref } from '../lib/router';
 import { teamColour } from '../lib/teams';
@@ -81,7 +82,7 @@ export function CalendarBoard({ races, results, hidden, now, loading }: BoardPro
               {sessions.map((s) => (
                 <li key={s.label} className={`${s.label === 'Race' ? 'race' : ''}${s.at.getTime() < now ? ' done' : ''}`}>
                   <span>{s.label}</span>
-                  <span className="mono">{fmtWeekdayDayTime(s.at)}</span>
+                  <span className="cb-when">{isOvernight(s.at) && <Overnight />}<span className="mono">{fmtWeekdayDayTime(s.at)}</span></span>
                 </li>
               ))}
             </ul>
@@ -98,7 +99,7 @@ export function CalendarBoard({ races, results, hidden, now, loading }: BoardPro
             <div className="cb-sub">{then.Circuit.circuitName} · {fmtDateRange(weekendSessions(then)[0]?.at ?? new Date(then.date), raceStart(then) ?? new Date(then.date))}</div>
             <ul className="cb-sess">
               {weekendSessions(then).map((s) => (
-                <li key={s.label} className={s.label === 'Race' ? 'race' : undefined}><span>{s.label}</span><span className="mono">{fmtWeekdayDayTime(s.at)}</span></li>
+                <li key={s.label} className={s.label === 'Race' ? 'race' : undefined}><span>{s.label}</span><span className="cb-when">{isOvernight(s.at) && <Overnight />}<span className="mono">{fmtWeekdayDayTime(s.at)}</span></span></li>
               ))}
             </ul>
           </section>
