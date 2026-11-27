@@ -829,3 +829,27 @@ test.describe('Calendar overnight sessions', () => {
     expect(errors).toEqual([]);
   });
 });
+
+test("the Calendar shows your driver's result beside the winner", async ({ page }) => {
+  const errors = await setUp(page, AFTER_RACE, { favoriteDriver: 'HAM', favoriteName: 'Lewis Hamilton' });
+  await page.goto('#/calendar');
+  const last = page.getByRole('region', { name: 'Last race' });
+  await expect(last.locator('.cb-pod li')).toHaveCount(3, { timeout: 40_000 });
+  // Off the podium in Las Vegas, so a row of its own under the podium.
+  await expect(last.locator('.my-fin-row')).toContainText(/Your driver\s*(P\d+|DNF|DNS|DSQ)\s*Lewis Hamilton/);
+  // Each finished race in the timeline carries a short tag.
+  await expect(page.locator('.tl-item.past .my-fin').first()).toContainText('HAM');
+  expect(await page.locator('.tl-item.up .my-fin').count()).toBe(0);
+  expect(errors).toEqual([]);
+});
+
+test("in spoiler-free mode the Calendar does not show your driver's result for the hidden race", async ({ page }) => {
+  const errors = await setUp(page, AFTER_RACE, { favoriteDriver: 'HAM', favoriteName: 'Lewis Hamilton', spoilerFree: true });
+  await page.goto('#/calendar');
+  const last = page.getByRole('region', { name: 'Last race' });
+  await expect(last).toContainText('hidden in spoiler-free mode', { timeout: 40_000 });
+  await expect(page.locator('.tl-item').nth(10).locator('.my-fin')).toHaveCount(1, { timeout: 40_000 });
+  await expect(last.locator('.my-fin-row')).toHaveCount(0);
+  await expect(page.locator('.tl-item').filter({ hasText: 'Las Vegas' }).locator('.my-fin')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

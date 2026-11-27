@@ -95,3 +95,11 @@ export function weekStart(key: string): Date {
   const at = new Date(y, m - 1, d);
   return new Date(y, m - 1, d - ((at.getDay() + 6) % 7));
 }
+
+/** A driver's finish in one race as a short label: "P5", "DNF", "DSQ" or "DNS". */
+export function finishLabel(r: { positionText: string; position?: string }): string {
+  if (/^\d+$/.test(r.positionText)) return `P${r.positionText}`;
+  if (r.positionText === 'D') return 'DSQ';
+  if (r.positionText === 'W' || r.positionText === 'F') return 'DNS';
+  return 'DNF';
+}

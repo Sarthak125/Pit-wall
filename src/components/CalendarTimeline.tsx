@@ -5,10 +5,13 @@ import { Overnight } from './CalendarMonth';
 import { fmtDayMonth, fmtDateRange, fmtWeekdayDayTime, raceStart } from '../lib/format';
 import { driverHref, raceHref } from '../lib/router';
 import { teamColour } from '../lib/teams';
+import { useSettings } from '../lib/settings';
+import { MyFinish } from './MyFinish';
 
 /** The season as one vertical line, a dot per race weekend with its winner, and a marker for today. */
 export function CalendarTimeline({ races, results, hidden, now }: BoardProps) {
   const ni = nextRaceIndex(races, now);
+  const { favoriteDriver } = useSettings();
   return (
     <ol className="tl" aria-label="Season timeline">
       {races.map((r, i) => {
@@ -28,6 +31,10 @@ export function CalendarTimeline({ races, results, hidden, now }: BoardProps) {
                 {hasSprint(r) && <span className="tl-sprint">Sprint</span>}
                 <span className="muted tl-loc">{r.Circuit.Location.locality}, {r.Circuit.Location.country}</span>
                 <span className="tl-win">{winnerOrWhen(w, hidden(r), start, now)}</span>
+                {(() => {
+                  const mine = w && favoriteDriver ? results.get(r.round)?.find((x) => x.Driver.code === favoriteDriver) : undefined;
+                  return mine ? <MyFinish result={mine} compact /> : null;
+                })()}
               </div>
             </div>
           </li>

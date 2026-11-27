@@ -4,6 +4,8 @@ import { dayKey, isOvernight, monthGrid, nextRaceIndex, sessionsByDay, weekStart
 import { fmtDateRange, fmtShortClock } from '../lib/format';
 import { driverHref, raceHref } from '../lib/router';
 import { teamColour } from '../lib/teams';
+import { useSettings } from '../lib/settings';
+import { MyFinish } from './MyFinish';
 
 const KINDS: { kind: SessionKind; label: string }[] = [
   { kind: 'practice', label: 'Practice' },
@@ -28,6 +30,7 @@ const dow = Array.from({ length: 7 }, (_, i) => new Intl.DateTimeFormat(undefine
 
 /** A month grid with a dot per session, and the picked day's sessions beside it. */
 export function CalendarMonth({ races, results, hidden, now }: BoardProps) {
+  const { favoriteDriver } = useSettings();
   const byDay = useMemo(() => sessionsByDay(races), [races]);
   const days = useMemo(() => [...byDay.keys()].sort(), [byDay]);
   const today = dayKey(new Date(now));
@@ -100,6 +103,10 @@ export function CalendarMonth({ races, results, hidden, now }: BoardProps) {
                 {raceDay && (w ? (
                   <div className="cm-win">Won by {w.Driver.code ? <a className="name-link" href={driverHref(w.Driver.code)}>{w.Driver.givenName} {w.Driver.familyName}</a> : `${w.Driver.givenName} ${w.Driver.familyName}`} <span className="muted">({w.Constructor.name})</span></div>
                 ) : hidden(race) ? <div className="cm-win faint" title="Spoiler-free mode: reveal it on the race page or Dashboard">Winner hidden</div> : null)}
+                {raceDay && w && (() => {
+                  const mine = favoriteDriver ? results.get(race.round)?.find((x) => x.Driver.code === favoriteDriver) : undefined;
+                  return mine ? <MyFinish result={mine} /> : null;
+                })()}
               </article>
             );
           })}

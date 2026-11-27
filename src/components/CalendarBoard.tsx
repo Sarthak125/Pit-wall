@@ -5,6 +5,8 @@ import { countdown, nextRaceIndex, weekendSessions, isOvernight } from '../lib/c
 import { fmtDateRange, fmtWeekdayDayTime, raceStart } from '../lib/format';
 import { raceHref } from '../lib/router';
 import { teamColour } from '../lib/teams';
+import { useSettings } from '../lib/settings';
+import { MyFinish } from './MyFinish';
 
 export interface BoardProps {
   races: Race[];
@@ -25,6 +27,7 @@ const short = (name: string) => name.replace(' Grand Prix', ' GP');
  * the weekend after that, and a strip with one block per round coloured by the winning team.
  */
 export function CalendarBoard({ races, results, hidden, now, loading }: BoardProps) {
+  const { favoriteDriver } = useSettings();
   if (!races.length) return null;
   const ni = nextRaceIndex(races, now);
   const next = ni >= 0 ? races[ni] : null;
@@ -52,16 +55,21 @@ export function CalendarBoard({ races, results, hidden, now, loading }: BoardPro
             ) : (results.get(last.round)?.length ?? 0) > 0 ? (
               <ol className="cb-pod">
                 {results.get(last.round)!.slice(0, 3).map((x, i) => (
-                  <li key={x.Driver.driverId} className={i === 0 ? 'p1' : undefined}>
+                  <li key={x.Driver.driverId} className={[i === 0 ? 'p1' : '', favoriteDriver && x.Driver.code === favoriteDriver ? 'me' : ''].join(' ').trim() || undefined}>
                     <b>P{i + 1}</b>
                     <span className="cb-dot" style={{ background: teamColour(x.Constructor.constructorId) }} aria-hidden="true" />
                     <span>{x.Driver.givenName} {x.Driver.familyName}</span>
+                    {favoriteDriver && x.Driver.code === favoriteDriver && <span className="my-star" title="Your driver">★<span className="sr-only"> Your driver</span></span>}
                   </li>
                 ))}
               </ol>
             ) : (
               <p className="cb-note">The result is not in yet.</p>
             )}
+            {!hidden(last) && !loading && (() => {
+              const mine = favoriteDriver ? results.get(last.round)?.find((x) => x.Driver.code === favoriteDriver) : undefined;
+              return mine && results.get(last.round)!.indexOf(mine) >= 3 ? <MyFinish result={mine} /> : null;
+            })()}
             <a className="link cb-more" href={raceHref(last.round, last.season)}>{hidden(last) ? 'Open the race page' : 'Full results'} <span aria-hidden="true">→</span></a>
           </section>
         )}
