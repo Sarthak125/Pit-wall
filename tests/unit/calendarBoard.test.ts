@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Race } from '../../src/api/jolpica';
-import { countdown, dayKey, hasSprint, isOvernight, monthGrid, nextRaceIndex, sessionKind, weekendSessions, weekStart } from '../../src/lib/calendarBoard';
+import { countdown, dayKey, hasSprint, isOvernight, monthGrid, nextRaceIndex, seasonWrap, sessionKind, weekendSessions, weekStart } from '../../src/lib/calendarBoard';
 
 const race = (round: string, date: string, time = '13:00:00Z', extra: Partial<Race> = {}): Race => ({
   season: '2026',
@@ -86,5 +86,21 @@ describe('week and overnight helpers', () => {
     expect(isOvernight(new Date(2026, 10, 29, 5, 59))).toBe(true);
     expect(isOvernight(new Date(2026, 10, 29, 6, 0))).toBe(false);
     expect(isOvernight(new Date(2026, 10, 29, 23, 30))).toBe(false);
+  });
+});
+
+describe('season wrap-up', () => {
+  const res = (code: string, team: string) => [{ Driver: { code, givenName: code, familyName: code, driverId: code.toLowerCase() }, Constructor: { constructorId: team, name: team } }];
+  it('counts wins by driver and team, most wins first and ties by who got there first', () => {
+    const races = ['1', '2', '3', '4', '5'].map((r) => race(r, `2026-0${r}-01`));
+    const results = new Map([['1', res('NOR', 'mclaren')], ['2', res('VER', 'red_bull')], ['3', res('VER', 'red_bull')], ['4', res('PIA', 'mclaren')], ['5', res('NOR', 'mclaren')]]);
+    const w = seasonWrap(races, results);
+    expect(w.races).toBe(5);
+    expect(w.winners.map((x) => [x.code, x.wins])).toEqual([['NOR', 2], ['VER', 2], ['PIA', 1]]);
+    expect(w.teams.map((x) => [x.id, x.wins])).toEqual([['mclaren', 3], ['red_bull', 2]]);
+  });
+  it('skips races without a result', () => {
+    const w = seasonWrap([race('1', '2026-01-01'), race('2', '2026-02-01')], new Map([['1', res('NOR', 'mclaren')]]));
+    expect(w.races).toBe(1);
   });
 });

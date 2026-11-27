@@ -8,7 +8,7 @@ import { useSpoilers } from '../hooks/useSpoilers';
 import { SESSION_FIELDS, type Race } from '../api/jolpica';
 import { Empty, ErrorBox, Loading } from '../components/States';
 import { Footer } from '../components/Shell';
-import { useResults, useSchedule } from '../hooks/useSeason';
+import { useConstructorStandings, useDriverStandings, useResults, useSchedule } from '../hooks/useSeason';
 import { fmtDateRange, fmtWeekdayDayTime, raceStart, timeZoneLabel, toDate } from '../lib/format';
 import { useSettings } from '../lib/settings';
 import { useNow } from '../hooks/usePoll';
@@ -25,6 +25,12 @@ export function Calendar() {
   const shown = schedule.data?.[0]?.season;
   const resultsByRound = new Map((results.data?.races ?? []).filter((r) => r.Results?.length && (!shown || r.season === shown)).map((r) => [r.round, r.Results!]));
   const hidden = (r: { season: string; round: string }) => season === 'current' && spoilers.raceHidden(r.season, r.round);
+  const dStand = useDriverStandings(season);
+  const cStand = useConstructorStandings(season);
+  // The champions, for the wrap-up after the final race: only from final standings of the season the calendar shows.
+  const champions = shown && dStand.data && !dStand.data.offseason && dStand.data.season === shown
+    ? { driver: dStand.data.standings[0], team: cStand.data && !cStand.data.offseason && cStand.data.season === shown ? cStand.data.standings[0] : undefined }
+    : undefined;
   const [view, setView] = useState<'timeline' | 'month' | 'table'>('timeline');
   const now = useNow(60_000);
   const nextIdx = (schedule.data ?? []).findIndex((r) => (raceStart(r)?.getTime() ?? 0) + 3 * 3_600_000 > now);
@@ -43,7 +49,7 @@ export function Calendar() {
             })()}
           </span>
         </div>
-        {schedule.data?.length ? <CalendarBoard races={schedule.data} results={resultsByRound} hidden={hidden} now={now} loading={results.isLoading} /> : null}
+        {schedule.data?.length ? <CalendarBoard races={schedule.data} results={resultsByRound} hidden={hidden} now={now} loading={results.isLoading} champions={champions} /> : null}
         {schedule.data?.length ? (
           <div className="tabs" role="tablist" aria-label="Season view">
             <button role="tab" className="tab" aria-selected={view === 'timeline'} onClick={() => setView('timeline')}>Timeline</button>

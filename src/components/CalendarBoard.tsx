@@ -1,9 +1,9 @@
-import type { Race, Result } from '../api/jolpica';
+import type { ConstructorStanding, DriverStanding, Race, Result } from '../api/jolpica';
 import { Overnight } from './CalendarMonth';
 import { AddToCalendar } from './AddToCalendar';
-import { countdown, nextRaceIndex, weekendSessions, isOvernight } from '../lib/calendarBoard';
+import { countdown, nextRaceIndex, seasonWrap, weekendSessions, isOvernight } from '../lib/calendarBoard';
 import { fmtDateRange, fmtWeekdayDayTime, raceStart } from '../lib/format';
-import { raceHref } from '../lib/router';
+import { driverHref, href, raceHref, teamHref } from '../lib/router';
 import { teamColour } from '../lib/teams';
 import { useSettings } from '../lib/settings';
 import { MyFinish } from './MyFinish';
@@ -17,6 +17,8 @@ export interface BoardProps {
   now: number;
   /** Results are still loading. */
   loading?: boolean;
+  /** The final standings leaders, once the season is over (for the wrap-up). */
+  champions?: { driver?: DriverStanding; team?: ConstructorStanding };
 }
 
 const place = (r: Race) => `${r.Circuit.circuitName} · ${r.Circuit.Location.locality}, ${r.Circuit.Location.country}`;
@@ -26,7 +28,7 @@ const short = (name: string) => name.replace(' Grand Prix', ' GP');
  * The top of the Calendar page: the last race with its podium, the next weekend with a countdown and its sessions,
  * the weekend after that, and a strip with one block per round coloured by the winning team.
  */
-export function CalendarBoard({ races, results, hidden, now, loading }: BoardProps) {
+export function CalendarBoard({ races, results, hidden, now, loading, champions }: BoardProps) {
   const { favoriteDriver } = useSettings();
   if (!races.length) return null;
   const ni = nextRaceIndex(races, now);
@@ -34,7 +36,8 @@ export function CalendarBoard({ races, results, hidden, now, loading }: BoardPro
   const then = ni >= 0 ? races[ni + 1] : undefined;
   // The last race is the one before the next weekend, or the final race once the season is over.
   const last = (ni >= 0 ? races[ni - 1] : races[races.length - 1]) ?? null;
-  const panels = [last, next, then].filter(Boolean).length;
+  // The season wrap-up takes the next race's place once the season is over.
+  const panels = [last, next, then].filter(Boolean).length + (!next && last ? 1 : 0);
   const start = next ? raceStart(next)?.getTime() : undefined;
   const sessions = next ? weekendSessions(next) : [];
   const underWay = !!next && sessions.length > 0 && sessions[0].at.getTime() <= now;
@@ -113,10 +116,16 @@ export function CalendarBoard({ races, results, hidden, now, loading }: BoardPro
           </section>
         )}
         {!next && last && (
-          <section className="cb-pan" aria-label="Season over">
-            <div className="cb-kick">Season complete</div>
-            <h2 className="cb-title">That was the finale</h2>
-            <p className="cb-note">All {races.length} races have been run. The full season is below.</p>
+          <section className="cb-pan cb-wrapup" aria-label="Season over">
+            <div className="cb-kick">Season complete · {races[0].season}</div>
+            {races.some(hidden) ? (
+              <>
+                <h2 className="cb-title">That was the finale</h2>
+                <p className="cb-note">The season summary is hidden in spoiler-free mode until you reveal the final race.</p>
+              </>
+            ) : (
+              <WrapUp races={races} results={results} champions={champions} loading={loading} />
+            )}
           </section>
         )}
       </div>
@@ -134,8 +143,58 @@ export function CalendarBoard({ races, results, hidden, now, loading }: BoardPro
             );
           })}
         </ol>
-        <div className="faint cb-cap">One block per round, coloured by the winning team. The outlined block is the next race.</div>
+        <div className="faint cb-cap">One block per round, coloured by the winning team.{next ? ' The outlined block is the next race.' : ''}</div>
       </nav>
     </div>
+  );
+}
+
+/** The season in a few facts, once the final race is over: the champions, how many drivers won, and wins per team. */
+function WrapUp({ races, results, champions, loading }: Pick<BoardProps, 'races' | 'results' | 'champions' | 'loading'>) {
+  const wrap = seasonWrap(races, results);
+  const d = champions?.driver;
+  const t = champions?.team;
+  const most = wrap.teams[0]?.wins ?? 1;
+  return (
+    <>
+      <h2 className="cb-title">{d ? <>{d.Driver.givenName} {d.Driver.familyName} is champion</> : 'That was the finale'}</h2>
+      {d && (
+        <p className="cb-sub">
+          {d.points} points{t ? <> · Constructors' title: <a className="name-link" href={teamHref(t.Constructor.constructorId)}>{t.Constructor.name}</a></> : null}
+        </p>
+      )}
+      {loading && !wrap.races ? (
+        <p className="cb-note">Loading the season's results…</p>
+      ) : (
+        <>
+          <p className="cb-wfacts">
+            <span><b className="mono">{wrap.races}</b> races</span>
+            <span><b className="mono">{wrap.winners.length}</b> different winners</span>
+            <span><b className="mono">{wrap.teams.length}</b> winning teams</span>
+          </p>
+          <h3 className="cb-wh">Wins by team</h3>
+          <ul className="cb-wbars">
+            {wrap.teams.map((x) => (
+              <li key={x.id}>
+                <span className="cb-wname">{x.name}</span>
+                <span className="cb-wbar" aria-hidden="true"><i style={{ width: `${(x.wins / most) * 100}%`, background: teamColour(x.id) }} /></span>
+                <b className="mono">{x.wins}</b>
+              </li>
+            ))}
+          </ul>
+          <h3 className="cb-wh">Most wins</h3>
+          <ol className="cb-wlist">
+            {wrap.winners.slice(0, 5).map((x) => (
+              <li key={x.name}>
+                <span className="cb-dot" style={{ background: teamColour(x.teamId) }} aria-hidden="true" />
+                {x.code ? <a className="name-link" href={driverHref(x.code)}>{x.name}</a> : x.name}
+                <b className="mono">{x.wins}</b>
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+      <a className="link cb-more" href={href('review')}>Season review <span aria-hidden="true">→</span></a>
+    </>
   );
 }

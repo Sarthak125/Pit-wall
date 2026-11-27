@@ -103,3 +103,33 @@ export function finishLabel(r: { positionText: string; position?: string }): str
   if (r.positionText === 'W' || r.positionText === 'F') return 'DNS';
   return 'DNF';
 }
+
+export interface SeasonWrap {
+  races: number;
+  winners: { name: string; code?: string; teamId: string; wins: number }[];
+  teams: { id: string; name: string; wins: number }[];
+}
+
+/** Who won how many of the season's races, by driver and by team, most wins first (ties by who reached that total first). */
+export function seasonWrap(races: Race[], results: Map<string, { Driver: { code?: string; givenName: string; familyName: string; driverId: string }; Constructor: { constructorId: string; name: string } }[]>): SeasonWrap {
+  const drivers = new Map<string, SeasonWrap['winners'][number] & { first: number }>();
+  const teams = new Map<string, SeasonWrap['teams'][number] & { first: number }>();
+  races.forEach((r, i) => {
+    const w = results.get(r.round)?.[0];
+    if (!w) return;
+    const d = drivers.get(w.Driver.driverId) ?? { name: `${w.Driver.givenName} ${w.Driver.familyName}`, code: w.Driver.code, teamId: w.Constructor.constructorId, wins: 0, first: i };
+    d.wins++;
+    d.teamId = w.Constructor.constructorId;
+    drivers.set(w.Driver.driverId, d);
+    const t = teams.get(w.Constructor.constructorId) ?? { id: w.Constructor.constructorId, name: w.Constructor.name, wins: 0, first: i };
+    t.wins++;
+    teams.set(w.Constructor.constructorId, t);
+  });
+  const order = <T extends { wins: number; first: number }>(a: T, b: T) => b.wins - a.wins || a.first - b.first;
+  const strip = <T extends { first: number }>({ first: _f, ...rest }: T) => rest;
+  return {
+    races: races.filter((r) => results.get(r.round)?.length).length,
+    winners: [...drivers.values()].sort(order).map(strip),
+    teams: [...teams.values()].sort(order).map(strip),
+  };
+}

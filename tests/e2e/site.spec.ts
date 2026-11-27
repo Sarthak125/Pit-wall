@@ -853,3 +853,27 @@ test("in spoiler-free mode the Calendar does not show your driver's result for t
   await expect(page.locator('.tl-item').filter({ hasText: 'Las Vegas' }).locator('.my-fin')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test('after the final race the Calendar board sums up the season', async ({ page }) => {
+  // A week after the Abu Dhabi finale. The recording has no Qatar or Abu Dhabi results, so the summary covers the races it has.
+  const errors = await setUp(page, new Date('2026-12-13T08:00:00Z'));
+  await page.goto('#/calendar');
+  const wrap = page.getByRole('region', { name: 'Season over' });
+  await expect(wrap).toContainText('Season complete', { timeout: 40_000 });
+  await expect(wrap.locator('.cb-wbars li').first()).toBeVisible({ timeout: 40_000 });
+  await expect(wrap).toContainText('different winners');
+  await expect(wrap.locator('.cb-wlist li').first()).toContainText(/\d$/);
+  await expect(wrap.getByRole('link', { name: /Season review/ })).toBeVisible();
+  await expect(page.locator('.cb-cap')).not.toContainText('next race');
+  await noSidewaysScroll(page);
+  expect(errors).toEqual([]);
+});
+
+test('in spoiler-free mode the season summary waits until the final race is revealed', async ({ page }) => {
+  const errors = await setUp(page, new Date('2026-12-07T08:00:00Z'), { spoilerFree: true });
+  await page.goto('#/calendar');
+  const wrap = page.getByRole('region', { name: 'Season over' });
+  await expect(wrap).toContainText('hidden in spoiler-free mode', { timeout: 40_000 });
+  await expect(wrap.locator('.cb-wbars')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

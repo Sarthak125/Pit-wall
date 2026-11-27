@@ -1204,3 +1204,17 @@ html { zoom: 1.1; }
 .my-fin-row b { font-size: 13px; }
 .cb-pod li.me { outline: 1px solid var(--amber); }
 .cb-pod li .my-star { margin-left: auto; }
+
+/* Calendar: season wrap-up after the final race */
+.cb-wfacts { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 12px 0 4px; color: var(--muted); font-size: 13px; }
+.cb-wfacts b { color: var(--text); font-size: 16px; margin-right: 4px; }
+.cb-wh { margin: 14px 0 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.cb-wbars { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cb-wbars li { display: grid; grid-template-columns: minmax(80px, 34%) minmax(0, 1fr) 24px; align-items: center; gap: 8px; font-size: 13px; }
+.cb-wname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cb-wbar { height: 8px; border-radius: 4px; background: var(--raised); overflow: hidden; }
+.cb-wbar i { display: block; height: 100%; border-radius: 0 4px 4px 0; }
+.cb-wbars b, .cb-wlist b { text-align: right; font-size: 13px; }
+.cb-wlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.cb-wlist li { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.cb-wlist b { margin-left: auto; }
