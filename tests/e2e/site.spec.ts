@@ -863,6 +863,8 @@ test('after the final race the Calendar board sums up the season', async ({ page
   await expect(wrap.locator('.cb-wbars li').first()).toBeVisible({ timeout: 40_000 });
   await expect(wrap).toContainText('different winners');
   await expect(wrap.locator('.cb-wlist li').first()).toContainText(/\d$/);
+  // Sprints come with the season's results: the 2026 recording has sprint weekends before Las Vegas.
+  await expect(wrap.locator('.cb-wh', { hasText: 'Sprint wins' })).toContainText(/\d+ sprints?/);
   await expect(wrap.getByRole('link', { name: /Season review/ })).toBeVisible();
   await expect(page.locator('.cb-cap')).not.toContainText('next race');
   await noSidewaysScroll(page);

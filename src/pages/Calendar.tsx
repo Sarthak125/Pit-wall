@@ -24,6 +24,8 @@ export function Calendar() {
   // Full results by round, only for the season the calendar shows (between seasons Jolpica returns last year's).
   const shown = schedule.data?.[0]?.season;
   const resultsByRound = new Map((results.data?.races ?? []).filter((r) => r.Results?.length && (!shown || r.season === shown)).map((r) => [r.round, r.Results!]));
+  // Sprint results by round (Jolpica's sprints come with the season's results, so no extra requests).
+  const sprintsByRound = new Map((results.data?.sprints ?? []).filter((r) => r.SprintResults?.length && (!shown || r.season === shown)).map((r) => [r.round, r.SprintResults!]));
   const hidden = (r: { season: string; round: string }) => season === 'current' && spoilers.raceHidden(r.season, r.round);
   const dStand = useDriverStandings(season);
   const cStand = useConstructorStandings(season);
@@ -49,7 +51,7 @@ export function Calendar() {
             })()}
           </span>
         </div>
-        {schedule.data?.length ? <CalendarBoard races={schedule.data} results={resultsByRound} hidden={hidden} now={now} loading={results.isLoading} champions={champions} /> : null}
+        {schedule.data?.length ? <CalendarBoard races={schedule.data} results={resultsByRound} hidden={hidden} now={now} loading={results.isLoading} champions={champions} sprints={sprintsByRound} /> : null}
         {schedule.data?.length ? (
           <div className="tabs" role="tablist" aria-label="Season view">
             <button role="tab" className="tab" aria-selected={view === 'timeline'} onClick={() => setView('timeline')}>Timeline</button>

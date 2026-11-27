@@ -20,6 +20,8 @@ export interface BoardProps {
   loading?: boolean;
   /** The final standings leaders, once the season is over (for the wrap-up). */
   champions?: { driver?: DriverStanding; team?: ConstructorStanding };
+  /** Sprint results by round, for the wrap-up. */
+  sprints?: Map<string, Result[]>;
 }
 
 const place = (r: Race) => `${r.Circuit.circuitName} · ${r.Circuit.Location.locality}, ${r.Circuit.Location.country}`;
@@ -29,7 +31,7 @@ const short = (name: string) => name.replace(' Grand Prix', ' GP');
  * The top of the Calendar page: the last race with its podium, the next weekend with a countdown and its sessions,
  * the weekend after that, and a strip with one block per round coloured by the winning team.
  */
-export function CalendarBoard({ races, results, hidden, now, loading, champions }: BoardProps) {
+export function CalendarBoard({ races, results, hidden, now, loading, champions, sprints }: BoardProps) {
   const { favoriteDriver } = useSettings();
   if (!races.length) return null;
   const ni = nextRaceIndex(races, now);
@@ -125,7 +127,7 @@ export function CalendarBoard({ races, results, hidden, now, loading, champions 
                 <p className="cb-note">The season summary is hidden in spoiler-free mode until you reveal the final race.</p>
               </>
             ) : (
-              <WrapUp races={races} results={results} champions={champions} loading={loading} />
+              <WrapUp races={races} results={results} champions={champions} loading={loading} sprints={sprints} />
             )}
           </section>
         )}
@@ -151,8 +153,9 @@ export function CalendarBoard({ races, results, hidden, now, loading, champions 
 }
 
 /** The season in a few facts, once the final race is over: the champions, how many drivers won, and wins per team. */
-function WrapUp({ races, results, champions, loading }: Pick<BoardProps, 'races' | 'results' | 'champions' | 'loading'>) {
+function WrapUp({ races, results, champions, loading, sprints }: Pick<BoardProps, 'races' | 'results' | 'champions' | 'loading' | 'sprints'>) {
   const wrap = seasonWrap(races, results);
+  const sprintWrap = sprints?.size ? seasonWrap(races, sprints) : null;
   const d = champions?.driver;
   const t = champions?.team;
   const most = wrap.teams[0]?.wins ?? 1;
@@ -193,6 +196,20 @@ function WrapUp({ races, results, champions, loading }: Pick<BoardProps, 'races'
               </li>
             ))}
           </ol>
+          {sprintWrap && sprintWrap.races > 0 && (
+            <>
+              <h3 className="cb-wh">Sprint wins · {sprintWrap.races} sprint{sprintWrap.races === 1 ? '' : 's'}</h3>
+              <ol className="cb-wlist">
+                {sprintWrap.winners.map((x) => (
+                  <li key={x.name}>
+                    <span className="cb-dot" style={{ background: teamColour(x.teamId) }} aria-hidden="true" />
+                    {x.code ? <a className="name-link" href={driverHref(x.code)}>{x.name}</a> : x.name}
+                    <b className="mono">{x.wins}</b>
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
         </>
       )}
       <a className="link cb-more" href={href('review')}>Season review <span aria-hidden="true">→</span></a>
