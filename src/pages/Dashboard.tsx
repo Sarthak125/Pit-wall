@@ -2,7 +2,7 @@ import { OffseasonNote } from '../components/OffseasonNote';
 import { ChampionsBanner } from '../components/Champions';
 import { ProvisionalNote } from '../components/ProvisionalNote';
 import { RainWatch } from '../components/RainWatch';
-import { RemindButton } from '../components/RemindButton';
+import { RemindButton, RemindWeekend } from '../components/RemindButton';
 import { AddToCalendar } from '../components/AddToCalendar';
 import { SpoilerCover } from '../components/SpoilerCover';
 import { useSpoilers } from '../hooks/useSpoilers';
@@ -408,8 +408,9 @@ function NextRace({ race, total }: { race: Race; total: number }) {
         <div className="muted" style={{ fontSize: 12 }}>
           Until lights out · times in {timeZoneLabel()}
         </div>
-        <div style={{ marginTop: 4 }}>
+        <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           <AddToCalendar races={[race]} />
+          <RemindWeekend race={race} sessions={sessions.map((x) => ({ label: x.label, at: x.start }))} now={now} />
         </div>
       </div>
       <div className="sessions" style={{ flex: '1 1 260px' }}>

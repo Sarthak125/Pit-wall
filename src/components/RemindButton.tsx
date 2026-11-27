@@ -29,3 +29,31 @@ export function RemindButton({ race, session, at, now }: { race: Race; session: 
     </button>
   );
 }
+
+/** One button for every session of a weekend still to come: turns them all on, or all off when they already are. */
+export function RemindWeekend({ race, sessions, now }: { race: Race; sessions: { label: string; at: Date }[]; now: number }) {
+  const reminders = useReminders();
+  const left = sessions.filter((s) => s.at.getTime() > now);
+  if (left.length < 2) return null;
+  const ids = left.map((s) => reminderId(race.season, race.round, s.label));
+  const allOn = ids.every((id) => reminders.some((r) => r.id === id));
+  return (
+    <button
+      type="button"
+      className="btn cb-remind-all"
+      aria-pressed={allOn}
+      title="A notification 15 minutes before each session, while Pit Wall is open"
+      onClick={() => {
+        for (const s of left) {
+          const id = reminderId(race.season, race.round, s.label);
+          const on = reminders.some((r) => r.id === id);
+          // All on: turn them all off. Otherwise turn on the ones that are off.
+          if (allOn ? on : !on) toggleReminder({ id, at: s.at.getTime(), session: s.label, race: race.raceName });
+        }
+      }}
+    >
+      <BellIcon on={allOn} />
+      {allOn ? `Reminders on for all ${left.length} sessions` : `Remind me for ${left.length === sessions.length ? 'the whole weekend' : `the ${left.length} sessions left`}`}
+    </button>
+  );
+}

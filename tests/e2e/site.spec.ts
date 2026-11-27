@@ -929,3 +929,20 @@ test("when Open-Meteo refuses, the weekend forecast comes from Pit Wall's saved 
   expect(asked.length).toBeGreaterThan(0);
   expect(errors).toEqual([]);
 });
+
+test('one button sets reminders for every session of the next weekend, and turns them off again', async ({ page }) => {
+  const errors = await setUp(page);
+  await page.goto('#/calendar');
+  const next = page.getByRole('region', { name: 'Next race' });
+  const all = next.getByRole('button', { name: /Remind me for the whole weekend/ });
+  await all.click({ timeout: 40_000 });
+  const count = await next.locator('.cb-sess .remind').count();
+  await expect(next.locator('.cb-sess .remind[aria-pressed="true"]')).toHaveCount(count);
+  await expect(next.getByRole('button', { name: `Reminders on for all ${count} sessions` })).toHaveAttribute('aria-pressed', 'true');
+  // The Dashboard shows the same reminders.
+  await page.goto('#/');
+  await expect(page.locator('.sessions .remind[aria-pressed="true"]')).toHaveCount(count, { timeout: 40_000 });
+  await page.getByRole('button', { name: `Reminders on for all ${count} sessions` }).click();
+  await expect(page.locator('.sessions .remind[aria-pressed="true"]')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

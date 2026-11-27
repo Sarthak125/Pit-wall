@@ -1193,7 +1193,8 @@ html { zoom: 1.1; }
 .cm-up { display: grid; gap: 12px; }
 .cm-up-g ul { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 5px; }
 .cm-up-row { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--text); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
-.cm-up-row[aria-pressed='true'] { outline: 2px solid var(--text); outline-offset: 1px; }
+/* Sessions on the picked day: a quiet marker, since a day often has two or three. */
+.cm-up-row[aria-pressed='true'] { background: var(--raised); border-color: var(--line-strong); box-shadow: inset 3px 0 0 var(--text); }
 .cm-up-empty { margin: 8px 0; }
 
 /* Calendar: the favourite driver's result */
@@ -1227,3 +1228,6 @@ html { zoom: 1.1; }
 .cm-up-li .cm-up-row { flex: 1; min-width: 0; }
 .cm-up-li .remind { margin: 0; width: 38px; height: 38px; }
 @media (pointer: coarse) { .remind { width: 40px; height: 40px; } }
+
+.cb-remind-all { display: inline-flex; align-items: center; gap: 8px; }
+.cb-remind-all[aria-pressed='true'] { color: var(--amber); border-color: var(--amber); }

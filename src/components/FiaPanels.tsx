@@ -55,7 +55,7 @@ export function TrackLimitsPanel({ limits, penalties, drivers, isRace, favNum }:
               return (
                 <div className={`limits-row${l.car === favNum ? ' fav' : ''}`} key={l.car}>
                   <DriverTag n={l.car} drivers={drivers} />
-                  <div className="limits-bar" aria-label={`${l.deleted} deleted`}>
+                  <div className="limits-bar" role="img" aria-label={`${l.deleted} lap time${l.deleted === 1 ? '' : 's'} deleted`}>
                     {Array.from({ length: cells }, (_, k) => <i key={k} style={{ background: tone(k, l) }} />)}
                   </div>
                   <div className="limits-meta">

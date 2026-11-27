@@ -7,7 +7,7 @@ import { driverHref, href, raceHref, teamHref } from '../lib/router';
 import { teamColour } from '../lib/teams';
 import { useSettings } from '../lib/settings';
 import { MyFinish } from './MyFinish';
-import { RemindButton } from './RemindButton';
+import { RemindButton, RemindWeekend } from './RemindButton';
 
 export interface BoardProps {
   races: Race[];
@@ -103,6 +103,7 @@ export function CalendarBoard({ races, results, hidden, now, loading, champions,
             <div className="cb-acts">
               <a className="btn primary" href={raceHref(next.round, next.season)}>Open race page</a>
               <AddToCalendar races={[next]} label="Add this weekend to calendar" />
+              <RemindWeekend race={next} sessions={sessions} now={now} />
             </div>
           </section>
         )}
