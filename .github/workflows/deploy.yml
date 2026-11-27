@@ -18,10 +18,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # The site only deploys if these pass: unit tests, then browser tests at laptop and phone width
-  # against recorded API responses (so they don't depend on the live APIs or their rate limits).
+  # The site only deploys if these pass: unit tests, and browser tests at laptop and phone width against recorded API
+  # responses (so they don't depend on the live APIs or their rate limits). The browser tests are split across four
+  # machines, and the site is built at the same time, so a deploy waits for the slowest quarter rather than all of them.
   # Scheduled runs only refresh the data copy (the code on main was tested when it was pushed).
-  test:
+  unit:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
@@ -33,12 +34,35 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npx tsc -p tests/tsconfig.json
-      - run: npx playwright install --with-deps chromium
+  e2e:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # The browser download is cached by Playwright version; the system libraries it needs are installed each time.
+      - id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6
+        id: pw-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+      - if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
       - run: npm run build
-      - run: npm run test:e2e
+      - run: npm run test:e2e -- --shard=${{ matrix.shard }}/4
   build:
-    needs: test
-    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -74,7 +98,8 @@ jobs:
         with:
           path: dist
   deploy:
-    needs: build
+    # Waits for the tests as well as the build; on scheduled runs the tests are skipped, which counts as passing here.
+    needs: [unit, e2e, build]
     if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     environment:

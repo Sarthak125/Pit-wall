@@ -7,6 +7,8 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: 'tests/e2e',
   timeout: 60_000,
+  // Every test sets up its own page and recordings, so tests from one file can run side by side (and be split across CI machines).
+  fullyParallel: true,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
