@@ -342,6 +342,26 @@ export async function getCircuitLaps(circuitId: string, sprint: boolean): Promis
   return last && laps > 0 ? { season: last.season, laps } : null;
 }
 
+/**
+ * The most recent qualifying at a circuit before the given season, for projecting knockout times. Reads only the
+ * last rows of the circuit's qualifying history (newest last), which hold the latest one or two sessions.
+ */
+export async function getLastCircuitQualifying(circuitId: string, beforeSeason: number): Promise<{ season: string; results: QualifyingResult[] } | null> {
+  const total = await countOf(`circuits/${circuitId}/qualifying`);
+  if (!total) return null;
+  const take = 60;
+  const data = await fetchJson<MR<{ RaceTable: { Races: RaceWithQualifying[] } }>>(
+    `${BASE}/circuits/${circuitId}/qualifying/?limit=${take}&offset=${Math.max(0, total - take)}`,
+    { limiter, cacheTtlMs: DAY },
+  );
+  const races = data.MRData.RaceTable.Races.filter((r) => Number(r.season) < beforeSeason);
+  const last = races[races.length - 1];
+  if (!last) return null;
+  // One session can be split across pages, so gather its rows from every entry for that season and round.
+  const results = races.filter((r) => r.season === last.season && r.round === last.round).flatMap((r) => r.QualifyingResults ?? []);
+  return { season: last.season, results };
+}
+
 /** A team's Grand Prix results at one circuit, all seasons (both cars). */
 export async function getTeamCircuitHistory(circuitId: string, constructorId: string): Promise<RaceWithResults[]> {
   const data = await fetchJson<MR<{ RaceTable: { Races: RaceWithResults[] } }>>(
