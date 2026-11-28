@@ -60,7 +60,11 @@ jobs:
         run: npx playwright install --with-deps chromium
       - if: steps.pw-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
+      # The tests build against a stand-in Supabase address that tests/e2e/account.spec.ts answers itself.
       - run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://pitwall-test.supabase.co
+          VITE_SUPABASE_ANON_KEY: test-public-key-not-a-real-project
       - run: npm run test:e2e -- --shard=${{ matrix.shard }}/4
   build:
     runs-on: ubuntu-latest
@@ -71,9 +75,15 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Sign-in appears only when the repository has the Supabase project's URL and public key as Actions variables
+      # (Settings > Secrets and variables > Actions > Variables). The public key is meant to be in the page; the
+      # database's row rules in supabase/migrations keep each account to its own row.
       - run: npm run build
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_PROVIDERS: ${{ vars.SUPABASE_PROVIDERS }}
       # Pit Wall's own copy of the Jolpica data, published under data/jolpica/. When Jolpica cannot be reached, the
       # copy already on the live site is kept. This step never stops a deploy.
       - name: Copy Jolpica data

@@ -1,3 +1,5 @@
+import { AccountCard } from '../components/AccountCard';
+import { useAccount } from '../lib/account';
 import { DelayPicker } from '../components/DelayPicker';
 import { useSpoilers } from '../hooks/useSpoilers';
 import { useEffect, useState } from 'react';
@@ -63,6 +65,7 @@ export function Settings() {
           </div>
         </form>
       </section>
+      <AccountCard />
       <FavouriteSettings />
       <WatchingLater />
       <Appearance />
@@ -83,6 +86,7 @@ export function Settings() {
 
 function FavouriteSettings() {
   const s = useSettings();
+  const signedIn = useAccount().status === 'signed-in';
   const standings = useDriverStandings('current');
   const drivers = standings.data?.standings ?? [];
   const teamStandings = useConstructorStandings('current');
@@ -96,7 +100,7 @@ function FavouriteSettings() {
       <div className="form">
         <label>
           Favourite driver
-          <span className="hint">Highlighted across the app and followed on the My Driver page. Saved on this device only.</span>
+          <span className="hint">Highlighted across the app and followed on the My Driver page. {signedIn ? 'Follows your account to your other devices.' : 'Saved on this device only.'}</span>
           <select
             className="input"
             style={{ maxWidth: 360 }}
@@ -224,6 +228,7 @@ function WatchingLater() {
 /** Dark, light, or follow the device. */
 function Appearance() {
   const s = useSettings();
+  const signedIn = useAccount().status === 'signed-in';
   const options: [ThemeChoice, string][] = [['dark', 'Dark'], ['light', 'Light'], ['auto', 'Auto']];
   return (
     <section className="card">
@@ -231,7 +236,7 @@ function Appearance() {
       <div className="form">
         <div>
           <div id="theme-label">Theme</div>
-          <span className="hint">Auto follows your device's light or dark setting. Track maps stay dark either way. Saved on this device only.</span>
+          <span className="hint">Auto follows your device's light or dark setting. Track maps stay dark either way. {signedIn ? 'Follows your account to your other devices.' : 'Saved on this device only.'}</span>
           <div className="tabs" role="radiogroup" aria-labelledby="theme-label" style={{ marginTop: 8, marginBottom: 0 }}>
             {options.map(([v, label]) => (
               <button key={v} role="radio" className="tab" aria-checked={s.theme === v} onClick={() => { updateSettings({ theme: v }); applyTheme(v); }}>

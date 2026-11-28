@@ -559,6 +559,41 @@ npm run build
 - **Netlify, Vercel or Cloudflare Pages:** build command `npm run build`, output folder `dist`.
 - **Android app:** the APK in `public/pit-wall.apk` deploys with the site. The file that lets it open without an address bar (`/.well-known/assetlinks.json`) lives in the separate [`Sarthak125.github.io`](https://github.com/Sarthak125/sarthak125.github.io) repository, which serves https://sarthak125.github.io/ and forwards the home page to Pit Wall. Building and signing new versions: [`android/README.md`](android/README.md).
 
+## Sign-in (optional)
+
+Settings, Account lets people sign in so their favourite driver and team, alerts, track map, spoiler-free mode, theme and session reminders are the same on every device. Everything else works without an account, and the OpenF1 token, request limit, system notifications and TV delay always stay on each device. Accounts use [Supabase](https://supabase.com): the app stays a static site, and the Supabase code (about 56 KB compressed) downloads only when someone signs in or is already signed in.
+
+Without a Supabase project configured, the Account card is hidden and the app behaves as before. To turn it on:
+
+1. Create a free project at supabase.com.
+2. In the project's SQL editor, run [`supabase/migrations/0001_profiles.sql`](supabase/migrations/0001_profiles.sql). It makes one `profiles` row per person, turns on row rules so each signed-in person can read and change only their own row, and adds the `delete_my_account` function behind the Delete account button.
+3. In Authentication, URL Configuration, set the Site URL to `https://sarthak125.github.io/Pit-wall/` and add the same address (plus `http://localhost:3030/` for local work) to Redirect URLs.
+4. Email sign-in links work straight away (Supabase's built-in email sender has a low hourly limit; for real use, add your own SMTP under Authentication, Emails). For Google or GitHub buttons, turn the provider on in Authentication, Providers with that service's OAuth app, then list it in `SUPABASE_PROVIDERS` below.
+5. In this repository, Settings, Secrets and variables, Actions, **Variables** (not secrets, as they end up in the page anyway): `SUPABASE_URL` (Project Settings, API, Project URL), `SUPABASE_ANON_KEY` (the public anon key, never the service role key) and optionally `SUPABASE_PROVIDERS` (for example `github,google`). The next deploy shows the Account card.
+
+For local work, copy `.env.example` to `.env.local` and fill in the same values.
+
+### Roles: super admin, admins and users
+
+Everyone who signs in is a normal user. On top of that there is exactly one **super admin** and up to **5 admins**, set up by [`supabase/migrations/0002_roles.sql`](supabase/migrations/0002_roles.sql) (run it after `0001`). The database enforces all of this, not just the app: the public key cannot write roles, only one super admin can exist, a sixth admin is refused, and the super admin account cannot be deleted from the app.
+
+- **Super admin:** sees the Admin page (Settings, Account, Open the Admin page) with every account's email, role, join date and last sign-in, and can make people admins or normal users again.
+- **Admins:** see the same list but cannot change roles. Nothing else in the app is admin-only yet.
+- **Users:** no Admin page.
+
+To make yourself the super admin: sign in to Pit Wall once so your account exists, then run this in the Supabase SQL editor with your own address (it is deliberately not stored in this repository):
+
+```sql
+insert into public.user_roles (user_id, role)
+select id, 'super_admin' from auth.users where email = 'you@example.com';
+```
+
+After that, make admins from the Admin page. To hand the super admin role to someone else, change the row in the SQL editor.
+
+How syncing works: the first time a device signs in to an account that already has settings, the account's settings win and reminders from both are kept. After that, each change is saved about a second later, and changes from other devices are picked up when the app opens or comes back to the foreground. If two devices change something before either saves, the later save wins. Signing out leaves the settings on the device. Delete account removes the sign-in and the saved row.
+
+Signing in stores the person's email address and these settings with Supabase. If Pit Wall is offered to other people, the privacy wording on the Account card and any privacy notice should be checked by someone qualified for the places it is used; this README is not legal advice.
+
 ## Project layout
 
 ```

@@ -42,6 +42,21 @@ function save(next: Reminder[]) {
   listeners.forEach((l) => l());
 }
 
+export function getReminders(): Reminder[] {
+  return list;
+}
+
+/** Replaces the whole list (used when an account sync brings reminders from another device). */
+export function setReminders(next: Reminder[]) {
+  save([...next].filter((r) => r && typeof r.id === 'string' && typeof r.at === 'number').sort((a, b) => a.at - b.at));
+}
+
+/** Called after every change to the list; returns a function that stops it. */
+export function subscribeReminders(cb: () => void): () => void {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+}
+
 export function useReminders(): Reminder[] {
   return useSyncExternalStore(
     (cb) => {

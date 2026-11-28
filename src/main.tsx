@@ -5,6 +5,7 @@ import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import { announceUpdate, setUpdateHandler } from './lib/update';
 import { onLateData, onSlowChange, slowServers } from './api/http';
+import { startAccount } from './lib/account';
 import './styles.css';
 
 const queryClient = new QueryClient({
@@ -52,6 +53,8 @@ const updateSW = registerSW({
   },
 });
 setUpdateHandler(() => void updateSW(true));
+
+startAccount();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

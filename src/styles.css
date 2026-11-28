@@ -1231,3 +1231,17 @@ html { zoom: 1.1; }
 
 .cb-remind-all { display: inline-flex; align-items: center; gap: 8px; }
 .cb-remind-all[aria-pressed='true'] { color: var(--amber); border-color: var(--amber); }
+
+/* Account card (Settings) */
+.acct-email { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.acct-confirm { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--red-line); background: var(--red-bg-2); border-radius: 10px; }
+.btn.danger { border-color: var(--red-line); background: var(--red-bg); color: var(--red-text); }
+.acct-msg { margin: 12px 0 0; }
+.acct-msg.err { color: var(--red-soft); }
+.role-badge { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line-strong); font-size: 12px; font-weight: 700; letter-spacing: .02em; }
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table th, .admin-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.admin-table .role-badge { margin-left: 0; }
+.admin-email { white-space: normal; word-break: break-all; }
+.table-wrap { overflow-x: auto; }
+.btn.sm { min-height: 36px; padding: 0 12px; font-size: 14px; }

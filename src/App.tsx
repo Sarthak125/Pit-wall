@@ -19,13 +19,14 @@ const Drivers = lazy(() => import('./pages/Drivers').then((m) => ({ default: m.D
 const LiveTiming = lazy(() => import('./pages/LiveTiming').then((m) => ({ default: m.LiveTiming })));
 const Settings = lazy(() => import('./pages/Settings').then((m) => ({ default: m.Settings })));
 const Help = lazy(() => import('./pages/Help').then((m) => ({ default: m.Help })));
+const Admin = lazy(() => import('./pages/Admin').then((m) => ({ default: m.Admin })));
 const SeasonReview = lazy(() => import('./pages/SeasonReview').then((m) => ({ default: m.SeasonReview })));
 const Standings = lazy(() => import('./pages/Standings').then((m) => ({ default: m.Standings })));
 const MyDriver = lazy(() => import('./pages/MyDriver').then((m) => ({ default: m.MyDriver })));
 const MyTeam = lazy(() => import('./pages/MyTeam').then((m) => ({ default: m.MyTeam })));
 const RaceResults = lazy(() => import('./pages/RaceResults').then((m) => ({ default: m.RaceResults })));
 
-const TITLES = { dashboard: 'Dashboard', live: 'Live Timing', driver: 'My Driver', team: 'My Team', race: 'Race results', standings: 'Standings', calendar: 'Calendar', drivers: 'Drivers', settings: 'Settings', help: 'How to use', review: 'Season review' };
+const TITLES = { dashboard: 'Dashboard', live: 'Live Timing', driver: 'My Driver', team: 'My Team', race: 'Race results', standings: 'Standings', calendar: 'Calendar', drivers: 'Drivers', settings: 'Settings', help: 'How to use', review: 'Season review', admin: 'Admin' };
 
 export default function App() {
   const route = useRoute();
@@ -62,6 +63,7 @@ export default function App() {
       {route === 'settings' && <Settings />}
       {route === 'help' && <Help />}
       {route === 'review' && <SeasonReview />}
+      {route === 'admin' && <Admin />}
       </Suspense>
       <Toasts />
       <UpdateBanner />
