@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCircuitLaps } from '../api/jolpica';
 import { getLayout } from '../lib/sectorLines';
@@ -605,6 +605,11 @@ function TimingTable({ rows, isRace, live, upcoming, fastest, favNum, team, pitL
   );
 }
 
+/** FIA feed: messages shown at first (laptop, phone) and added by each Show more. */
+const FIA_FIRST = 8;
+const FIA_FIRST_PHONE = 5;
+const FIA_STEP = 10;
+
 function FiaSection({ messages, drivers, favNum, team, teamNums, isRace }: { messages: ClassifiedMsg[]; drivers: Map<number, OF1Driver>; favNum: number | null; team: FavouriteTeam | null; teamNums: number[]; isRace: boolean }) {
   const [tab, setTab] = useState<MsgTab>('All');
   const [driver, setDriver] = useState<number | 0>(0);
@@ -614,11 +619,16 @@ function FiaSection({ messages, drivers, favNum, team, teamNums, isRace }: { mes
   // Routine sector and blue flags crowd out the important messages, so All hides them unless asked.
   const minor = tab === 'All' ? byDriver.filter(isMinor).length : 0;
   const shown = tab === 'All' ? byDriver.filter((m) => showMinor || !isMinor(m)) : byDriver.filter((m) => m.tab === tab);
-  // On phones the full feed makes the page very long, so it starts with the newest messages.
-  const [showAll, setShowAll] = useState(false);
+  // The full feed makes the page very long, so it starts with the newest few; Show more adds the next batch.
   const phone = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 599px)').matches;
-  const PHONE_LIMIT = 15;
-  const visible = phone && !showAll ? shown.slice(0, PHONE_LIMIT) : shown;
+  const first = phone ? FIA_FIRST_PHONE : FIA_FIRST;
+  // A different category or driver starts from the newest few again.
+  const view = `${tab}|${driver}|${showMinor}`;
+  const [more, setMore] = useState({ view, limit: first });
+  const limit = more.view === view ? Math.max(more.limit, first) : first;
+  const setLimit = (n: number) => setMore({ view, limit: n });
+  const visible = shown.slice(0, limit);
+  const fiaHead = useRef<HTMLHeadingElement>(null);
   const penalties = summarisePenalties(messages);
   const limits = summariseTrackLimits(messages);
   const open = openInvestigations(messages);
@@ -634,7 +644,7 @@ function FiaSection({ messages, drivers, favNum, team, teamNums, isRace }: { mes
       <section className="card tight w3" aria-labelledby="fia">
         <div className="card-head">
           <div>
-            <h2 className="h2" id="fia">FIA race control and stewards</h2>
+            <h2 className="h2" id="fia" ref={fiaHead}>FIA race control and stewards</h2>
             <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>Every official message for this session, newest first</div>
           </div>
           <label className="field">
@@ -698,8 +708,26 @@ function FiaSection({ messages, drivers, favNum, team, teamNums, isRace }: { mes
                 </FiaText>
               </div>
             ))}
-            {visible.length < shown.length && (
-              <button className="tab" style={{ marginTop: 12 }} onClick={() => setShowAll(true)}>Show all {shown.length} messages</button>
+            {shown.length > first && (
+              <div className="more-row">
+                <span className="muted">Showing {visible.length} of {shown.length}</span>
+                {visible.length < shown.length && (
+                  <button className="tab" onClick={() => setLimit(limit + FIA_STEP)}>
+                    Show {Math.min(FIA_STEP, shown.length - visible.length)} more
+                  </button>
+                )}
+                {limit > first && (
+                  <button
+                    className="tab"
+                    onClick={() => {
+                      setLimit(first);
+                      fiaHead.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    }}
+                  >
+                    Show less
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}

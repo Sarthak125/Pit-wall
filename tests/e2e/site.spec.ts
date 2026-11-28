@@ -966,3 +966,26 @@ test('a forecast copy made from MET Norway is credited to it, with rain in mm in
   await expect(card).not.toContainText('Rain chance');
   expect(errors).toEqual([]);
 });
+
+test('Live Timing: the FIA feed starts with the newest messages, with Show more and Show less', async ({ page }, info) => {
+  const errors = await setUp(page);
+  await page.goto('#/live');
+  await expect(page.locator('table.timing tbody tr')).toHaveCount(22, { timeout: 30_000 });
+  const card = page.locator('section[aria-labelledby="fia"]');
+  const first = info.project.name === 'phone' ? 5 : 8;
+  const msgs = card.locator('[role="log"] .msg');
+  await expect(msgs).toHaveCount(first, { timeout: 20_000 });
+  const total = Number((await card.locator('.more-row .muted').textContent())!.match(/of (\d+)/)![1]);
+  expect(total).toBeGreaterThan(first);
+  await card.getByRole('button', { name: /^Show \d+ more$/ }).click();
+  await expect(msgs).toHaveCount(Math.min(total, first + 10));
+  await expect(card.locator('.more-row .muted')).toHaveText(`Showing ${Math.min(total, first + 10)} of ${total}`);
+  await card.getByRole('button', { name: 'Show less' }).click();
+  await expect(msgs).toHaveCount(first);
+  await expect(card.getByRole('button', { name: 'Show less' })).toHaveCount(0);
+  // Another category starts from the newest few again.
+  await card.getByRole('button', { name: /^Show \d+ more$/ }).click();
+  await card.getByRole('tab', { name: /^Flags/ }).click();
+  expect(await msgs.count()).toBeLessThanOrEqual(first);
+  expect(errors).toEqual([]);
+});

@@ -68,6 +68,8 @@
   --faint: #626b76;
   --accent: #d00500;
   --green: #13753a;
+  /* Green text on a green tint (lap pills), dark enough for 4.5:1 even on a highlighted row. */
+  --green-strong: #0e5a2c;
   --amber: #946200;
   --purple: #7e22ce;
   --on-purple: #ffffff;
@@ -114,6 +116,7 @@
     --faint: #626b76;
     --accent: #d00500;
     --green: #13753a;
+    --green-strong: #0e5a2c;
     --amber: #946200;
     --purple: #7e22ce;
     --on-purple: #ffffff;
@@ -510,7 +513,7 @@ a.round:hover, a.round:focus-visible { border-color: var(--hover-line); opacity:
 .segs i.purple { background: var(--purple); }
 .segs i.pit { background: var(--pit-blue); }
 .lap-pill { font-family: var(--mono); padding: 3px 8px; border-radius: 999px; }
-.lap-pill.tone-personal { background: color-mix(in srgb, var(--green) 20%, transparent); }
+.lap-pill.tone-personal { background: color-mix(in srgb, var(--green) 20%, transparent); color: var(--green-strong, var(--green)); }
 .lap-pill.tone-overall { background: color-mix(in srgb, var(--purple) 22%, transparent); }
 .pit-pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
 .pit-pill.in { background: var(--accent); color: #fff; }
@@ -1245,3 +1248,5 @@ html { zoom: 1.1; }
 .admin-email { white-space: normal; word-break: break-all; }
 .table-wrap { overflow-x: auto; }
 .btn.sm { min-height: 36px; padding: 0 12px; font-size: 14px; }
+.more-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+.more-row .muted { font-size: 13px; margin-right: auto; }
