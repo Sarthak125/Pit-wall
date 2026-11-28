@@ -12,6 +12,9 @@ Unofficial fan project. Not affiliated with Formula 1, the FIA or any team.
 
 ### Latest
 
+- **Sector leaders above the track map:** on Live Timing the three sector boxes (fastest three in each sector, with your driver's place) now sit above the track map instead of below it, so they are visible without scrolling past the map. The Sectors button still hides them.
+- **Optional sign-in with settings sync:** Settings has an **Account** card. Sign in with an email link (or Google and GitHub once turned on) and your favourite driver and team, alerts, track map, spoiler-free mode, theme and session reminders are the same on every device. The OpenF1 token and limit, system notifications and TV delay stay on each device. Everything else works without an account, and the sign-in code only downloads for people who use it. The card stays hidden until a Supabase project is connected. See [Sign-in (optional)](#sign-in-optional).
+- **Roles: one super admin, up to 5 admins, everyone else a user:** the super admin gets an **Admin** page listing every account and can make people admins or normal users again; admins can see the list but not change it. The database enforces the rules, not just the app. See [Roles: super admin, admins and users](#roles-super-admin-admins-and-users).
 - **MET Norway as a second forecast source:** if Open-Meteo also refuses the job that saves the weekend forecast, the job now gets it from MET Norway (the Norwegian Meteorological Institute, behind yr.no) instead, and the forecast card credits MET Norway when it shows that copy. See [Our own copy of the weekend forecast](#our-own-copy-of-the-weekend-forecast).
 - **Weekend forecast when Open-Meteo refuses:** Open-Meteo caps requests per network address per day, which a shared mobile or office connection can reach. Pit Wall now saves the forecast for the current and next race weekend with the site every 3 hours, and the forecast card uses that copy (saying when it was saved) when Open-Meteo does not answer. See [Our own copy of the weekend forecast](#our-own-copy-of-the-weekend-forecast).
 - **Remind me for the whole weekend:** one button on the Calendar's next race panel and the Dashboard's next race card sets a reminder for every session still to come, and turns them all off again.
@@ -195,8 +198,8 @@ OpenF1 shares data only with paying supporters from 30 minutes before a session 
 **Track map**
 
 - The circuit with numbered turns and the start/finish line, and every car moving on it in team colours: your favourite driver ringed in gold, your team's cars in white. Tap a car to open that driver's page.
-- The three timing sectors in their own colours: **S1 red, S2 light blue, S3 yellow**, the same everywhere sectors appear. The sector lines are worked out from where a car crossed them on a clean lap. The Sectors button turns the colours off.
-- A top 3 for each sector underneath: each driver's best sector time so far, with a team-coloured driver tile, plus your favourite driver's position and gap if they are outside the top 3.
+- The three timing sectors in their own colours: **S1 red, S2 light blue, S3 yellow**, the same everywhere sectors appear. The sector lines are worked out from where a car crossed them on a clean lap. The Sectors button turns the colours and the sector top 3 off.
+- A top 3 for each sector above the map: each driver's best sector time so far, with a team-coloured driver tile, plus your favourite driver's position and gap if they are outside the top 3.
 - Flags stand out: the flagged part of the track glows yellow (or orange for double yellow) with a dashed black stripe, so it still shows on the yellow sector; the whole track pulses red under a red flag and turns dashed amber behind the safety car; and a banner says what is happening and where (for example "Yellow flag · Turn 2").
 - Live, it plays about 15 seconds behind (less with a bigger request budget) so cars move smoothly between position updates. For finished sessions, a replay bar lets you scrub to any moment and play at 1×, 4× or 8×.
 
@@ -374,6 +377,7 @@ The **?** button in the header (next to Settings) opens a guide to the app, also
 
 ### Settings
 
+- **Account (optional):** sign in so favourites, alerts, the track map setting, spoiler-free mode, theme and session reminders follow you between devices; sign out, Sync now, and Delete account. The super admin and admins also get a link to the Admin page. Shown only when the site has a Supabase project connected (see [Sign-in (optional)](#sign-in-optional)).
 - Favourite driver and favourite team.
 - Alerts on or off, and device notifications.
 - Live track map on the Favourites driver page on or off (Live Timing always has its own map).
@@ -383,7 +387,7 @@ The **?** button in the header (next to Settings) opens a guide to the app, also
 - Optional OpenF1 access token and request budget. OpenF1 allows 30 requests a minute (3 a second) for free use and 60 a minute (6 a second) with its paid supporter plan; the per-second cap follows the per-minute setting. At the default 30 Live Timing stays just under it, and at 60 or more everything updates up to twice as often. Without a token, live sessions use Formula 1's free feed instead (see [During live sessions](#during-live-sessions)).
 - Clear cached data.
 
-All settings are saved on each device separately.
+Settings are saved on each device. When signed in, the ones listed under Account also follow the account; the OpenF1 token and request budget, device notifications and TV delay always stay on the device.
 
 ### Works everywhere
 
@@ -527,8 +531,8 @@ npm run build
 npm run test:e2e
 ```
 
-- **Unit tests** (Vitest, `tests/unit`): merging F1 feed updates, lap time parsing, turning a real feed snapshot into the timing tower, long-run pace, qualifying knockouts, calendar files, OpenF1's live windows, the request limiter, the cache (shared requests, keeping past results, dropping the oldest entries when storage is full), the race story, the lap time comparison, telemetry and race pace calculations, the file names of the Jolpica and OpenF1 copies and the OpenF1 backup across several missing weekends, the age of the data copy, driver card ratings, overall rating and the compare table, the copy job itself (run against a stand-in Jolpica), pit stop ranking and team summaries, the qualifying gap between team-mates, title what-if scenarios, and the Calendar's helpers (next race, countdown, month and week layout, overnight sessions, finish labels and the season wrap-up), and when session reminders go off.
-- **Browser tests** (Playwright, `tests/e2e`): every page at laptop and phone width with no errors and no sideways scrolling; the finished race (gaps, positions chart, pit stops, tyre strategy), qualifying knockouts, practice long runs, spoiler-free mode, the calendar download, Live Timing on a stand-in F1 feed during a live race, the feed dropping and reconnecting, the race story, the lap time comparison, picking the light theme, moving between pages showing only the new page, fastest laps compared, race pace, the Wikipedia cards, a page showing saved data within seconds when Jolpica is slow, and pages loading from Pit Wall's own copy with Jolpica down, the Calendar's board, timeline, Month, Week and Upcoming views, overnight tags, your driver's result, the season wrap-up and a session reminder going off, and the axe accessibility check of every page in both themes.
+- **Unit tests** (Vitest, `tests/unit`): merging F1 feed updates, lap time parsing, turning a real feed snapshot into the timing tower, long-run pace, qualifying knockouts, calendar files, OpenF1's live windows, the request limiter, the cache (shared requests, keeping past results, dropping the oldest entries when storage is full), the race story, the lap time comparison, telemetry and race pace calculations, the file names of the Jolpica and OpenF1 copies and the OpenF1 backup across several missing weekends, the age of the data copy, driver card ratings, overall rating and the compare table, the copy job itself (run against a stand-in Jolpica), pit stop ranking and team summaries, the qualifying gap between team-mates, title what-if scenarios, and the Calendar's helpers (next race, countdown, month and week layout, overnight sessions, finish labels and the season wrap-up), and when session reminders go off. Also the account sync rules (which settings follow an account, how a new device merges with the saved copy).
+- **Browser tests** (Playwright, `tests/e2e`): every page at laptop and phone width with no errors and no sideways scrolling; the finished race (gaps, positions chart, pit stops, tyre strategy), qualifying knockouts, practice long runs, spoiler-free mode, the calendar download, Live Timing on a stand-in F1 feed during a live race, the feed dropping and reconnecting, the race story, the lap time comparison, picking the light theme, moving between pages showing only the new page, fastest laps compared, race pace, the Wikipedia cards, a page showing saved data within seconds when Jolpica is slow, and pages loading from Pit Wall's own copy with Jolpica down, the Calendar's board, timeline, Month, Week and Upcoming views, overnight tags, your driver's result, the season wrap-up and a session reminder going off, and the axe accessibility check of every page in both themes. Sign-in, sync, sign out, delete account and roles (super admin, admin, user, the limit of 5 admins) run against a stand-in for Supabase answered by the test itself (`tests/e2e/account.spec.ts`); the test build points at `https://pitwall-test.supabase.co`, which is never contacted.
 - The browser tests use recorded API responses from the 2026 Las Vegas weekend (`tests/fixtures`) and a fixed clock, so they do not depend on OpenF1, Jolpica, MultiViewer or Open-Meteo being up or within their limits. If an app change needs data the recordings do not have, the test fails rather than calling the real service; record again in that case, or add the missing response as a file (the standings after round 20, `tests/fixtures/r20-*.json`, were added this way).
 - The first time, install the browser with `npx playwright install chromium`.
 - **Off-season check** (`tests/manual/offseason.cjs`, not part of the automatic tests): fakes the date and Jolpica's answers for four stages between seasons (season over, next calendar out, new season with no races, new season with no calendar) and reports what the Dashboard, Standings, Calendar, season review and Settings show, with screenshots. Run it against a local build:
@@ -602,14 +606,15 @@ src/api/         OpenF1, Jolpica, MultiViewer (circuits) and Open-Meteo (weather
 src/hooks/       Polling, live timing, season data and favourites hooks
 src/lib/         Race story (raceStory), lap time comparison (lapCompare), telemetry and race pace (telemetry, racePace), copy file names (mirrorKey), theme, title decisions (titles), season review figures (seasonReview), FIA message classifier and plain-English wording, driver stats, alerts, formatting, team colours,
                  calendar files (ics), long runs,
-                 settings, routing, track geometry, sector lines, lap-by-lap positions, app updates, OpenF1 live
+                 settings, account sign-in and sync (account, syncDoc, cloudConfig, supabaseClient), routing, track geometry, sector lines, lap-by-lap positions, app updates, OpenF1 live
                  windows (openf1Window), F1 feed to app data adapter (f1adapter)
-src/pages/       Dashboard, Live Timing, Favourites (My Driver, My Team), Standings, Calendar, Race results, Drivers, Settings, How to use (Help), Season review
+src/pages/       Dashboard, Live Timing, Favourites (My Driver, My Team), Standings, Calendar, Race results, Drivers, Settings, How to use (Help), Season review, Admin
 src/components/  App shell, charts, live track map, live championship, gap chart, dashboard extras, circuit overview and outline, weekend weather,
                  position chart, live driver and team views, team radio cards, FIA messages, strips, alerts, update
                  banner, champions banner, feed status, tyre strategy, long-run pace, rain watch, add to calendar, spoiler cover,
                  TV delay picker, race story, lap time comparison, fastest laps compared, race pace, Wikipedia cards, slow-server note, loading and error states
 scripts/         Data copy jobs (mirror-jolpica.mjs, mirror-openf1.mjs, mirror-photos.mjs) and the copy freshness check (check-copy.mjs), run by the deploy workflow every 3 hours
+supabase/        Database setup for sign-in: profiles with row rules (0001) and roles (0002)
 android/         Android app (Trusted Web Activity) project, generator, Digital Asset Links file and build notes
 tests/           Unit tests (unit), browser tests (e2e), recorded API responses and feed snapshot (fixtures), and the
                  live session check (live) and off-season check (manual)
