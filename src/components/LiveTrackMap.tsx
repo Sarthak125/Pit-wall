@@ -230,6 +230,45 @@ export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, t
 
   return (
     <div className={`tmap${flags.red ? ' is-red' : flags.sectors.size ? ' is-yellow' : flags.neutralised ? ' is-sc' : ''}`}>
+      {/* Sector leaders sit above the map, so they show without scrolling past it. */}
+      {showSectors && (
+        <div className="tmap-sectors">
+          {[0, 1, 2].map((i) => {
+            const top = bests.top[i];
+            const favPos = favNum != null ? bests.rank[i].findIndex((b) => b.driver === favNum) : -1;
+            const favBest = favPos >= 3 ? bests.rank[i][favPos] : null;
+            return (
+              <div key={i} className={`tmap-sbox s${i + 1}`}>
+                <div className="tmap-sname">Sector {i + 1}</div>
+                {top.length === 0 ? (
+                  <div className="faint">No sector times yet</div>
+                ) : (
+                  <ol className="tmap-top">
+                    {top.map((b, k) => {
+                      const d = drivers.find((x) => x.driver_number === b.driver);
+                      const colour = teamColour(d?.team_name, d?.team_colour);
+                      return (
+                        <li key={b.driver} className={b.driver === favNum ? 'fav' : teamNums.includes(b.driver) ? 'team' : ''}>
+                          <span className="tmap-tile" style={{ '--team': colour } as React.CSSProperties}>
+                            <b>{k + 1}</b>
+                            {d ? <a href={driverHref(d.name_acronym)} title={`${d.name_acronym}: full stats`}>{d.name_acronym}</a> : <span>#{b.driver}</span>}
+                          </span>
+                          <span className={`mono${k === 0 ? ' tone-overall' : ''}`}>{b.time.toFixed(3)}</span>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                )}
+                {favBest && (
+                  <div className="faint" style={{ fontSize: 12, marginTop: 4 }}>
+                    ★ {drivers.find((x) => x.driver_number === favNum)?.name_acronym} P{favPos + 1} · {favBest.time.toFixed(3)} (+{(favBest.time - top[0].time).toFixed(3)})
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
       <div className="tmap-stage">
       {flagBanner && <div className={`tmap-banner ${flagBanner.tone}`} role="status">{flagBanner.text}</div>}
       <svg viewBox={geo.viewBox} className="tmap-svg" role="img" aria-label={`Track map of ${session.circuit_short_name} with car positions`}>
@@ -290,44 +329,6 @@ export function LiveTrackMap({ session, live, drivers, messages, laps, favNum, t
         })}
       </svg>
       </div>
-      {showSectors && (
-        <div className="tmap-sectors">
-          {[0, 1, 2].map((i) => {
-            const top = bests.top[i];
-            const favPos = favNum != null ? bests.rank[i].findIndex((b) => b.driver === favNum) : -1;
-            const favBest = favPos >= 3 ? bests.rank[i][favPos] : null;
-            return (
-              <div key={i} className={`tmap-sbox s${i + 1}`}>
-                <div className="tmap-sname">Sector {i + 1}</div>
-                {top.length === 0 ? (
-                  <div className="faint">No sector times yet</div>
-                ) : (
-                  <ol className="tmap-top">
-                    {top.map((b, k) => {
-                      const d = drivers.find((x) => x.driver_number === b.driver);
-                      const colour = teamColour(d?.team_name, d?.team_colour);
-                      return (
-                        <li key={b.driver} className={b.driver === favNum ? 'fav' : teamNums.includes(b.driver) ? 'team' : ''}>
-                          <span className="tmap-tile" style={{ '--team': colour } as React.CSSProperties}>
-                            <b>{k + 1}</b>
-                            {d ? <a href={driverHref(d.name_acronym)} title={`${d.name_acronym}: full stats`}>{d.name_acronym}</a> : <span>#{b.driver}</span>}
-                          </span>
-                          <span className={`mono${k === 0 ? ' tone-overall' : ''}`}>{b.time.toFixed(3)}</span>
-                        </li>
-                      );
-                    })}
-                  </ol>
-                )}
-                {favBest && (
-                  <div className="faint" style={{ fontSize: 12, marginTop: 4 }}>
-                    ★ {drivers.find((x) => x.driver_number === favNum)?.name_acronym} P{favPos + 1} · {favBest.time.toFixed(3)} (+{(favBest.time - top[0].time).toFixed(3)})
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
       <div className="tmap-bar">
         {live ? (
           <span className="muted">
